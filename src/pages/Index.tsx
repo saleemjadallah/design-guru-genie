@@ -47,7 +47,7 @@ const Index = () => {
           setAnalysisStage(1);
           
           try {
-            // Call analysis function directly with base64 image
+            // Call analysis function with base64 image
             setAnalysisStage(2);
             const { data: analysisData, error: analysisError } = await supabase.functions
               .invoke("analyze-design", {
@@ -60,10 +60,13 @@ const Index = () => {
             setAnalysisStage(3);
             console.log("Analysis results:", analysisData);
 
-            // Convert analysis results to feedback format
             if (analysisData?.result?.content) {
               try {
-                const analysis = JSON.parse(analysisData.result.content);
+                // Parse the response content to get the analysis JSON
+                const analysisText = analysisData.result.content[0].text;
+                const analysis = JSON.parse(analysisText);
+
+                // Convert analysis to feedback format
                 const newFeedback: Feedback[] = [
                   ...analysis.strengths.map((s: any) => ({
                     type: "positive",
@@ -77,8 +80,11 @@ const Index = () => {
                     priority: i.priority,
                     location: i.location,
                     id: i.id,
+                    principle: i.principle,
+                    technical_details: i.technical_details
                   })),
                 ];
+
                 setFeedback(newFeedback);
               } catch (parseError) {
                 console.error("Error parsing analysis:", parseError);

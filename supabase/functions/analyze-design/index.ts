@@ -66,7 +66,7 @@ serve(async (req) => {
                 "issues": [{
                   "id": 1,
                   "priority": "high|medium|low",
-                  "location": "area description",
+                  "location": "area description", 
                   "coordinates": {"x": 250, "y": 100},
                   "issue": "problem",
                   "principle": "design principle",

@@ -1,6 +1,8 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Circle, Square, Type, Minus } from "lucide-react";
+import { ProcessingState } from "./ProcessingState";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 type Annotation = {
   type: "circle" | "rectangle" | "text" | "arrow";
@@ -16,21 +18,82 @@ type Props = {
   onSave: (annotations: Annotation[]) => void;
 };
 
+type AnalysisStage = 0 | 1 | 2 | 3;
+
 export const AnnotationCanvas = ({ image, onSave }: Props) => {
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [activeTool, setActiveTool] = useState<Annotation["type"]>("circle");
   const [isDrawing, setIsDrawing] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(true);
+  const [analysisStage, setAnalysisStage] = useState<AnalysisStage>(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
 
   useEffect(() => {
-    const img = new Image();
-    img.src = image;
-    img.onload = () => {
-      imageRef.current = img;
-      drawCanvas();
+    const analyzeDesign = async () => {
+      try {
+        // Upload image to get a URL
+        setAnalysisStage(0);
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from("designs")
+          .upload(`design-${Date.now()}.png`, dataURItoBlob(image), {
+            contentType: "image/png",
+          });
+
+        if (uploadError) throw uploadError;
+
+        // Get public URL
+        setAnalysisStage(1);
+        const { data: { publicUrl } } = supabase.storage
+          .from("designs")
+          .getPublicUrl(uploadData.path);
+
+        // Call analysis function
+        setAnalysisStage(2);
+        const { data, error } = await supabase.functions
+          .invoke("analyze-design", {
+            body: { imageUrl: publicUrl },
+          });
+
+        if (error) throw error;
+
+        // Process results
+        setAnalysisStage(3);
+        console.log("Analysis results:", data);
+        
+        // TODO: Process annotations from analysis
+        setTimeout(() => {
+          setIsProcessing(false);
+          toast({
+            title: "Analysis complete",
+            description: "Your design has been analyzed successfully",
+          });
+        }, 1000);
+
+      } catch (error) {
+        console.error("Analysis error:", error);
+        toast({
+          title: "Analysis failed",
+          description: "There was an error analyzing your design. Please try again.",
+          variant: "destructive",
+        });
+        setIsProcessing(false);
+      }
     };
+
+    analyzeDesign();
   }, [image]);
+
+  const dataURItoBlob = (dataURI: string) => {
+    const byteString = atob(dataURI.split(",")[1]);
+    const mimeString = dataURI.split(",")[0].split(":")[1].split(";")[0];
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) {
+      ia[i] = byteString.charCodeAt(i);
+    }
+    return new Blob([ab], { type: mimeString });
+  };
 
   const drawCanvas = () => {
     const canvas = canvasRef.current;
@@ -103,6 +166,10 @@ export const AnnotationCanvas = ({ image, onSave }: Props) => {
     setAnnotations([...annotations, newAnnotation]);
     onSave([...annotations, newAnnotation]);
   };
+
+  if (isProcessing) {
+    return <ProcessingState currentStage={analysisStage} />;
+  }
 
   return (
     <div className="relative border rounded-lg overflow-hidden bg-neutral-50">

@@ -20,6 +20,39 @@ export default {
     },
     extend: {
       colors: {
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
+        primary: {
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
+        },
+        secondary: {
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
+        },
+        destructive: {
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
+        },
+        muted: {
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
+        },
+        accent: {
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
+        },
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
+        },
+        card: {
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
+        },
         // Using a sophisticated neutral palette
         neutral: {
           50: "#fafafa",
@@ -32,22 +65,6 @@ export default {
           700: "#404040",
           800: "#262626",
           900: "#171717",
-        },
-        // Accent colors
-        accent: {
-          light: "#60a5fa",
-          DEFAULT: "#3b82f6",
-          dark: "#2563eb",
-        },
-        success: {
-          light: "#4ade80",
-          DEFAULT: "#22c55e",
-          dark: "#16a34a",
-        },
-        warning: {
-          light: "#fbbf24",
-          DEFAULT: "#f59e0b",
-          dark: "#d97706",
         },
       },
       fontFamily: {
@@ -77,6 +94,11 @@ export default {
           "0%": { opacity: "1" },
           "100%": { opacity: "0" },
         },
+      },
+      borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
       },
     },
   },

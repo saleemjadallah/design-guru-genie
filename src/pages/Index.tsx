@@ -10,6 +10,7 @@ import { Navigation } from "@/components/layout/Navigation";
 import { ProcessingState } from "@/components/ProcessingState";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { ArrowLeft, Download, Share2 } from "lucide-react";
 
 type AnalysisStage = 0 | 1 | 2 | 3;
 
@@ -20,6 +21,8 @@ type Feedback = {
   priority?: "low" | "medium" | "high";
   location?: { x: number; y: number };
   id?: number;
+  principle?: string;
+  technical_details?: string;
 };
 
 const Index = () => {
@@ -27,6 +30,8 @@ const Index = () => {
   const [feedback, setFeedback] = useState<Feedback[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisStage, setAnalysisStage] = useState<AnalysisStage>(0);
+  const [selectedIssue, setSelectedIssue] = useState<number | null>(null);
+  const [priorityFilter, setPriorityFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
 
   const handleImageUpload = async (file: File) => {
     try {
@@ -113,15 +118,20 @@ const Index = () => {
     }
   };
 
+  const filteredIssues = priorityFilter === 'all' 
+    ? feedback.filter(f => f.type === "improvement")
+    : feedback.filter(f => f.type === "improvement" && f.priority === priorityFilter);
+
+  const positiveFeatures = feedback.filter(f => f.type === "positive");
+
   return (
     <>
       <Navigation />
-      <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100 pt-16">
-        <div className="container py-12">
-          <div className="max-w-4xl mx-auto">
-            <Hero />
-            
-            {!uploadedImage ? (
+      <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
+        {!uploadedImage ? (
+          <div className="container py-12">
+            <div className="max-w-4xl mx-auto">
+              <Hero />
               <div className="animate-slide-up space-y-6">
                 <ImageUpload onImageUpload={handleImageUpload} />
                 <div className="text-center">
@@ -129,42 +139,138 @@ const Index = () => {
                     First analysis free • $18/month after • Cancel anytime
                   </p>
                 </div>
-
                 <HowItWorks />
                 <AnnotationExample />
               </div>
-            ) : (
-              <div className="space-y-8 animate-fade-in">
-                {isAnalyzing ? (
-                  <ProcessingState currentStage={analysisStage} />
-                ) : (
-                  <>
-                    <AnnotationCanvas
-                      image={uploadedImage}
-                      onSave={() => {}}
-                      annotations={feedback.filter(f => f.type === "improvement" && f.location).map(f => ({
-                        id: f.id || 0,
-                        x: f.location?.x || 0,
-                        y: f.location?.y || 0,
-                        priority: f.priority || "medium"
-                      }))}
-                    />
-                    <FeedbackPanel 
-                      feedback={feedback.sort((a, b) => {
-                        if (a.type === "improvement" && b.type === "improvement") {
-                          const priorityOrder = { high: 0, medium: 1, low: 2 };
-                          return priorityOrder[a.priority || "medium"] - priorityOrder[b.priority || "medium"];
-                        }
-                        return a.type === "positive" ? -1 : 1;
-                      })} 
-                      onSave={setFeedback} 
-                    />
-                  </>
-                )}
-              </div>
-            )}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="min-h-screen bg-neutral-50">
+            {/* Header */}
+            <header className="bg-white shadow-sm">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+                <div className="flex items-center">
+                  <button 
+                    className="mr-4 text-neutral-600 hover:text-neutral-900"
+                    onClick={() => {
+                      setUploadedImage(null);
+                      setFeedback([]);
+                      setIsAnalyzing(false);
+                      setAnalysisStage(0);
+                    }}
+                  >
+                    <ArrowLeft size={20} />
+                  </button>
+                  <h1 className="text-xl font-bold text-neutral-900">Design Analysis</h1>
+                </div>
+              </div>
+            </header>
+
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+              {isAnalyzing ? (
+                <ProcessingState currentStage={analysisStage} />
+              ) : (
+                <div className="space-y-6">
+                  {/* Actions Bar */}
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm text-neutral-700 mr-2">Filter by:</span>
+                      <div className="inline-flex rounded-md shadow-sm" role="group">
+                        <button
+                          type="button"
+                          className={`px-4 py-2 text-sm font-medium rounded-l-lg ${
+                            priorityFilter === 'all'
+                              ? 'bg-accent text-white'
+                              : 'bg-white text-neutral-700 hover:bg-neutral-50'
+                          } border border-neutral-300`}
+                          onClick={() => setPriorityFilter('all')}
+                        >
+                          All
+                        </button>
+                        <button
+                          type="button"
+                          className={`px-4 py-2 text-sm font-medium ${
+                            priorityFilter === 'high'
+                              ? 'bg-red-500 text-white'
+                              : 'bg-white text-neutral-700 hover:bg-neutral-50'
+                          } border-t border-b border-r border-neutral-300`}
+                          onClick={() => setPriorityFilter('high')}
+                        >
+                          High
+                        </button>
+                        <button
+                          type="button"
+                          className={`px-4 py-2 text-sm font-medium ${
+                            priorityFilter === 'medium'
+                              ? 'bg-amber-500 text-white'
+                              : 'bg-white text-neutral-700 hover:bg-neutral-50'
+                          } border-t border-b border-r border-neutral-300`}
+                          onClick={() => setPriorityFilter('medium')}
+                        >
+                          Medium
+                        </button>
+                        <button
+                          type="button"
+                          className={`px-4 py-2 text-sm font-medium rounded-r-lg ${
+                            priorityFilter === 'low'
+                              ? 'bg-blue-500 text-white'
+                              : 'bg-white text-neutral-700 hover:bg-neutral-50'
+                          } border-t border-b border-r border-neutral-300`}
+                          onClick={() => setPriorityFilter('low')}
+                        >
+                          Low
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <div className="flex space-x-2">
+                      <button className="flex items-center px-4 py-2 bg-white border border-neutral-300 rounded-md text-sm font-medium text-neutral-700 hover:bg-neutral-50">
+                        <Download size={16} className="mr-2" />
+                        Export PDF
+                      </button>
+                      <button className="flex items-center px-4 py-2 bg-white border border-neutral-300 rounded-md text-sm font-medium text-neutral-700 hover:bg-neutral-50">
+                        <Share2 size={16} className="mr-2" />
+                        Share
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Split View */}
+                  <div className="flex flex-col lg:flex-row gap-6">
+                    {/* Design View */}
+                    <div className="lg:w-3/5">
+                      <AnnotationCanvas
+                        image={uploadedImage}
+                        onSave={() => {}}
+                        annotations={filteredIssues
+                          .filter(f => f.location)
+                          .map(f => ({
+                            id: f.id || 0,
+                            x: f.location?.x || 0,
+                            y: f.location?.y || 0,
+                            priority: f.priority || "medium"
+                          }))}
+                        selectedIssue={selectedIssue}
+                        onIssueSelect={setSelectedIssue}
+                      />
+                    </div>
+
+                    {/* Feedback Panel */}
+                    <div className="lg:w-2/5">
+                      <FeedbackPanel 
+                        feedback={filteredIssues} 
+                        strengths={positiveFeatures}
+                        onSave={setFeedback}
+                        selectedIssue={selectedIssue}
+                        onIssueSelect={setSelectedIssue}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

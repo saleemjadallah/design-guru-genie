@@ -1,5 +1,6 @@
 
-import { Check, AlertCircle } from "lucide-react";
+import { Check, AlertCircle, Copy } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 type Feedback = {
   type: "positive" | "improvement";
@@ -7,81 +8,98 @@ type Feedback = {
   description: string;
   priority?: "low" | "medium" | "high";
   id?: number;
+  principle?: string;
+  technical_details?: string;
 };
 
 type Props = {
   feedback: Feedback[];
+  strengths: Feedback[];
   onSave: (feedback: Feedback[]) => void;
+  selectedIssue?: number | null;
+  onIssueSelect?: (id: number | null) => void;
 };
 
-export const FeedbackPanel = ({ feedback, onSave }: Props) => {
-  return (
-    <div className="bg-white rounded-lg shadow-sm border p-6">
-      <h2 className="text-2xl font-semibold mb-6">Design Feedback</h2>
-      
-      <div className="space-y-6">
-        {/* Positive Feedback Section */}
-        {feedback.filter(item => item.type === "positive").length > 0 && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-neutral-800">Strengths</h3>
-            {feedback
-              .filter(item => item.type === "positive")
-              .map((item, index) => (
-                <div key={index} className="p-4 rounded-lg bg-neutral-50 border animate-slide-up">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Check className="w-5 h-5 text-success-dark" />
-                    <h4 className="font-medium text-neutral-800">{item.title}</h4>
-                  </div>
-                  <p className="text-neutral-600 ml-7">{item.description}</p>
-                </div>
-              ))}
-          </div>
-        )}
+export const FeedbackPanel = ({ 
+  feedback, 
+  strengths,
+  selectedIssue,
+  onIssueSelect 
+}: Props) => {
+  const handleCopyRecommendation = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "Copied to clipboard",
+      description: "The recommendation has been copied to your clipboard.",
+    });
+  };
 
-        {/* Improvements Section */}
-        {feedback.filter(item => item.type === "improvement").length > 0 && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-neutral-800">Suggested Improvements</h3>
-            {feedback
-              .filter(item => item.type === "improvement")
-              .map((item, index) => (
-                <div key={index} className="p-4 rounded-lg bg-neutral-50 border animate-slide-up">
-                  <div className="flex items-start gap-3">
-                    <div 
-                      className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-sm font-medium shrink-0
-                        ${item.priority === "high" 
-                          ? "bg-red-500" 
-                          : item.priority === "medium" 
-                          ? "bg-amber-500" 
-                          : "bg-blue-500"
-                        }`}
-                    >
-                      {item.id || index + 1}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <AlertCircle className="w-5 h-5 text-warning-dark" />
-                        <h4 className="font-medium text-neutral-800">{item.title}</h4>
-                      </div>
-                      <p className="text-neutral-600 mb-2">{item.description}</p>
-                      {item.priority && (
-                        <span className={`inline-block px-2 py-1 text-xs rounded-full 
-                          ${item.priority === "high"
-                            ? "bg-warning-light/20 text-warning-dark"
-                            : item.priority === "medium"
-                            ? "bg-amber-100 text-amber-700"
-                            : "bg-blue-100 text-blue-700"
-                          }`}
-                        >
-                          {item.priority.charAt(0).toUpperCase() + item.priority.slice(1)} Priority
-                        </span>
-                      )}
-                    </div>
-                  </div>
+  return (
+    <div className="bg-white rounded-lg shadow-sm divide-y divide-neutral-200">
+      <div className="p-4">
+        <h3 className="font-medium text-neutral-900 mb-2">Issues & Recommendations</h3>
+        <p className="text-sm text-neutral-500">
+          Click on an issue to see detailed recommendations
+        </p>
+      </div>
+      
+      <div className="max-h-[600px] overflow-y-auto">
+        {feedback.map(issue => (
+          <div 
+            key={issue.id}
+            className={`p-4 cursor-pointer transition-colors ${
+              selectedIssue === issue.id ? 'bg-accent/5' : ''
+            }`}
+            onClick={() => onIssueSelect?.(issue.id || null)}
+          >
+            <div className="flex items-start">
+              <div className={`mt-0.5 w-5 h-5 rounded-full flex items-center justify-center mr-3 flex-shrink-0 ${
+                issue.priority === 'high' ? 'bg-red-500' : 
+                issue.priority === 'medium' ? 'bg-amber-500' : 'bg-blue-500'
+              }`}>
+                <span className="text-white text-xs font-bold">{issue.id}</span>
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <h4 className="font-medium text-neutral-900">{issue.title}</h4>
+                  <span className={`ml-2 text-xs px-2 py-0.5 rounded ${
+                    issue.priority === 'high' ? 'bg-red-100 text-red-800' : 
+                    issue.priority === 'medium' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'
+                  }`}>
+                    {issue.priority} priority
+                  </span>
                 </div>
-              ))}
+                <p className="text-sm text-neutral-700 mb-2">{issue.description}</p>
+                
+                {selectedIssue === issue.id && (
+                  <div className="mt-3 pt-3 border-t border-neutral-100">
+                    {issue.principle && (
+                      <div className="mb-3">
+                        <span className="inline-block text-xs font-medium bg-accent/10 text-accent px-2 py-0.5 rounded">
+                          {issue.principle}
+                        </span>
+                      </div>
+                    )}
+                    
+                    {issue.technical_details && (
+                      <div className="bg-neutral-50 rounded p-2 mb-3">
+                        <p className="text-xs text-neutral-600">{issue.technical_details}</p>
+                      </div>
+                    )}
+                    
+                    <button 
+                      className="flex items-center text-xs text-accent hover:text-accent/80"
+                      onClick={() => handleCopyRecommendation(issue.description)}
+                    >
+                      <Copy size={14} className="mr-1" />
+                      Copy recommendation
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-        )}
+        ))}
       </div>
     </div>
   );

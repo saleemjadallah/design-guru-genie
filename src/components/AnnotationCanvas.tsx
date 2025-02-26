@@ -1,6 +1,5 @@
 
-import { useState, useRef, useEffect } from "react";
-import { Circle, Square, Type, Minus } from "lucide-react";
+import { useRef, useEffect } from "react";
 
 type Annotation = {
   id: number;
@@ -13,9 +12,16 @@ type Props = {
   image: string;
   onSave: (annotations: Annotation[]) => void;
   annotations?: Annotation[];
+  selectedIssue?: number | null;
+  onIssueSelect?: (id: number | null) => void;
 };
 
-export const AnnotationCanvas = ({ image, onSave, annotations = [] }: Props) => {
+export const AnnotationCanvas = ({ 
+  image, 
+  annotations = [], 
+  selectedIssue,
+  onIssueSelect 
+}: Props) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
 
@@ -40,6 +46,13 @@ export const AnnotationCanvas = ({ image, onSave, annotations = [] }: Props) => 
         : annotation.priority === "medium"
         ? "rgba(245, 158, 11, 0.9)"
         : "rgba(59, 130, 246, 0.9)";
+      
+      if (selectedIssue === annotation.id) {
+        ctx.strokeStyle = "white";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+      
       ctx.fill();
 
       // Draw number
@@ -71,18 +84,39 @@ export const AnnotationCanvas = ({ image, onSave, annotations = [] }: Props) => 
     };
   }, [image]);
 
-  // Redraw when annotations change
+  // Redraw when annotations or selection changes
   useEffect(() => {
     drawCanvas();
-  }, [annotations]);
+  }, [annotations, selectedIssue]);
+
+  const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!onIssueSelect) return;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    // Check if click is within any annotation
+    const clickedAnnotation = annotations.find(annotation => {
+      const dx = x - annotation.x;
+      const dy = y - annotation.y;
+      return Math.sqrt(dx * dx + dy * dy) <= 16;
+    });
+
+    onIssueSelect(clickedAnnotation?.id || null);
+  };
 
   return (
-    <div className="relative border rounded-lg overflow-hidden bg-neutral-50">
+    <div className="bg-white rounded-lg shadow-sm p-4">
       <canvas
         ref={canvasRef}
         width={800}
         height={600}
-        className="max-w-full h-auto"
+        className="max-w-full h-auto cursor-pointer"
+        onClick={handleCanvasClick}
       />
     </div>
   );

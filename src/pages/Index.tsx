@@ -6,6 +6,7 @@ import { FeedbackPanel } from "@/components/FeedbackPanel";
 import { AnnotationExample } from "@/components/AnnotationExample";
 import { Hero } from "@/components/landing/Hero";
 import { HowItWorks } from "@/components/landing/HowItWorks";
+import { Navigation } from "@/components/layout/Navigation";
 import { toast } from "@/hooks/use-toast";
 
 type Feedback = {
@@ -49,35 +50,38 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
-      <div className="container py-12">
-        <div className="max-w-4xl mx-auto">
-          <Hero />
-          
-          {!uploadedImage ? (
-            <div className="animate-slide-up space-y-6">
-              <ImageUpload onImageUpload={handleImageUpload} />
-              <div className="text-center">
-                <p className="text-sm text-neutral-600">
-                  First analysis free • $18/month after • Cancel anytime
-                </p>
-              </div>
+    <>
+      <Navigation />
+      <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100 pt-16">
+        <div className="container py-12">
+          <div className="max-w-4xl mx-auto">
+            <Hero />
+            
+            {!uploadedImage ? (
+              <div className="animate-slide-up space-y-6">
+                <ImageUpload onImageUpload={handleImageUpload} />
+                <div className="text-center">
+                  <p className="text-sm text-neutral-600">
+                    First analysis free • $18/month after • Cancel anytime
+                  </p>
+                </div>
 
-              <HowItWorks />
-              <AnnotationExample />
-            </div>
-          ) : (
-            <div className="space-y-8 animate-fade-in">
-              <AnnotationCanvas
-                image={uploadedImage}
-                onSave={handleAnnotationSave}
-              />
-              <FeedbackPanel feedback={feedback} onSave={handleFeedbackSave} />
-            </div>
-          )}
+                <HowItWorks />
+                <AnnotationExample />
+              </div>
+            ) : (
+              <div className="space-y-8 animate-fade-in">
+                <AnnotationCanvas
+                  image={uploadedImage}
+                  onSave={handleAnnotationSave}
+                />
+                <FeedbackPanel feedback={feedback} onSave={handleFeedbackSave} />
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

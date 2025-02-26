@@ -1,8 +1,8 @@
-
 import { useState } from "react";
 import { ImageUpload } from "@/components/ImageUpload";
 import { AnnotationCanvas } from "@/components/AnnotationCanvas";
 import { FeedbackPanel } from "@/components/FeedbackPanel";
+import { AnnotationExample } from "@/components/AnnotationExample";
 import { toast } from "@/hooks/use-toast";
 import { 
   CheckCircle, 
@@ -183,6 +183,9 @@ const Index = () => {
                   ))}
                 </div>
               </section>
+
+              {/* See It In Action Section */}
+              <AnnotationExample />
             </div>
           ) : (
             <div className="space-y-8 animate-fade-in">

@@ -46,10 +46,10 @@ export const ImageUpload = ({ onImageUpload }: { onImageUpload: (file: File) => 
 
   return (
     <div
-      className={`relative flex flex-col items-center justify-center w-full h-64 p-6 border-2 border-dashed rounded-lg transition-colors ${
+      className={`relative flex flex-col items-center justify-center w-full h-80 p-8 border-2 border-dashed rounded-xl transition-all ${
         isDragging
-          ? "border-accent bg-accent/5"
-          : "border-neutral-200 hover:border-accent/50"
+          ? "border-accent bg-accent/5 scale-[1.02]"
+          : "border-neutral-200 hover:border-accent/50 hover:bg-neutral-50"
       }`}
       onDragEnter={handleDrag}
       onDragOver={handleDrag}
@@ -57,16 +57,19 @@ export const ImageUpload = ({ onImageUpload }: { onImageUpload: (file: File) => 
       onDrop={handleDrop}
     >
       <Upload
-        className={`w-12 h-12 mb-4 ${
+        className={`w-16 h-16 mb-6 ${
           isDragging ? "text-accent" : "text-neutral-400"
         }`}
       />
-      <p className="mb-2 text-lg font-semibold text-neutral-700">
+      <h3 className="text-2xl font-semibold mb-3 text-neutral-800">
         Drop your design here
+      </h3>
+      <p className="mb-6 text-neutral-600">
+        or click to select a file from your computer
       </p>
-      <p className="mb-4 text-sm text-neutral-500">
-        or click to select a file
-      </p>
+      <button className="px-6 py-3 bg-accent text-white rounded-lg font-medium hover:bg-accent-dark transition-colors">
+        Select File
+      </button>
       <input
         type="file"
         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"

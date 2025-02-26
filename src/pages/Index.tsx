@@ -18,6 +18,8 @@ type Feedback = {
   title: string;
   description: string;
   priority?: "low" | "medium" | "high";
+  location?: { x: number; y: number };
+  id?: number;
 };
 
 const Index = () => {
@@ -31,31 +33,20 @@ const Index = () => {
       setIsAnalyzing(true);
       setAnalysisStage(0);
 
-      // Convert file to data URL for preview
+      // Convert file to data URL for preview and analysis
       const reader = new FileReader();
       reader.onload = async (e) => {
         if (e.target?.result) {
-          setUploadedImage(e.target.result as string);
+          const imageDataUrl = e.target.result as string;
+          setUploadedImage(imageDataUrl);
+          setAnalysisStage(1);
           
           try {
-            // Upload to Supabase Storage
-            const { data: uploadData, error: uploadError } = await supabase.storage
-              .from("designs")
-              .upload(`design-${Date.now()}.png`, file);
-
-            if (uploadError) throw uploadError;
-
-            // Get public URL for analysis
-            setAnalysisStage(1);
-            const { data: { publicUrl } } = supabase.storage
-              .from("designs")
-              .getPublicUrl(uploadData.path);
-
-            // Call analysis function
+            // Call analysis function directly with base64 image
             setAnalysisStage(2);
             const { data: analysisData, error: analysisError } = await supabase.functions
               .invoke("analyze-design", {
-                body: { imageUrl: publicUrl },
+                body: { imageUrl: imageDataUrl },
               });
 
             if (analysisError) throw analysisError;
@@ -79,11 +70,18 @@ const Index = () => {
                     title: i.issue,
                     description: i.recommendation,
                     priority: i.priority,
+                    location: i.location,
+                    id: i.id,
                   })),
                 ];
                 setFeedback(newFeedback);
               } catch (parseError) {
                 console.error("Error parsing analysis:", parseError);
+                toast({
+                  title: "Analysis error",
+                  description: "Could not process the analysis results.",
+                  variant: "destructive",
+                });
               }
             }
 
@@ -144,8 +142,23 @@ const Index = () => {
                     <AnnotationCanvas
                       image={uploadedImage}
                       onSave={() => {}}
+                      annotations={feedback.filter(f => f.type === "improvement" && f.location).map(f => ({
+                        id: f.id || 0,
+                        x: f.location?.x || 0,
+                        y: f.location?.y || 0,
+                        priority: f.priority || "medium"
+                      }))}
                     />
-                    <FeedbackPanel feedback={feedback} onSave={setFeedback} />
+                    <FeedbackPanel 
+                      feedback={feedback.sort((a, b) => {
+                        if (a.type === "improvement" && b.type === "improvement") {
+                          const priorityOrder = { high: 0, medium: 1, low: 2 };
+                          return priorityOrder[a.priority || "medium"] - priorityOrder[b.priority || "medium"];
+                        }
+                        return a.type === "positive" ? -1 : 1;
+                      })} 
+                      onSave={setFeedback} 
+                    />
                   </>
                 )}
               </div>

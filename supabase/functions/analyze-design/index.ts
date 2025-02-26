@@ -8,8 +8,6 @@ const corsHeaders = {
 }
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -17,11 +15,6 @@ serve(async (req) => {
   }
 
   try {
-    const supabase = createClient(
-      SUPABASE_URL ?? '',
-      SUPABASE_SERVICE_ROLE_KEY ?? ''
-    )
-
     const { imageUrl } = await req.json()
     console.log('Analyzing design:', imageUrl)
 
@@ -45,8 +38,9 @@ serve(async (req) => {
             {
               type: 'image',
               source: {
-                type: 'url',
-                url: imageUrl
+                type: 'base64',
+                media_type: 'image/png',
+                data: imageUrl.split(',')[1]
               }
             },
             {
@@ -55,7 +49,7 @@ serve(async (req) => {
               - Precisely describe the problem
               - Explain why it matters from a design principles perspective
               - Provide a specific, actionable recommendation
-              - Indicate the location in the image
+              - Indicate the location in the image (x,y coordinates)
               
               Also note 1-2 positive aspects of the design.
               
@@ -66,12 +60,10 @@ serve(async (req) => {
                 "issues": [{
                   "id": 1,
                   "priority": "high|medium|low",
-                  "location": "area description", 
-                  "coordinates": {"x": 250, "y": 100},
                   "issue": "problem",
                   "principle": "design principle",
-                  "recommendation": "solution",
-                  "technical_details": "exact values"
+                  "location": {"x": 250, "y": 100},
+                  "recommendation": "solution"
                 }]
               }`
             }

@@ -1,6 +1,5 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,7 +15,7 @@ serve(async (req) => {
 
   try {
     const { imageUrl } = await req.json()
-    console.log('Analyzing design:', imageUrl)
+    console.log('Analyzing design with Claude...')
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -33,7 +32,37 @@ serve(async (req) => {
           content: [
             {
               type: 'text',
-              text: 'You are DesignCritiqueAI, a professional design consultant. Please analyze this design screenshot:'
+              text: `You are DesignCritiqueAI, a professional UI/UX design consultant. Please analyze this design screenshot in detail and provide structured feedback. Focus on usability, accessibility, visual hierarchy, and conversion optimization.
+
+Rules for your analysis:
+1. Provide a concise overview of the design
+2. Identify 2 key strengths
+3. Identify 3-5 issues, each with:
+   - Clear priority level (high/medium/low)
+   - Specific location in pixels (x,y coordinates)
+   - Design principle violated
+   - Technical recommendation
+4. Format response as JSON matching exactly this structure:
+{
+  "overview": "Brief overall impression",
+  "strengths": [
+    {
+      "title": "Strength name",
+      "description": "Detailed explanation"
+    }
+  ],
+  "issues": [
+    {
+      "id": 1,
+      "priority": "high|medium|low",
+      "issue": "Problem description",
+      "principle": "Design principle",
+      "location": {"x": 250, "y": 100},
+      "recommendation": "Solution",
+      "technical_details": "Specific implementation details"
+    }
+  ]
+}`
             },
             {
               type: 'image',
@@ -42,41 +71,17 @@ serve(async (req) => {
                 media_type: 'image/png',
                 data: imageUrl.split(',')[1]
               }
-            },
-            {
-              type: 'text',
-              text: `Identify 3-5 key design issues ordered by priority (high/medium/low). For each issue:
-              - Precisely describe the problem
-              - Explain why it matters from a design principles perspective
-              - Provide a specific, actionable recommendation
-              - Indicate the location in the image (x,y coordinates)
-              
-              Also note 1-2 positive aspects of the design.
-              
-              Format your response as JSON with this schema:
-              {
-                "overview": "Brief impression",
-                "strengths": [{"title": "strength", "description": "details"}],
-                "issues": [{
-                  "id": 1,
-                  "priority": "high|medium|low",
-                  "issue": "problem",
-                  "principle": "design principle",
-                  "location": {"x": 250, "y": 100},
-                  "recommendation": "solution"
-                }]
-              }`
             }
           ]
         }]
       })
     })
 
-    const analysisResult = await response.json()
-    console.log('Analysis complete:', analysisResult)
+    const result = await response.json()
+    console.log('Analysis complete:', result)
 
     return new Response(
-      JSON.stringify({ result: analysisResult }),
+      JSON.stringify({ result }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {

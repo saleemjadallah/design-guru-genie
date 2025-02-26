@@ -47,11 +47,11 @@ export const Navigation = () => {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="relative h-10 w-10 rounded-full"
+                  className="relative h-12 w-12 rounded-full hover:bg-accent/10"
                 >
-                  <Avatar className="h-10 w-10">
+                  <Avatar className="h-12 w-12">
                     <AvatarFallback className="bg-accent/10 text-accent">
-                      <User className="h-5 w-5" />
+                      <User className="h-6 w-6" />
                     </AvatarFallback>
                   </Avatar>
                   <ChevronDown className="h-4 w-4 absolute -right-4 top-1/2 -translate-y-1/2 text-neutral-500" />

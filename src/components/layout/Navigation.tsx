@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   User, 
@@ -17,7 +16,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
 
@@ -45,17 +43,14 @@ export const Navigation = () => {
           <div className="flex items-center gap-4">
             <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="relative h-12 w-12 rounded-full hover:bg-accent/10"
-                >
+                <div className="relative cursor-pointer hover:opacity-80 transition-opacity">
                   <Avatar className="h-12 w-12">
                     <AvatarFallback className="bg-accent/10 text-accent">
                       <User className="h-6 w-6" />
                     </AvatarFallback>
                   </Avatar>
                   <ChevronDown className="h-4 w-4 absolute -right-4 top-1/2 -translate-y-1/2 text-neutral-500" />
-                </Button>
+                </div>
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 className="w-56"

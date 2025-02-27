@@ -68,3 +68,44 @@ button, a, input, textarea {
 ::-webkit-scrollbar-thumb {
   @apply bg-neutral-300 rounded-full hover:bg-neutral-400;
 }
+
+/* Gradient header styling */
+.gradient-header {
+  background: linear-gradient(135deg, #4F46E5 0%, #7E22CE 100%);
+  position: relative;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Create a dot pattern overlay */
+.pattern-dots {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Add animation for the header */
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.gradient-header {
+  background-size: 200% 200%;
+  animation: gradient-shift 15s ease infinite;
+}
+
+/* Add responsive font sizes */
+@media (max-width: 640px) {
+  .gradient-header h1 {
+    font-size: 2.25rem; /* 36px */
+  }
+  .gradient-header p {
+    font-size: 1rem; /* 16px */
+  }
+}

@@ -1,5 +1,5 @@
 
-import { Star } from "lucide-react";
+import { Star, MousePointer, Layout, Palette } from "lucide-react";
 
 type FeatureProps = {
   icon: React.ElementType;
@@ -18,17 +18,17 @@ const Feature = ({ icon: Icon, title, description }: FeatureProps) => (
 export const Hero = () => {
   const features = [
     {
-      icon: Star,
+      icon: Palette,
       title: "Professional Analysis",
       description: "Get expert insights on your design",
     },
     {
-      icon: Star,
+      icon: MousePointer,
       title: "Visual Annotations",
       description: "Clear, actionable visual feedback",
     },
     {
-      icon: Star,
+      icon: Layout,
       title: "Actionable Feedback",
       description: "Concrete steps to improve",
     },
@@ -41,12 +41,19 @@ export const Hero = () => {
 
   return (
     <div className="text-center mb-12 animate-fade-in space-y-6">
-      <h1 className="text-5xl font-bold mb-4 text-neutral-900">
-        Design Critique
-      </h1>
-      <p className="text-xl text-neutral-600 max-w-2xl mx-auto">
-        Get expert design feedback with AI-powered visual annotations in minutes
-      </p>
+      <div className="gradient-header rounded-2xl mb-12 relative overflow-hidden">
+        {/* Subtle dot pattern overlay */}
+        <div className="absolute inset-0 opacity-5 pointer-events-none pattern-dots"></div>
+        
+        <div className="pt-16 pb-14 px-6 md:px-10 relative z-10">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-white drop-shadow-sm">
+            Design Critique
+          </h1>
+          <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto font-medium">
+            Get expert design feedback with AI-powered visual annotations in minutes
+          </p>
+        </div>
+      </div>
       
       <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-12">
         {features.map((feature, index) => (

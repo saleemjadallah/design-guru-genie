@@ -49,24 +49,30 @@ export const AnalysisView = ({
   setFeedback,
   getIssueCountByPriority,
 }: Props) => {
-  // Force a re-render after component mounts to ensure image displays
-  const [mounted, setMounted] = useState(false);
+  // Track image loaded status
+  const [imageReady, setImageReady] = useState(false);
   
   // Check if this is a URL analysis (no real image, just a placeholder)
   const isUrlAnalysis = uploadedImage?.startsWith('data:image/svg+xml');
   
   useEffect(() => {
-    // Set mounted to true after component mounts
-    setMounted(true);
-    
-    // Force a redraw by toggling the state after a short delay
-    const timer = setTimeout(() => {
-      setMounted(false);
-      setTimeout(() => setMounted(true), 10);
-    }, 100);
-    
-    return () => clearTimeout(timer);
-  }, []);
+    if (uploadedImage && !isUrlAnalysis) {
+      // Create a new Image to preload the image
+      const img = new Image();
+      img.onload = () => {
+        setImageReady(true);
+      };
+      img.onerror = () => {
+        console.error("Failed to load image");
+        // Still set to ready so we can display error fallback
+        setImageReady(true);
+      };
+      img.src = uploadedImage;
+    } else {
+      // For URL analysis or if no image, we're ready
+      setImageReady(true);
+    }
+  }, [uploadedImage, isUrlAnalysis]);
 
   return (
     <div className="min-h-screen bg-neutral-50 pt-16">
@@ -122,22 +128,28 @@ export const AnalysisView = ({
                     <div className="text-center text-sm font-medium text-neutral-500 mb-4">
                       With AI Annotations
                     </div>
-                    {uploadedImage && (
-                      <div key={mounted ? "mounted" : "unmounted"}>
-                        <AnnotationCanvas
-                          image={uploadedImage}
-                          onSave={() => {}}
-                          annotations={filteredIssues
-                            .filter(f => f.location)
-                            .map(f => ({
-                              id: f.id || 0,
-                              x: f.location?.x || 0,
-                              y: f.location?.y || 0,
-                              priority: f.priority || "medium"
-                            }))}
-                          selectedIssue={selectedIssue}
-                          onIssueSelect={setSelectedIssue}
-                        />
+                    {uploadedImage && imageReady && (
+                      <AnnotationCanvas
+                        image={uploadedImage}
+                        onSave={() => {}}
+                        annotations={filteredIssues
+                          .filter(f => f.location)
+                          .map(f => ({
+                            id: f.id || 0,
+                            x: f.location?.x || 0,
+                            y: f.location?.y || 0,
+                            priority: f.priority || "medium"
+                          }))}
+                        selectedIssue={selectedIssue}
+                        onIssueSelect={setSelectedIssue}
+                      />
+                    )}
+                    
+                    {uploadedImage && !imageReady && (
+                      <div className="w-full py-20 flex items-center justify-center bg-neutral-50 rounded-lg">
+                        <div className="animate-pulse text-neutral-500">
+                          Preparing image...
+                        </div>
                       </div>
                     )}
                   </div>

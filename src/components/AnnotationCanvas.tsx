@@ -28,6 +28,61 @@ export const AnnotationCanvas = ({
   const [scale, setScale] = useState(1);
   const [imgLoaded, setImgLoaded] = useState(false);
   const [imgError, setImgError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+
+  const loadImage = () => {
+    console.log("Loading image:", image);
+    
+    // Create a new image instance
+    const img = new Image();
+    
+    // Set up onload handler before setting the src
+    img.onload = () => {
+      console.log("Image loaded successfully:", img.width, "x", img.height);
+      imageRef.current = img;
+      setImgLoaded(true);
+      setImgError(false);
+
+      if (canvasRef.current && containerRef.current) {
+        // Set canvas size based on container width while maintaining aspect ratio
+        const container = containerRef.current;
+        const containerWidth = container.clientWidth;
+        const ratio = containerWidth / img.width;
+        
+        canvasRef.current.width = containerWidth;
+        canvasRef.current.height = img.height * ratio;
+        
+        updateScale();
+        
+        // Force immediate draw
+        setTimeout(() => {
+          drawCanvas();
+        }, 0);
+      }
+    };
+    
+    img.onerror = (e) => {
+      console.error("Image loading error:", e);
+      setImgError(true);
+      setImgLoaded(false);
+      
+      // If we haven't retried too many times, try again
+      if (retryCount < 3) {
+        setRetryCount(prev => prev + 1);
+        setTimeout(() => loadImage(), 500);
+      }
+    };
+
+    // Set src after defining onload handler
+    img.src = image;
+    
+    // Force the img element to be immediately cached and processed
+    if (img.complete && !img.naturalWidth) {
+      img.onerror?.(new Event('error') as any);
+    } else if (img.complete) {
+      img.onload?.(new Event('load') as any);
+    }
+  };
 
   const updateScale = () => {
     if (!containerRef.current || !imageRef.current) return;
@@ -112,52 +167,14 @@ export const AnnotationCanvas = ({
 
   // Initialize image and canvas
   useEffect(() => {
-    console.log("Loading image:", image);
-    
-    // Create a new image instance
-    const img = new Image();
-    
-    // Set up onload handler before setting the src
-    img.onload = () => {
-      console.log("Image loaded successfully:", img.width, "x", img.height);
-      imageRef.current = img;
-      setImgLoaded(true);
-      setImgError(false);
-
-      if (canvasRef.current && containerRef.current) {
-        // Set canvas size based on container width while maintaining aspect ratio
-        const container = containerRef.current;
-        const containerWidth = container.clientWidth;
-        const ratio = containerWidth / img.width;
-        
-        canvasRef.current.width = containerWidth;
-        canvasRef.current.height = img.height * ratio;
-        
-        updateScale();
-        drawCanvas();
-      }
-    };
-    
-    img.onerror = (e) => {
-      console.error("Image loading error:", e);
-      setImgError(true);
-      setImgLoaded(false);
-    };
-
-    // Set src after defining onload handler
-    img.src = image;
-    
-    // Force the img element to be immediately cached and processed
-    if (img.complete && !img.naturalWidth) {
-      img.onerror?.(new Event('error') as any);
-    } else if (img.complete) {
-      img.onload?.(new Event('load') as any);
-    }
+    loadImage();
     
     // Cleanup function
     return () => {
-      img.onload = null;
-      img.onerror = null;
+      if (imageRef.current) {
+        imageRef.current.onload = null;
+        imageRef.current.onerror = null;
+      }
     };
   }, [image]);
 
@@ -239,25 +256,61 @@ export const AnnotationCanvas = ({
     onIssueSelect(clickedAnnotation?.id || null);
   };
 
+  // Add a fallback image display
+  const renderFallback = () => {
+    if (imgError) {
+      return (
+        <div className="relative">
+          <img 
+            src={image} 
+            alt="Original uploaded design" 
+            className="w-full h-auto rounded"
+            style={{ maxHeight: "600px", objectFit: "contain" }}
+          />
+          {annotations.map((annotation) => (
+            <div 
+              key={annotation.id}
+              className={`absolute w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm -ml-4 -mt-4 ${
+                annotation.priority === "high" ? "bg-red-500" : 
+                annotation.priority === "medium" ? "bg-amber-500" : "bg-blue-500"
+              } ${selectedIssue === annotation.id ? 'ring-2 ring-white' : ''}`}
+              style={{
+                left: `${annotation.x}px`,
+                top: `${annotation.y}px`,
+                transform: 'translate(-50%, -50%)',
+                cursor: 'pointer'
+              }}
+              onClick={() => onIssueSelect?.(annotation.id)}
+            >
+              {annotation.id}
+            </div>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-sm p-4">
       <div ref={containerRef} className="relative w-full">
-        {imgError && (
-          <div className="bg-gray-100 rounded-lg p-8 text-center">
-            <p className="text-gray-500">Unable to load image. Please try again.</p>
-            <img 
-              src={image} 
-              alt="Original uploaded design" 
-              className="mx-auto mt-4 max-w-full h-auto"
-              style={{ maxHeight: "600px", objectFit: "contain" }}
-            />
+        {imgError ? (
+          renderFallback()
+        ) : (
+          <canvas
+            ref={canvasRef}
+            className="w-full h-auto cursor-pointer"
+            onClick={handleCanvasClick}
+          />
+        )}
+        
+        {!imgLoaded && !imgError && (
+          <div className="w-full py-16 flex items-center justify-center bg-neutral-50 rounded-lg">
+            <div className="animate-pulse text-neutral-500">
+              Loading image...
+            </div>
           </div>
         )}
-        <canvas
-          ref={canvasRef}
-          className={`w-full h-auto cursor-pointer ${imgError ? 'hidden' : 'block'}`}
-          onClick={handleCanvasClick}
-        />
       </div>
     </div>
   );

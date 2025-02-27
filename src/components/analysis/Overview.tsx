@@ -19,7 +19,7 @@ export const Overview = ({ positiveFeatures, getIssueCountByPriority }: Props) =
       <div>
         <h2 className="text-xl font-bold text-neutral-900 mb-4">Design Analysis</h2>
         <p className="text-neutral-700">
-          This e-commerce product page has a clean overall structure, but suffers from several usability and accessibility issues that may impact conversion rates and user experience.
+          This website has been analyzed by our AI to identify design strengths and areas for improvement. Review the feedback below to enhance user experience and conversion rates.
         </p>
       </div>
 

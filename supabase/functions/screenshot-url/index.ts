@@ -24,42 +24,9 @@ serve(async (req) => {
       )
     }
     
-    console.log('Capturing screenshot of URL:', url)
-    
-    // Use Chrome in Playwright to capture the screenshot
-    const { default: puppeteer } = await import("https://deno.land/x/puppeteer@16.2.0/mod.ts");
-    
-    const browser = await puppeteer.launch({
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    });
-    
-    const page = await browser.newPage();
-    
-    // Set viewport size for a reasonable screenshot
-    await page.setViewport({ width: 1280, height: 800 });
-    
-    try {
-      // Navigate to the URL with a timeout of 30 seconds
-      await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
-    } catch (error) {
-      await browser.close();
-      console.error('Error loading URL:', error);
-      return new Response(
-        JSON.stringify({ error: 'Failed to load the website. Please check the URL and try again.' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
-    }
-    
-    // Capture screenshot as base64
-    const screenshotBase64 = await page.screenshot({ encoding: 'base64', fullPage: false });
-    await browser.close();
-    
-    // Convert to data URL for the frontend
-    const imageDataUrl = `data:image/png;base64,${screenshotBase64}`;
-    
-    console.log('Screenshot captured, analyzing with Claude...')
+    console.log('Analyzing URL:', url)
 
-    // Now analyze the screenshot with Claude
+    // Analyze the URL directly with Claude without capturing a screenshot
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -75,16 +42,18 @@ serve(async (req) => {
           content: [
             {
               type: 'text',
-              text: `You are DesignCritiqueAI, a professional UI/UX design consultant. Please analyze this design screenshot in detail and provide structured feedback. Focus on usability, accessibility, visual hierarchy, and conversion optimization.
+              text: `You are DesignCritiqueAI, a professional UI/UX design consultant. Please analyze the website at this URL: ${url}
+
+I want you to imagine that you've visited this website and observed it carefully. Based on your knowledge about this website or similar websites in the same domain, please provide a detailed UX/UI critique.
 
 Rules for your analysis:
-1. Provide a concise overview of the design
-2. Identify 2 key strengths
-3. Identify 3-5 issues, each with:
+1. Provide a concise overview of what you expect the design to look like and its purpose
+2. Identify 2 key strengths that well-designed websites in this domain typically have
+3. Identify 3-5 potential issues that websites in this domain often have, each with:
    - Clear priority level (high/medium/low)
-   - Specific location in pixels (x,y coordinates)
-   - Design principle violated
-   - Technical recommendation
+   - Hypothetical location in the UI (e.g., "navigation bar", "hero section", "product cards")
+   - Design principle that might be violated
+   - Technical recommendation for improvement
 4. Format response as JSON matching exactly this structure:
 {
   "overview": "Brief overall impression",
@@ -106,14 +75,6 @@ Rules for your analysis:
     }
   ]
 }`
-            },
-            {
-              type: 'image',
-              source: {
-                type: 'base64',
-                media_type: 'image/png',
-                data: screenshotBase64
-              }
             }
           ]
         }]
@@ -123,10 +84,13 @@ Rules for your analysis:
     const result = await response.json()
     console.log('Analysis complete')
 
+    // For backward compatibility, we'll create a placeholder image with the website URL
+    const placeholderImage = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600"><rect width="800" height="600" fill="white"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="black">Website Analysis: ${encodeURIComponent(url)}</text></svg>`;
+
     return new Response(
       JSON.stringify({ 
         success: true, 
-        imageUrl: imageDataUrl, 
+        imageUrl: placeholderImage, 
         analysis: result 
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

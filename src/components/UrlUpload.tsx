@@ -25,11 +25,10 @@ export const UrlUpload = ({ onUrlAnalyze }: { onUrlAnalyze: (imageUrl: string, a
 
     try {
       toast({
-        title: "Processing URL",
-        description: "Taking screenshot and analyzing design...",
+        title: "Analyzing URL",
+        description: "Our AI is analyzing the website design...",
       });
 
-      // Check if the function is available before invoking
       try {
         const { data, error } = await supabase.functions.invoke("screenshot-url", {
           body: { url: normalizedUrl },
@@ -42,14 +41,14 @@ export const UrlUpload = ({ onUrlAnalyze }: { onUrlAnalyze: (imageUrl: string, a
 
         if (data?.success && data?.imageUrl && data?.analysis) {
           toast({
-            title: "URL processed",
-            description: "Website screenshot captured and analyzed.",
+            title: "Analysis complete",
+            description: "Website design has been analyzed successfully.",
           });
 
-          // Pass the captured screenshot and analysis data to the parent component
+          // Pass the analysis data to the parent component
           onUrlAnalyze(data.imageUrl, data.analysis);
         } else {
-          throw new Error("Failed to process URL");
+          throw new Error("Failed to analyze URL");
         }
       } catch (error: any) {
         console.error("URL processing error:", error);
@@ -92,7 +91,7 @@ export const UrlUpload = ({ onUrlAnalyze }: { onUrlAnalyze: (imageUrl: string, a
         Analyze website by URL
       </h3>
       <p className="mb-6 text-neutral-600">
-        Enter the website URL below and we'll capture and analyze it
+        Enter the website URL below and we'll analyze its design
       </p>
       
       <form onSubmit={handleSubmit} className="w-full max-w-md">
@@ -110,14 +109,13 @@ export const UrlUpload = ({ onUrlAnalyze }: { onUrlAnalyze: (imageUrl: string, a
             className="px-6 py-3 bg-accent text-white rounded-lg font-medium hover:bg-accent-dark transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
             disabled={isLoading}
           >
-            {isLoading ? "Processing..." : "Analyze"}
+            {isLoading ? "Analyzing..." : "Analyze"}
           </button>
         </div>
       </form>
       
       <div className="mt-4 text-center text-sm text-neutral-500">
-        <p>Note: The URL analysis feature requires server-side processing.</p>
-        <p>If you encounter issues, please try uploading a screenshot instead.</p>
+        <p>Our AI will analyze the website's design and provide detailed recommendations.</p>
       </div>
     </div>
   );

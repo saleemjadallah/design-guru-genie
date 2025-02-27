@@ -29,35 +29,49 @@ export const UrlUpload = ({ onUrlAnalyze }: { onUrlAnalyze: (imageUrl: string, a
         description: "Taking screenshot and analyzing design...",
       });
 
-      const { data, error } = await supabase.functions.invoke("screenshot-url", {
-        body: { url: normalizedUrl },
-      });
-
-      if (error) {
-        console.error("URL processing error:", error);
-        throw error;
-      }
-
-      if (data?.success && data?.imageUrl && data?.analysis) {
-        toast({
-          title: "URL processed",
-          description: "Website screenshot captured and analyzed.",
+      // Check if the function is available before invoking
+      try {
+        const { data, error } = await supabase.functions.invoke("screenshot-url", {
+          body: { url: normalizedUrl },
         });
 
-        // Pass the captured screenshot and analysis data to the parent component
-        onUrlAnalyze(data.imageUrl, data.analysis);
-      } else {
-        throw new Error("Failed to process URL");
+        if (error) {
+          console.error("URL processing error:", error);
+          throw error;
+        }
+
+        if (data?.success && data?.imageUrl && data?.analysis) {
+          toast({
+            title: "URL processed",
+            description: "Website screenshot captured and analyzed.",
+          });
+
+          // Pass the captured screenshot and analysis data to the parent component
+          onUrlAnalyze(data.imageUrl, data.analysis);
+        } else {
+          throw new Error("Failed to process URL");
+        }
+      } catch (error: any) {
+        console.error("URL processing error:", error);
+        
+        // Check if the error is related to the Edge Function availability
+        if (error.message?.includes("Failed to send a request to the Edge Function") || 
+            error.name === "FunctionsFetchError") {
+          toast({
+            title: "Feature unavailable",
+            description: "The URL analysis feature is currently unavailable. Please try uploading a screenshot instead.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Processing failed",
+            description: error instanceof Error 
+              ? error.message 
+              : "Failed to process the URL. Please check the URL and try again.",
+            variant: "destructive",
+          });
+        }
       }
-    } catch (error) {
-      console.error("URL processing error:", error);
-      toast({
-        title: "Processing failed",
-        description: error instanceof Error 
-          ? error.message 
-          : "Failed to process the URL. Please check the URL and try again.",
-        variant: "destructive",
-      });
     } finally {
       setIsLoading(false);
     }
@@ -94,6 +108,11 @@ export const UrlUpload = ({ onUrlAnalyze }: { onUrlAnalyze: (imageUrl: string, a
           </button>
         </div>
       </form>
+      
+      <div className="mt-4 text-center text-sm text-neutral-500">
+        <p>Note: The URL analysis feature requires server-side processing.</p>
+        <p>If you encounter issues, please try uploading a screenshot instead.</p>
+      </div>
     </div>
   );
 };

@@ -136,7 +136,7 @@ const Index = () => {
   return (
     <>
       <Navigation />
-      <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
+      <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100 pt-16">
         {!uploadedImage ? (
           <div className="container py-12">
             <div className="max-w-4xl mx-auto">

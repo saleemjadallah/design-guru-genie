@@ -46,7 +46,10 @@ serve(async (req) => {
 
 I want you to imagine that you've visited this website and observed it carefully. Based on common design principles and best practices, please provide a detailed UX/UI critique.
 
-CRITICAL: Your response must be VALID JSON and nothing else. No explanatory text outside the JSON object.
+CRITICAL REQUIREMENTS:
+1. MUST include AT LEAST 2 high priority, 2 medium priority, and 2 low priority issues (you can include more if relevant)
+2. Your response must be VALID JSON and nothing else. No explanatory text outside the JSON object.
+3. For each issue, use realistic values for the x,y location that would make sense on a typical website.
 
 Return a JSON object with this structure:
 {

@@ -49,8 +49,8 @@ export const AnalysisView = ({
   getIssueCountByPriority,
 }: Props) => {
   return (
-    <div className="min-h-screen bg-neutral-50">
-      <header className="bg-white shadow-sm">
+    <div className="min-h-screen bg-neutral-50 pt-16">
+      <header className="fixed top-16 left-0 right-0 bg-white shadow-sm z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <div className="flex items-center">
             <button 
@@ -64,7 +64,7 @@ export const AnalysisView = ({
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-20">
         {isAnalyzing ? (
           <ProcessingState currentStage={analysisStage} />
         ) : (

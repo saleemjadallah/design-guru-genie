@@ -111,8 +111,10 @@ export const AnnotationCanvas = ({
 
   // Initialize image and canvas
   useEffect(() => {
+    // Create a new image instance
     const img = new Image();
-    img.src = image;
+    
+    // Set up onload handler before setting the src
     img.onload = () => {
       imageRef.current = img;
       setImgLoaded(true);
@@ -129,6 +131,19 @@ export const AnnotationCanvas = ({
         updateScale();
         drawCanvas();
       }
+    };
+
+    // Set src after defining onload handler
+    img.src = image;
+    
+    // Force the img element to be immediately cached and processed
+    if (img.complete) {
+      img.onload?.(new Event('load') as any);
+    }
+    
+    // Cleanup function
+    return () => {
+      img.onload = null;
     };
   }, [image]);
 
@@ -154,10 +169,13 @@ export const AnnotationCanvas = ({
       resizeObserver.observe(containerRef.current);
     }
 
+    window.addEventListener('resize', handleResize);
+
     return () => {
       if (containerRef.current) {
         resizeObserver.unobserve(containerRef.current);
       }
+      window.removeEventListener('resize', handleResize);
     };
   }, []);
 
@@ -167,6 +185,16 @@ export const AnnotationCanvas = ({
       drawCanvas();
     }
   }, [annotations, selectedIssue, scale, imgLoaded]);
+
+  // Ensure canvas is initialized properly on component mount
+  useEffect(() => {
+    // Force a redraw at the next animation frame to ensure canvas is painted
+    if (imgLoaded) {
+      requestAnimationFrame(() => {
+        drawCanvas();
+      });
+    }
+  }, [imgLoaded]);
 
   const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
     if (!onIssueSelect) return;

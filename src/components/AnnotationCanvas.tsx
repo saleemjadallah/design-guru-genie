@@ -27,6 +27,7 @@ export const AnnotationCanvas = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const [imgLoaded, setImgLoaded] = useState(false);
+  const [imgError, setImgError] = useState(false);
 
   const updateScale = () => {
     if (!containerRef.current || !imageRef.current) return;
@@ -111,13 +112,17 @@ export const AnnotationCanvas = ({
 
   // Initialize image and canvas
   useEffect(() => {
+    console.log("Loading image:", image);
+    
     // Create a new image instance
     const img = new Image();
     
     // Set up onload handler before setting the src
     img.onload = () => {
+      console.log("Image loaded successfully:", img.width, "x", img.height);
       imageRef.current = img;
       setImgLoaded(true);
+      setImgError(false);
 
       if (canvasRef.current && containerRef.current) {
         // Set canvas size based on container width while maintaining aspect ratio
@@ -132,18 +137,27 @@ export const AnnotationCanvas = ({
         drawCanvas();
       }
     };
+    
+    img.onerror = (e) => {
+      console.error("Image loading error:", e);
+      setImgError(true);
+      setImgLoaded(false);
+    };
 
     // Set src after defining onload handler
     img.src = image;
     
     // Force the img element to be immediately cached and processed
-    if (img.complete) {
+    if (img.complete && !img.naturalWidth) {
+      img.onerror?.(new Event('error') as any);
+    } else if (img.complete) {
       img.onload?.(new Event('load') as any);
     }
     
     // Cleanup function
     return () => {
       img.onload = null;
+      img.onerror = null;
     };
   }, [image]);
 
@@ -228,9 +242,20 @@ export const AnnotationCanvas = ({
   return (
     <div className="bg-white rounded-lg shadow-sm p-4">
       <div ref={containerRef} className="relative w-full">
+        {imgError && (
+          <div className="bg-gray-100 rounded-lg p-8 text-center">
+            <p className="text-gray-500">Unable to load image. Please try again.</p>
+            <img 
+              src={image} 
+              alt="Original uploaded design" 
+              className="mx-auto mt-4 max-w-full h-auto"
+              style={{ maxHeight: "600px", objectFit: "contain" }}
+            />
+          </div>
+        )}
         <canvas
           ref={canvasRef}
-          className="w-full h-auto cursor-pointer"
+          className={`w-full h-auto cursor-pointer ${imgError ? 'hidden' : 'block'}`}
           onClick={handleCanvasClick}
         />
       </div>

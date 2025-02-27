@@ -5,6 +5,7 @@ import { FilterControls } from "./FilterControls";
 import { AnnotationCanvas } from "@/components/AnnotationCanvas";
 import { FeedbackPanel } from "@/components/FeedbackPanel";
 import { ProcessingState } from "@/components/ProcessingState";
+import { useEffect, useState } from "react";
 
 type Feedback = {
   type: "positive" | "improvement";
@@ -48,6 +49,22 @@ export const AnalysisView = ({
   setFeedback,
   getIssueCountByPriority,
 }: Props) => {
+  // Force a re-render after component mounts to ensure image displays
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    // Set mounted to true after component mounts
+    setMounted(true);
+    
+    // Force a redraw by toggling the state after a short delay
+    const timer = setTimeout(() => {
+      setMounted(false);
+      setTimeout(() => setMounted(true), 10);
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <div className="min-h-screen bg-neutral-50 pt-16">
       <header className="fixed top-16 left-0 right-0 bg-white shadow-sm z-40">
@@ -86,20 +103,22 @@ export const AnalysisView = ({
                     With AI Annotations
                   </div>
                   {uploadedImage && (
-                    <AnnotationCanvas
-                      image={uploadedImage}
-                      onSave={() => {}}
-                      annotations={filteredIssues
-                        .filter(f => f.location)
-                        .map(f => ({
-                          id: f.id || 0,
-                          x: f.location?.x || 0,
-                          y: f.location?.y || 0,
-                          priority: f.priority || "medium"
-                        }))}
-                      selectedIssue={selectedIssue}
-                      onIssueSelect={setSelectedIssue}
-                    />
+                    <div key={mounted ? "mounted" : "unmounted"}>
+                      <AnnotationCanvas
+                        image={uploadedImage}
+                        onSave={() => {}}
+                        annotations={filteredIssues
+                          .filter(f => f.location)
+                          .map(f => ({
+                            id: f.id || 0,
+                            x: f.location?.x || 0,
+                            y: f.location?.y || 0,
+                            priority: f.priority || "medium"
+                          }))}
+                        selectedIssue={selectedIssue}
+                        onIssueSelect={setSelectedIssue}
+                      />
+                    </div>
                   )}
                 </div>
               </div>

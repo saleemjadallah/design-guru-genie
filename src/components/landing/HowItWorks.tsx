@@ -1,26 +1,26 @@
 
-import { Upload, Brain, MessageCircle, Rocket } from "lucide-react";
+import { Upload, Brain, MessageCircle, Rocket, Globe, Link } from "lucide-react";
 
 const steps = [
   {
     icon: Upload,
-    title: "Upload Your Design",
-    description: "Share your website, app interface, or graphic design in seconds. We support most common file formats."
+    title: "Upload Your Design or URL",
+    description: "Share your website URL or upload a design image in seconds. We support most common file formats."
   },
   {
     icon: Brain,
-    title: "AI Analyzes Your Design",
-    description: "Our AI examines your design using professional principles from color theory, typography, layout, and UX best practices."
+    title: "AI Analyzes Your Content",
+    description: "Our AI examines your website or design using professional principles from color theory, typography, layout, and UX best practices."
   },
   {
     icon: MessageCircle,
-    title: "Get Visual Annotations",
-    description: "Receive specific, actionable feedback with visual markers highlighting exactly where and how to improve your design."
+    title: "Get Actionable Feedback",
+    description: "Receive specific, actionable recommendations with detailed insights highlighting exactly what aspects to improve and why."
   },
   {
     icon: Rocket,
     title: "Elevate Your Design",
-    description: "Apply the recommended changes and see immediate improvements in your design's effectiveness."
+    description: "Apply the recommended changes and see immediate improvements in your design's effectiveness and user experience."
   }
 ];
 

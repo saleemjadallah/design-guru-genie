@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Link2 } from "lucide-react";
+import { Globe } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
@@ -84,7 +84,7 @@ export const UrlUpload = ({ onUrlAnalyze }: { onUrlAnalyze: (imageUrl: string, a
 
   return (
     <div className="relative flex flex-col items-center justify-center w-full p-8 border-2 border-dashed rounded-xl border-neutral-200 hover:border-accent/50 hover:bg-neutral-50 transition-all">
-      <Link2
+      <Globe
         className="w-16 h-16 mb-6 text-neutral-400"
       />
       <h3 className="text-2xl font-semibold mb-3 text-neutral-800">

@@ -130,6 +130,10 @@ const Index = () => {
 
   const positiveFeatures = feedback.filter(f => f.type === "positive");
 
+  const getIssueCountByPriority = (priority: string) => {
+    return feedback.filter(f => f.type === "improvement" && f.priority === priority).length;
+  };
+
   return (
     <>
       <Navigation />
@@ -177,16 +181,81 @@ const Index = () => {
                 <ProcessingState currentStage={analysisStage} />
               ) : (
                 <div className="space-y-6">
-                  {/* Actions Bar */}
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center space-x-2">
+                  {/* Overview Section */}
+                  <div className="bg-white rounded-lg shadow-sm p-6 space-y-6">
+                    <div>
+                      <h2 className="text-xl font-bold text-neutral-900 mb-4">Design Analysis</h2>
+                      <p className="text-neutral-700">
+                        This e-commerce product page has a clean overall structure, but suffers from several usability and accessibility issues that may impact conversion rates and user experience.
+                      </p>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-6">
+                      {/* Design Strengths */}
+                      <div className="flex-1 border border-green-100 bg-green-50 rounded-lg p-4">
+                        <h3 className="font-medium text-green-800 flex items-center gap-2 mb-3">
+                          <Check size={16} className="text-green-600" />
+                          Design Strengths
+                        </h3>
+                        <ul className="space-y-4">
+                          {positiveFeatures.map((strength, index) => (
+                            <li key={index}>
+                              <h4 className="font-medium text-neutral-900">{strength.title}</h4>
+                              <p className="text-sm text-neutral-600">{strength.description}</p>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      {/* Issues Breakdown */}
+                      <div className="flex-1 border border-neutral-200 rounded-lg p-4">
+                        <h3 className="font-medium text-neutral-800 flex items-center gap-2 mb-3">
+                          <AlertCircle size={16} />
+                          Issues Breakdown
+                        </h3>
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm flex items-center gap-2">
+                              <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                              High Priority
+                            </span>
+                            <span className="text-sm font-medium">
+                              {getIssueCountByPriority('high')}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm flex items-center gap-2">
+                              <span className="w-2 h-2 bg-amber-500 rounded-full"></span>
+                              Medium Priority
+                            </span>
+                            <span className="text-sm font-medium">
+                              {getIssueCountByPriority('medium')}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm flex items-center gap-2">
+                              <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                              Low Priority
+                            </span>
+                            <span className="text-sm font-medium">
+                              {getIssueCountByPriority('low')}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Filter and Actions */}
+                  <div className="flex flex-wrap justify-between items-center gap-4">
+                    <div className="flex items-center">
                       <span className="text-sm text-neutral-700 mr-2">Filter by:</span>
                       <div className="inline-flex rounded-md shadow-sm" role="group">
                         <button
                           type="button"
                           className={`px-4 py-2 text-sm font-medium rounded-l-lg ${
                             priorityFilter === 'all'
-                              ? 'bg-accent text-white'
+                              ? 'bg-indigo-600 text-white'
                               : 'bg-white text-neutral-700 hover:bg-neutral-50'
                           } border border-neutral-300`}
                           onClick={() => setPriorityFilter('all')}
@@ -229,7 +298,7 @@ const Index = () => {
                       </div>
                     </div>
                     
-                    <div className="flex space-x-2">
+                    <div className="flex gap-2">
                       <button className="flex items-center px-4 py-2 bg-white border border-neutral-300 rounded-md text-sm font-medium text-neutral-700 hover:bg-neutral-50">
                         <Download size={16} className="mr-2" />
                         Export PDF
@@ -245,20 +314,25 @@ const Index = () => {
                   <div className="flex flex-col lg:flex-row gap-6">
                     {/* Design View */}
                     <div className="lg:w-3/5">
-                      <AnnotationCanvas
-                        image={uploadedImage}
-                        onSave={() => {}}
-                        annotations={filteredIssues
-                          .filter(f => f.location)
-                          .map(f => ({
-                            id: f.id || 0,
-                            x: f.location?.x || 0,
-                            y: f.location?.y || 0,
-                            priority: f.priority || "medium"
-                          }))}
-                        selectedIssue={selectedIssue}
-                        onIssueSelect={setSelectedIssue}
-                      />
+                      <div className="bg-white rounded-lg shadow-sm p-4">
+                        <div className="text-center text-sm font-medium text-neutral-500 mb-4">
+                          With AI Annotations
+                        </div>
+                        <AnnotationCanvas
+                          image={uploadedImage}
+                          onSave={() => {}}
+                          annotations={filteredIssues
+                            .filter(f => f.location)
+                            .map(f => ({
+                              id: f.id || 0,
+                              x: f.location?.x || 0,
+                              y: f.location?.y || 0,
+                              priority: f.priority || "medium"
+                            }))}
+                          selectedIssue={selectedIssue}
+                          onIssueSelect={setSelectedIssue}
+                        />
+                      </div>
                     </div>
 
                     {/* Feedback Panel */}

@@ -22,7 +22,6 @@ type Props = {
 
 export const FeedbackPanel = ({ 
   feedback, 
-  strengths,
   selectedIssue,
   onIssueSelect 
 }: Props) => {
@@ -48,18 +47,18 @@ export const FeedbackPanel = ({
           <div 
             key={issue.id}
             className={`p-4 cursor-pointer transition-colors ${
-              selectedIssue === issue.id ? 'bg-accent/5' : ''
+              selectedIssue === issue.id ? 'bg-neutral-50' : ''
             }`}
             onClick={() => onIssueSelect?.(issue.id || null)}
           >
-            <div className="flex items-start">
-              <div className={`mt-0.5 w-5 h-5 rounded-full flex items-center justify-center mr-3 flex-shrink-0 ${
+            <div className="flex items-start gap-3">
+              <div className={`mt-0.5 w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
                 issue.priority === 'high' ? 'bg-red-500' : 
                 issue.priority === 'medium' ? 'bg-amber-500' : 'bg-blue-500'
               }`}>
                 <span className="text-white text-xs font-bold">{issue.id}</span>
               </div>
-              <div>
+              <div className="flex-1">
                 <div className="flex items-center justify-between mb-1">
                   <h4 className="font-medium text-neutral-900">{issue.title}</h4>
                   <span className={`ml-2 text-xs px-2 py-0.5 rounded ${
@@ -69,27 +68,28 @@ export const FeedbackPanel = ({
                     {issue.priority} priority
                   </span>
                 </div>
-                <p className="text-sm text-neutral-700 mb-2">{issue.description}</p>
+                <p className="text-sm text-neutral-700">{issue.description}</p>
                 
-                {selectedIssue === issue.id && (
+                {selectedIssue === issue.id && issue.technical_details && (
                   <div className="mt-3 pt-3 border-t border-neutral-100">
                     {issue.principle && (
                       <div className="mb-3">
-                        <span className="inline-block text-xs font-medium bg-accent/10 text-accent px-2 py-0.5 rounded">
+                        <span className="inline-block text-xs font-medium bg-neutral-100 text-neutral-800 px-2 py-0.5 rounded">
                           {issue.principle}
                         </span>
                       </div>
                     )}
                     
-                    {issue.technical_details && (
-                      <div className="bg-neutral-50 rounded p-2 mb-3">
-                        <p className="text-xs text-neutral-600">{issue.technical_details}</p>
-                      </div>
-                    )}
+                    <div className="bg-neutral-50 rounded p-2 mb-3">
+                      <p className="text-xs text-neutral-600">{issue.technical_details}</p>
+                    </div>
                     
                     <button 
                       className="flex items-center text-xs text-accent hover:text-accent/80"
-                      onClick={() => handleCopyRecommendation(issue.description)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCopyRecommendation(issue.description);
+                      }}
                     >
                       <Copy size={14} className="mr-1" />
                       Copy recommendation

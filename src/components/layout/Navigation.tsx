@@ -1,11 +1,14 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { 
   User, 
   HelpCircle, 
   Mail, 
   LogOut, 
   Trash2, 
-  ChevronDown 
+  ChevronDown,
+  Bookmark,
+  LogIn
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -18,17 +21,65 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
-
-const mockUser = null; // Replace with actual user state later
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 export const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const navigate = useNavigate();
 
-  const handleAction = (action: string) => {
-    toast({
-      title: "Action triggered",
-      description: `${action} - Connect Supabase to enable this feature`,
-    });
+  useEffect(() => {
+    // Check if user is already logged in
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user || null);
+    };
+    
+    checkUser();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user || null);
+      }
+    );
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const handleAction = async (action: string) => {
+    switch (action) {
+      case "sign-in":
+        toast({
+          title: "Sign In",
+          description: "Sign in coming soon",
+        });
+        break;
+      case "sign-up":
+        toast({
+          title: "Sign Up",
+          description: "Sign up coming soon",
+        });
+        break;
+      case "logout":
+        await supabase.auth.signOut();
+        toast({
+          title: "Signed out",
+          description: "You have been signed out successfully",
+        });
+        break;
+      case "saved-reviews":
+        navigate("/saved-reviews");
+        break;
+      default:
+        toast({
+          title: "Action triggered",
+          description: `${action} - Connect Supabase to enable this feature`,
+        });
+    }
     setIsOpen(false);
   };
 
@@ -57,10 +108,10 @@ export const Navigation = () => {
                 align="end"
                 forceMount
               >
-                {!mockUser ? (
+                {!user ? (
                   <>
                     <DropdownMenuItem onClick={() => handleAction("sign-in")}>
-                      <LogOut className="mr-2 h-4 w-4" />
+                      <LogIn className="mr-2 h-4 w-4" />
                       <span>Sign In</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleAction("sign-up")}>
@@ -73,9 +124,14 @@ export const Navigation = () => {
                   <>
                     <DropdownMenuLabel className="font-normal">
                       <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium leading-none">username@example.com</p>
+                        <p className="text-sm font-medium leading-none">{user.email}</p>
                       </div>
                     </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => handleAction("saved-reviews")}>
+                      <Bookmark className="mr-2 h-4 w-4" />
+                      <span>Saved Reviews</span>
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                   </>
                 )}
@@ -97,7 +153,7 @@ export const Navigation = () => {
                   <Trash2 className="mr-2 h-4 w-4" />
                   <span>Delete account</span>
                 </DropdownMenuItem>
-                {mockUser && (
+                {user && (
                   <DropdownMenuItem onClick={() => handleAction("logout")}>
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Sign out</span>

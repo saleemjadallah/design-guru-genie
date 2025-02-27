@@ -106,6 +106,9 @@ export const AnalysisView = ({
             <FilterControls 
               priorityFilter={priorityFilter}
               setPriorityFilter={setPriorityFilter}
+              uploadedImage={uploadedImage}
+              feedback={feedback}
+              isUrlAnalysis={isUrlAnalysis}
             />
 
             {isUrlAnalysis ? (

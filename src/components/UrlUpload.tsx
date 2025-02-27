@@ -62,6 +62,12 @@ export const UrlUpload = ({ onUrlAnalyze }: { onUrlAnalyze: (imageUrl: string, a
             description: "The URL analysis feature is currently unavailable. Please try uploading a screenshot instead.",
             variant: "destructive",
           });
+        } else if (error.message?.includes("non-2xx status code")) {
+          toast({
+            title: "Server error",
+            description: "The server encountered an error processing your request. This could be due to the complexity of the website or server limitations. Please try uploading a screenshot instead.",
+            variant: "destructive",
+          });
         } else {
           toast({
             title: "Processing failed",

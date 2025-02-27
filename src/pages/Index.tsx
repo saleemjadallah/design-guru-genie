@@ -129,34 +129,45 @@ const Index = () => {
       
       if (analysisData?.content) {
         try {
+          // Extract just the JSON part from the text response
           const analysisText = analysisData.content[0].text;
-          const analysis = JSON.parse(analysisText);
           
-          const newFeedback: Feedback[] = [
-            ...analysis.strengths.map((s: any) => ({
-              type: "positive",
-              title: s.title,
-              description: s.description,
-            })),
-            ...analysis.issues.map((i: any) => ({
-              type: "improvement",
-              title: i.issue,
-              description: i.recommendation,
-              priority: i.priority,
-              location: i.location,
-              id: i.id,
-              principle: i.principle,
-              technical_details: i.technical_details
-            })),
-          ];
+          // Find where the JSON starts (looking for first '{') and ends (looking for last '}')
+          const jsonStartIndex = analysisText.indexOf('{');
+          const jsonEndIndex = analysisText.lastIndexOf('}') + 1;
           
-          setFeedback(newFeedback);
-          setIsAnalyzing(false);
-          
-          toast({
-            title: "Analysis complete",
-            description: "The website design has been analyzed successfully",
-          });
+          if (jsonStartIndex >= 0 && jsonEndIndex > jsonStartIndex) {
+            const jsonString = analysisText.substring(jsonStartIndex, jsonEndIndex);
+            const analysis = JSON.parse(jsonString);
+            
+            const newFeedback: Feedback[] = [
+              ...analysis.strengths.map((s: any) => ({
+                type: "positive",
+                title: s.title,
+                description: s.description,
+              })),
+              ...analysis.issues.map((i: any) => ({
+                type: "improvement",
+                title: i.issue,
+                description: i.recommendation,
+                priority: i.priority,
+                location: i.location,
+                id: i.id,
+                principle: i.principle,
+                technical_details: i.technical_details
+              })),
+            ];
+            
+            setFeedback(newFeedback);
+            setIsAnalyzing(false);
+            
+            toast({
+              title: "Analysis complete",
+              description: "The website design has been analyzed successfully",
+            });
+          } else {
+            throw new Error("Could not find valid JSON in the response");
+          }
         } catch (parseError) {
           console.error("Error parsing URL analysis:", parseError);
           toast({

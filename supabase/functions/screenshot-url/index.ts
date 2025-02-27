@@ -44,17 +44,11 @@ serve(async (req) => {
               type: 'text',
               text: `You are DesignCritiqueAI, a professional UI/UX design consultant. Please analyze the website at this URL: ${url}
 
-I want you to imagine that you've visited this website and observed it carefully. Based on your knowledge about this website or similar websites in the same domain, please provide a detailed UX/UI critique.
+I want you to imagine that you've visited this website and observed it carefully. Based on common design principles and best practices, please provide a detailed UX/UI critique.
 
-Rules for your analysis:
-1. Provide a concise overview of what you expect the design to look like and its purpose
-2. Identify 2 key strengths that well-designed websites in this domain typically have
-3. Identify 3-5 potential issues that websites in this domain often have, each with:
-   - Clear priority level (high/medium/low)
-   - Hypothetical location in the UI (e.g., "navigation bar", "hero section", "product cards")
-   - Design principle that might be violated
-   - Technical recommendation for improvement
-4. Format response as JSON matching exactly this structure:
+CRITICAL: Your response must be VALID JSON and nothing else. No explanatory text outside the JSON object.
+
+Return a JSON object with this structure:
 {
   "overview": "Brief overall impression",
   "strengths": [

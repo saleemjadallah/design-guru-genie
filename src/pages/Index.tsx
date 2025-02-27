@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { ImageUpload } from "@/components/ImageUpload";
+import { UrlUpload } from "@/components/UrlUpload";
 import { AnnotationExample } from "@/components/AnnotationExample";
 import { Hero } from "@/components/landing/Hero";
 import { HowItWorks } from "@/components/landing/HowItWorks";
@@ -8,6 +9,7 @@ import { Navigation } from "@/components/layout/Navigation";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { AnalysisView } from "@/components/analysis/AnalysisView";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type AnalysisStage = 0 | 1 | 2 | 3;
 
@@ -116,6 +118,68 @@ const Index = () => {
     }
   };
 
+  const handleUrlAnalyze = async (imageUrl: string, analysisData: any) => {
+    try {
+      setIsAnalyzing(true);
+      setAnalysisStage(0);
+      setUploadedImage(imageUrl);
+      setAnalysisStage(3); // Skip the intermediate stages since we already have the analysis
+      
+      console.log("URL analysis results:", analysisData);
+      
+      if (analysisData?.content) {
+        try {
+          const analysisText = analysisData.content[0].text;
+          const analysis = JSON.parse(analysisText);
+          
+          const newFeedback: Feedback[] = [
+            ...analysis.strengths.map((s: any) => ({
+              type: "positive",
+              title: s.title,
+              description: s.description,
+            })),
+            ...analysis.issues.map((i: any) => ({
+              type: "improvement",
+              title: i.issue,
+              description: i.recommendation,
+              priority: i.priority,
+              location: i.location,
+              id: i.id,
+              principle: i.principle,
+              technical_details: i.technical_details
+            })),
+          ];
+          
+          setFeedback(newFeedback);
+          setIsAnalyzing(false);
+          
+          toast({
+            title: "Analysis complete",
+            description: "The website design has been analyzed successfully",
+          });
+        } catch (parseError) {
+          console.error("Error parsing URL analysis:", parseError);
+          toast({
+            title: "Analysis error",
+            description: "Could not process the analysis results.",
+            variant: "destructive",
+          });
+          setIsAnalyzing(false);
+        }
+      } else {
+        throw new Error("Invalid analysis data format");
+      }
+    } catch (error) {
+      console.error("URL analysis error:", error);
+      toast({
+        title: "Analysis failed",
+        description: "There was an error analyzing the website design. Please try again.",
+        variant: "destructive",
+      });
+      setIsAnalyzing(false);
+    }
+  };
+
   const filteredIssues = priorityFilter === 'all' 
     ? feedback.filter(f => f.type === "improvement")
     : feedback.filter(f => f.type === "improvement" && f.priority === priorityFilter);
@@ -142,7 +206,18 @@ const Index = () => {
             <div className="max-w-4xl mx-auto">
               <Hero />
               <div className="animate-slide-up space-y-6">
-                <ImageUpload onImageUpload={handleImageUpload} />
+                <Tabs defaultValue="upload" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 mb-6">
+                    <TabsTrigger value="upload">Upload Image</TabsTrigger>
+                    <TabsTrigger value="url">Analyze URL</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="upload">
+                    <ImageUpload onImageUpload={handleImageUpload} />
+                  </TabsContent>
+                  <TabsContent value="url">
+                    <UrlUpload onUrlAnalyze={handleUrlAnalyze} />
+                  </TabsContent>
+                </Tabs>
                 <div className="text-center">
                   <p className="text-sm text-neutral-600">
                     First analysis free • $18/month after • Cancel anytime

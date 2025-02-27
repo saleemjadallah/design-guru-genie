@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { ImageUpload } from "@/components/ImageUpload";
 import { AnnotationCanvas } from "@/components/AnnotationCanvas";
@@ -10,7 +9,7 @@ import { Navigation } from "@/components/layout/Navigation";
 import { ProcessingState } from "@/components/ProcessingState";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Download, Share2 } from "lucide-react";
+import { ArrowLeft, Download, Share2, Check, AlertCircle } from "lucide-react";
 
 type AnalysisStage = 0 | 1 | 2 | 3;
 
@@ -38,7 +37,6 @@ const Index = () => {
       setIsAnalyzing(true);
       setAnalysisStage(0);
 
-      // Convert file to data URL for preview and analysis
       const reader = new FileReader();
       reader.onload = async (e) => {
         if (e.target?.result) {
@@ -47,7 +45,6 @@ const Index = () => {
           setAnalysisStage(1);
           
           try {
-            // Call analysis function with base64 image
             setAnalysisStage(2);
             const { data: analysisData, error: analysisError } = await supabase.functions
               .invoke("analyze-design", {
@@ -56,17 +53,14 @@ const Index = () => {
 
             if (analysisError) throw analysisError;
 
-            // Process results
             setAnalysisStage(3);
             console.log("Analysis results:", analysisData);
 
             if (analysisData?.result?.content) {
               try {
-                // Parse the response content to get the analysis JSON
                 const analysisText = analysisData.result.content[0].text;
                 const analysis = JSON.parse(analysisText);
 
-                // Convert analysis to feedback format
                 const newFeedback: Feedback[] = [
                   ...analysis.strengths.map((s: any) => ({
                     type: "positive",
@@ -156,7 +150,6 @@ const Index = () => {
           </div>
         ) : (
           <div className="min-h-screen bg-neutral-50">
-            {/* Header */}
             <header className="bg-white shadow-sm">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
                 <div className="flex items-center">
@@ -181,7 +174,6 @@ const Index = () => {
                 <ProcessingState currentStage={analysisStage} />
               ) : (
                 <div className="space-y-6">
-                  {/* Overview Section */}
                   <div className="bg-white rounded-lg shadow-sm p-6 space-y-6">
                     <div>
                       <h2 className="text-xl font-bold text-neutral-900 mb-4">Design Analysis</h2>
@@ -191,7 +183,6 @@ const Index = () => {
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-6">
-                      {/* Design Strengths */}
                       <div className="flex-1 border border-green-100 bg-green-50 rounded-lg p-4">
                         <h3 className="font-medium text-green-800 flex items-center gap-2 mb-3">
                           <Check size={16} className="text-green-600" />
@@ -207,7 +198,6 @@ const Index = () => {
                         </ul>
                       </div>
 
-                      {/* Issues Breakdown */}
                       <div className="flex-1 border border-neutral-200 rounded-lg p-4">
                         <h3 className="font-medium text-neutral-800 flex items-center gap-2 mb-3">
                           <AlertCircle size={16} />
@@ -246,7 +236,6 @@ const Index = () => {
                     </div>
                   </div>
 
-                  {/* Filter and Actions */}
                   <div className="flex flex-wrap justify-between items-center gap-4">
                     <div className="flex items-center">
                       <span className="text-sm text-neutral-700 mr-2">Filter by:</span>
@@ -310,9 +299,7 @@ const Index = () => {
                     </div>
                   </div>
 
-                  {/* Split View */}
                   <div className="flex flex-col lg:flex-row gap-6">
-                    {/* Design View */}
                     <div className="lg:w-3/5">
                       <div className="bg-white rounded-lg shadow-sm p-4">
                         <div className="text-center text-sm font-medium text-neutral-500 mb-4">
@@ -335,7 +322,6 @@ const Index = () => {
                       </div>
                     </div>
 
-                    {/* Feedback Panel */}
                     <div className="lg:w-2/5">
                       <FeedbackPanel 
                         feedback={filteredIssues} 

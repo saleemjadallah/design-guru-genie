@@ -1,5 +1,5 @@
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 
 type Annotation = {
   id: number;
@@ -24,6 +24,18 @@ export const AnnotationCanvas = ({
 }: Props) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+
+  const updateScale = () => {
+    if (!containerRef.current || !imageRef.current) return;
+    
+    const container = containerRef.current;
+    const img = imageRef.current;
+    const displayWidth = container.clientWidth;
+    const originalWidth = img.naturalWidth;
+    setScale(displayWidth / originalWidth);
+  };
 
   const drawCanvas = () => {
     const canvas = canvasRef.current;
@@ -36,11 +48,20 @@ export const AnnotationCanvas = ({
     // Draw image
     ctx.drawImage(imageRef.current, 0, 0, canvas.width, canvas.height);
 
-    // Draw annotations
+    // Draw annotations with proper scaling
     annotations.forEach((annotation) => {
-      // Draw marker
+      const scaledX = annotation.x * scale;
+      const scaledY = annotation.y * scale;
+
+      // Draw marker with shadow
+      ctx.save();
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+      ctx.shadowBlur = 4;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 2;
+
       ctx.beginPath();
-      ctx.arc(annotation.x, annotation.y, 16, 0, Math.PI * 2);
+      ctx.arc(scaledX, scaledY, 16, 0, Math.PI * 2);
       ctx.fillStyle = annotation.priority === "high" 
         ? "rgba(239, 68, 68, 0.9)" 
         : annotation.priority === "medium"
@@ -54,13 +75,14 @@ export const AnnotationCanvas = ({
       }
       
       ctx.fill();
+      ctx.restore();
 
-      // Draw number
-      ctx.font = "bold 16px Inter";
+      // Draw number with better typography
+      ctx.font = "bold 14px Inter";
       ctx.fillStyle = "white";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(annotation.id.toString(), annotation.x, annotation.y);
+      ctx.fillText(annotation.id.toString(), scaledX, scaledY);
     });
   };
 
@@ -71,23 +93,54 @@ export const AnnotationCanvas = ({
     img.onload = () => {
       imageRef.current = img;
 
-      if (canvasRef.current) {
-        // Set canvas size based on image dimensions while maintaining aspect ratio
-        const maxWidth = 800;
-        const maxHeight = 600;
-        const ratio = Math.min(maxWidth / img.width, maxHeight / img.height);
-        canvasRef.current.width = img.width * ratio;
+      if (canvasRef.current && containerRef.current) {
+        // Set canvas size based on container width while maintaining aspect ratio
+        const container = containerRef.current;
+        const containerWidth = container.clientWidth;
+        const ratio = containerWidth / img.width;
+        
+        canvasRef.current.width = containerWidth;
         canvasRef.current.height = img.height * ratio;
         
+        updateScale();
         drawCanvas();
       }
     };
   }, [image]);
 
+  // Handle window resizing
+  useEffect(() => {
+    const handleResize = () => {
+      if (!imageRef.current || !canvasRef.current || !containerRef.current) return;
+      
+      const container = containerRef.current;
+      const img = imageRef.current;
+      const containerWidth = container.clientWidth;
+      const ratio = containerWidth / img.width;
+      
+      canvasRef.current.width = containerWidth;
+      canvasRef.current.height = img.height * ratio;
+      
+      updateScale();
+      drawCanvas();
+    };
+
+    const resizeObserver = new ResizeObserver(handleResize);
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
+    return () => {
+      if (containerRef.current) {
+        resizeObserver.unobserve(containerRef.current);
+      }
+    };
+  }, []);
+
   // Redraw when annotations or selection changes
   useEffect(() => {
     drawCanvas();
-  }, [annotations, selectedIssue]);
+  }, [annotations, selectedIssue, scale]);
 
   const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
     if (!onIssueSelect) return;
@@ -101,8 +154,10 @@ export const AnnotationCanvas = ({
 
     // Check if click is within any annotation
     const clickedAnnotation = annotations.find(annotation => {
-      const dx = x - annotation.x;
-      const dy = y - annotation.y;
+      const scaledX = annotation.x * scale;
+      const scaledY = annotation.y * scale;
+      const dx = x - scaledX;
+      const dy = y - scaledY;
       return Math.sqrt(dx * dx + dy * dy) <= 16;
     });
 
@@ -111,13 +166,13 @@ export const AnnotationCanvas = ({
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-4">
-      <canvas
-        ref={canvasRef}
-        width={800}
-        height={600}
-        className="max-w-full h-auto cursor-pointer"
-        onClick={handleCanvasClick}
-      />
+      <div ref={containerRef} className="relative w-full">
+        <canvas
+          ref={canvasRef}
+          className="w-full h-auto cursor-pointer"
+          onClick={handleCanvasClick}
+        />
+      </div>
     </div>
   );
 };

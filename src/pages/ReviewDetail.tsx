@@ -24,8 +24,10 @@ type SavedReview = {
   id: string;
   title: string;
   image_url: string;
-  feedback: string;
+  feedback: string | any; // Update type to accept both string and JSON
   created_at: string;
+  updated_at: string;
+  user_id?: string;
 };
 
 const ReviewDetail = () => {
@@ -72,7 +74,11 @@ const ReviewDetail = () => {
         
         // Parse the feedback JSON
         try {
-          const parsedFeedback = JSON.parse(data.feedback);
+          // Handle both cases - if feedback is already an object or still a string
+          const parsedFeedback = typeof data.feedback === 'string' 
+            ? JSON.parse(data.feedback) 
+            : data.feedback;
+          
           setFeedbackItems(parsedFeedback);
         } catch (parseError) {
           console.error("Error parsing feedback:", parseError);

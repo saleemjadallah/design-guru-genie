@@ -10,7 +10,7 @@ type SavedReview = {
   id: string;
   title: string;
   image_url: string;
-  feedback: string;
+  feedback: string | any; // Update type to accept both string and JSON
   created_at: string;
   updated_at: string;
 };

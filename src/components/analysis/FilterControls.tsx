@@ -42,7 +42,7 @@ export const FilterControls = ({
         .insert({
           title: `${title} - ${currentDate.split('T')[0]}`,
           image_url: uploadedImage,
-          feedback: JSON.stringify(feedback),
+          feedback: feedback, // Send the feedback as JSON directly
           user_id: session.session.user.id
         })
         .select();

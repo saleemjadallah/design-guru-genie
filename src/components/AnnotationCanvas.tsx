@@ -49,10 +49,32 @@ export const AnnotationCanvas = ({
     // Draw image
     ctx.drawImage(imageRef.current, 0, 0, canvas.width, canvas.height);
 
-    // Draw annotations with proper scaling
+    // Draw annotations with proper scaling and positioning
     annotations.forEach((annotation) => {
-      const scaledX = annotation.x * scale;
-      const scaledY = annotation.y * scale;
+      // Scale coordinates to match current canvas size
+      const scaledX = Math.round(annotation.x * scale);
+      const scaledY = Math.round(annotation.y * scale);
+
+      // Draw connector line
+      ctx.beginPath();
+      ctx.strokeStyle = annotation.priority === "high" 
+        ? "rgba(239, 68, 68, 0.6)" 
+        : annotation.priority === "medium"
+        ? "rgba(245, 158, 11, 0.6)"
+        : "rgba(59, 130, 246, 0.6)";
+      ctx.lineWidth = 2;
+      
+      // Calculate marker offset to prevent overlap
+      const markerRadius = 16;
+      const offset = 30; // Distance from the point to the marker
+      const angle = Math.PI / 4; // 45 degrees angle for the line
+      const markerX = scaledX + Math.cos(angle) * offset;
+      const markerY = scaledY - Math.sin(angle) * offset;
+      
+      // Draw connecting line
+      ctx.moveTo(scaledX, scaledY);
+      ctx.lineTo(markerX, markerY);
+      ctx.stroke();
 
       // Draw marker with shadow
       ctx.save();
@@ -62,7 +84,7 @@ export const AnnotationCanvas = ({
       ctx.shadowOffsetY = 2;
 
       ctx.beginPath();
-      ctx.arc(scaledX, scaledY, 16, 0, Math.PI * 2);
+      ctx.arc(markerX, markerY, markerRadius, 0, Math.PI * 2);
       ctx.fillStyle = annotation.priority === "high" 
         ? "rgba(239, 68, 68, 0.9)" 
         : annotation.priority === "medium"
@@ -83,7 +105,7 @@ export const AnnotationCanvas = ({
       ctx.fillStyle = "white";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(annotation.id.toString(), scaledX, scaledY);
+      ctx.fillText(annotation.id.toString(), markerX, markerY);
     });
   };
 
@@ -160,8 +182,15 @@ export const AnnotationCanvas = ({
     const clickedAnnotation = annotations.find(annotation => {
       const scaledX = annotation.x * scale;
       const scaledY = annotation.y * scale;
-      const dx = x - scaledX;
-      const dy = y - scaledY;
+      
+      // Calculate marker position with offset
+      const offset = 30;
+      const angle = Math.PI / 4;
+      const markerX = scaledX + Math.cos(angle) * offset;
+      const markerY = scaledY - Math.sin(angle) * offset;
+      
+      const dx = x - markerX;
+      const dy = y - markerY;
       return Math.sqrt(dx * dx + dy * dy) <= 16;
     });
 

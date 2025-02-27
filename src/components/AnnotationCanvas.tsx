@@ -26,6 +26,7 @@ export const AnnotationCanvas = ({
   const imageRef = useRef<HTMLImageElement | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
+  const [imgLoaded, setImgLoaded] = useState(false);
 
   const updateScale = () => {
     if (!containerRef.current || !imageRef.current) return;
@@ -40,7 +41,7 @@ export const AnnotationCanvas = ({
   const drawCanvas = () => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
-    if (!canvas || !ctx || !imageRef.current) return;
+    if (!canvas || !ctx || !imageRef.current || !imgLoaded) return;
 
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -92,6 +93,7 @@ export const AnnotationCanvas = ({
     img.src = image;
     img.onload = () => {
       imageRef.current = img;
+      setImgLoaded(true);
 
       if (canvasRef.current && containerRef.current) {
         // Set canvas size based on container width while maintaining aspect ratio
@@ -139,8 +141,10 @@ export const AnnotationCanvas = ({
 
   // Redraw when annotations or selection changes
   useEffect(() => {
-    drawCanvas();
-  }, [annotations, selectedIssue, scale]);
+    if (imgLoaded) {
+      drawCanvas();
+    }
+  }, [annotations, selectedIssue, scale, imgLoaded]);
 
   const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
     if (!onIssueSelect) return;

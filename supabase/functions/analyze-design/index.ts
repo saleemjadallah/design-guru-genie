@@ -34,15 +34,12 @@ serve(async (req) => {
               type: 'text',
               text: `You are DesignCritiqueAI, a professional UI/UX design consultant. Please analyze this design screenshot in detail and provide structured feedback. Focus on usability, accessibility, visual hierarchy, and conversion optimization.
 
-Rules for your analysis:
-1. Provide a concise overview of the design
-2. Identify 2 key strengths
-3. Identify 3-5 issues, each with:
-   - Clear priority level (high/medium/low)
-   - Specific location in pixels (x,y coordinates)
-   - Design principle violated
-   - Technical recommendation
-4. Format response as JSON matching exactly this structure:
+CRITICAL REQUIREMENTS:
+1. MUST include AT LEAST 2 high priority, 2 medium priority, and 2 low priority issues (you can include more if relevant)
+2. Your response must be VALID JSON and nothing else. No explanatory text outside the JSON object.
+3. For each issue, provide specific x,y coordinates to indicate the location of the issue in the image.
+
+Return a JSON object with this structure:
 {
   "overview": "Brief overall impression",
   "strengths": [

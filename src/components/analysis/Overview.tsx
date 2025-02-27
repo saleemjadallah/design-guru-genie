@@ -11,15 +11,24 @@ type Feedback = {
 type Props = {
   positiveFeatures: Feedback[];
   getIssueCountByPriority: (priority: string) => number;
+  isUrlAnalysis?: boolean;
 };
 
-export const Overview = ({ positiveFeatures, getIssueCountByPriority }: Props) => {
+export const Overview = ({ 
+  positiveFeatures, 
+  getIssueCountByPriority,
+  isUrlAnalysis = false
+}: Props) => {
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 space-y-6">
       <div>
-        <h2 className="text-xl font-bold text-neutral-900 mb-4">Design Analysis</h2>
+        <h2 className="text-xl font-bold text-neutral-900 mb-4">
+          {isUrlAnalysis ? "Website Analysis" : "Design Analysis"}
+        </h2>
         <p className="text-neutral-700">
-          This website has been analyzed by our AI to identify design strengths and areas for improvement. Review the feedback below to enhance user experience and conversion rates.
+          {isUrlAnalysis 
+            ? "This website has been analyzed by our AI to identify design strengths and areas for improvement. Review the feedback below to enhance user experience and conversion rates."
+            : "This design has been analyzed by our AI to identify strengths and areas for improvement. Review the feedback below to enhance user experience and conversion rates."}
         </p>
       </div>
 

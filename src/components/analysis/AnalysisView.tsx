@@ -52,6 +52,9 @@ export const AnalysisView = ({
   // Force a re-render after component mounts to ensure image displays
   const [mounted, setMounted] = useState(false);
   
+  // Check if this is a URL analysis (no real image, just a placeholder)
+  const isUrlAnalysis = uploadedImage?.startsWith('data:image/svg+xml');
+  
   useEffect(() => {
     // Set mounted to true after component mounts
     setMounted(true);
@@ -76,7 +79,9 @@ export const AnalysisView = ({
             >
               <ArrowLeft size={20} />
             </button>
-            <h1 className="text-xl font-bold text-neutral-900">Design Analysis</h1>
+            <h1 className="text-xl font-bold text-neutral-900">
+              {isUrlAnalysis ? "Website Analysis" : "Design Analysis"}
+            </h1>
           </div>
         </div>
       </header>
@@ -89,6 +94,7 @@ export const AnalysisView = ({
             <Overview 
               positiveFeatures={positiveFeatures}
               getIssueCountByPriority={getIssueCountByPriority}
+              isUrlAnalysis={isUrlAnalysis}
             />
 
             <FilterControls 
@@ -96,43 +102,58 @@ export const AnalysisView = ({
               setPriorityFilter={setPriorityFilter}
             />
 
-            <div className="flex flex-col lg:flex-row gap-6">
-              <div className="lg:w-3/5">
-                <div className="bg-white rounded-lg shadow-sm p-4">
-                  <div className="text-center text-sm font-medium text-neutral-500 mb-4">
-                    With AI Annotations
-                  </div>
-                  {uploadedImage && (
-                    <div key={mounted ? "mounted" : "unmounted"}>
-                      <AnnotationCanvas
-                        image={uploadedImage}
-                        onSave={() => {}}
-                        annotations={filteredIssues
-                          .filter(f => f.location)
-                          .map(f => ({
-                            id: f.id || 0,
-                            x: f.location?.x || 0,
-                            y: f.location?.y || 0,
-                            priority: f.priority || "medium"
-                          }))}
-                        selectedIssue={selectedIssue}
-                        onIssueSelect={setSelectedIssue}
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="lg:w-2/5">
+            {isUrlAnalysis ? (
+              // URL Analysis Layout - Full-width feedback panel
+              <div className="bg-white rounded-lg shadow-sm">
                 <FeedbackPanel 
                   feedback={filteredIssues} 
                   strengths={positiveFeatures}
                   onSave={setFeedback}
                   selectedIssue={selectedIssue}
                   onIssueSelect={setSelectedIssue}
+                  isUrlAnalysis={true}
                 />
               </div>
-            </div>
+            ) : (
+              // Image Analysis Layout - Split view with annotations
+              <div className="flex flex-col lg:flex-row gap-6">
+                <div className="lg:w-3/5">
+                  <div className="bg-white rounded-lg shadow-sm p-4">
+                    <div className="text-center text-sm font-medium text-neutral-500 mb-4">
+                      With AI Annotations
+                    </div>
+                    {uploadedImage && (
+                      <div key={mounted ? "mounted" : "unmounted"}>
+                        <AnnotationCanvas
+                          image={uploadedImage}
+                          onSave={() => {}}
+                          annotations={filteredIssues
+                            .filter(f => f.location)
+                            .map(f => ({
+                              id: f.id || 0,
+                              x: f.location?.x || 0,
+                              y: f.location?.y || 0,
+                              priority: f.priority || "medium"
+                            }))}
+                          selectedIssue={selectedIssue}
+                          onIssueSelect={setSelectedIssue}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="lg:w-2/5">
+                  <FeedbackPanel 
+                    feedback={filteredIssues} 
+                    strengths={positiveFeatures}
+                    onSave={setFeedback}
+                    selectedIssue={selectedIssue}
+                    onIssueSelect={setSelectedIssue}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

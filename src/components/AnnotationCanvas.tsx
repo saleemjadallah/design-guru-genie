@@ -35,6 +35,7 @@ export const AnnotationCanvas = ({
 
   const loadImage = () => {
     console.log("Loading image:", image);
+    setImgLoaded(false); // Reset loading state first
     
     // Create a new image instance
     const img = new Image();
@@ -46,26 +47,33 @@ export const AnnotationCanvas = ({
       setImgLoaded(true);
       setImgError(false);
 
-      if (canvasRef.current && containerRef.current) {
-        // Set canvas size based on container width while maintaining aspect ratio
-        const container = containerRef.current;
-        const containerWidth = container.clientWidth;
-        const ratio = containerWidth / img.width;
-        
-        // Update canvas dimensions
-        setCanvasWidth(containerWidth);
-        setCanvasHeight(img.height * ratio);
-        
-        canvasRef.current.width = containerWidth;
-        canvasRef.current.height = img.height * ratio;
-        
-        updateScale();
-        
-        // Force immediate draw
-        setTimeout(() => {
-          drawCanvas();
-        }, 0);
-      }
+      // Delay setting dimensions to ensure DOM has updated
+      requestAnimationFrame(() => {
+        if (canvasRef.current && containerRef.current) {
+          // Set canvas size based on container width while maintaining aspect ratio
+          const container = containerRef.current;
+          const containerWidth = container.clientWidth;
+          const ratio = containerWidth / img.width;
+          
+          // Update canvas dimensions - ensure non-zero values
+          const newWidth = Math.max(containerWidth, 1);
+          const newHeight = Math.max(Math.round(img.height * ratio), 1);
+          
+          setCanvasWidth(newWidth);
+          setCanvasHeight(newHeight);
+          
+          canvasRef.current.width = newWidth;
+          canvasRef.current.height = newHeight;
+          
+          // Calculate scale after dimensions are set
+          const newScale = newWidth / img.width;
+          console.log(`Setting scale: ${newWidth} / ${img.width} = ${newScale}`);
+          setScale(newScale);
+          
+          // Force draw after dimensions and scale are updated
+          requestAnimationFrame(drawCanvas);
+        }
+      });
     };
     
     img.onerror = (e) => {
@@ -84,10 +92,14 @@ export const AnnotationCanvas = ({
     img.src = image;
     
     // Force the img element to be immediately cached and processed
-    if (img.complete && !img.naturalWidth) {
-      img.onerror?.(new Event('error') as any);
-    } else if (img.complete) {
-      img.onload?.(new Event('load') as any);
+    if (img.complete) {
+      if (img.naturalWidth) {
+        // Image is already cached
+        img.onload?.(new Event('load') as any);
+      } else {
+        // Image failed to load
+        img.onerror?.(new Event('error') as any);
+      }
     }
   };
 
@@ -219,12 +231,15 @@ export const AnnotationCanvas = ({
       const containerWidth = container.clientWidth;
       const ratio = containerWidth / img.width;
       
-      // Update canvas dimensions state
-      setCanvasWidth(containerWidth);
-      setCanvasHeight(img.height * ratio);
+      // Update canvas dimensions state - ensure non-zero values
+      const newWidth = Math.max(containerWidth, 1);
+      const newHeight = Math.max(Math.round(img.height * ratio), 1);
       
-      canvasRef.current.width = containerWidth;
-      canvasRef.current.height = img.height * ratio;
+      setCanvasWidth(newWidth);
+      setCanvasHeight(newHeight);
+      
+      canvasRef.current.width = newWidth;
+      canvasRef.current.height = newHeight;
       
       updateScale();
       drawCanvas();
@@ -257,27 +272,40 @@ export const AnnotationCanvas = ({
   useEffect(() => {
     if (initialRender && imgLoaded) {
       console.log("Initial render with loaded image, scheduling redraws");
-      // Force multiple redraws to ensure canvas is painted properly
-      const timers = [
-        setTimeout(() => { 
-          console.log("Redraw 1");
-          drawCanvas(); 
-        }, 50),
-        setTimeout(() => { 
+      
+      // Using requestAnimationFrame for smoother rendering
+      const animationIds: number[] = [];
+      
+      // Force multiple redraws at different times to catch any timing issues
+      animationIds.push(window.requestAnimationFrame(() => {
+        console.log("Redraw 1");
+        drawCanvas();
+      }));
+      
+      // Second redraw with delay
+      const timer = setTimeout(() => {
+        animationIds.push(window.requestAnimationFrame(() => {
           console.log("Redraw 2");
-          drawCanvas(); 
-        }, 250),
-        setTimeout(() => { 
+          drawCanvas();
+        }));
+      }, 250);
+      
+      // Third redraw with longer delay
+      const timer2 = setTimeout(() => {
+        animationIds.push(window.requestAnimationFrame(() => {
           console.log("Redraw 3");
-          drawCanvas(); 
-        }, 500)
-      ];
+          drawCanvas();
+        }));
+      }, 500);
       
       // Set flag to prevent repeated initial renders
       setInitialRender(false);
       
       return () => {
-        timers.forEach(timer => clearTimeout(timer));
+        // Clean up all animation frames and timers
+        animationIds.forEach(id => window.cancelAnimationFrame(id));
+        clearTimeout(timer);
+        clearTimeout(timer2);
       };
     }
   }, [initialRender, imgLoaded]);
@@ -286,7 +314,7 @@ export const AnnotationCanvas = ({
   useEffect(() => {
     if (scale > 0 && imgLoaded) {
       console.log("Scale changed to", scale, "- redrawing canvas");
-      drawCanvas();
+      requestAnimationFrame(drawCanvas);
     }
   }, [scale]);
 

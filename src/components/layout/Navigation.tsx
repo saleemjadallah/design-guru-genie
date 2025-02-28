@@ -1,191 +1,278 @@
 
 import { useState, useEffect } from "react";
-import { 
-  User, 
-  HelpCircle, 
-  Mail, 
-  LogOut, 
-  Trash2, 
-  ChevronDown,
-  Bookmark,
-  LogIn
-} from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { toast } from "@/hooks/use-toast";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { toast } from "@/hooks/use-toast";
+import { SheetSide } from "@/components/ui/sidebar";
+import {
+  LayoutDashboard,
+  History,
+  LifeBuoy,
+  Settings,
+  Sparkles,
+  Menu,
+  X,
+  LogOut
+} from "lucide-react";
 
 export const Navigation = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const navigate = useNavigate();
+  const [isOpen, setIsOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
-    // Check if user is already logged in
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user || null);
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      setUser(data.session?.user || null);
     };
     
-    checkUser();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    checkSession();
+    
+    const { data: authListener } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setUser(session?.user || null);
       }
     );
+    
+    const handleScroll = () => {
+      if (window.scrollY > 10) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
 
+    window.addEventListener("scroll", handleScroll);
+    
     return () => {
-      subscription.unsubscribe();
+      authListener.subscription.unsubscribe();
+      window.removeEventListener("scroll", handleScroll);
     };
   }, []);
 
-  const handleAction = async (action: string) => {
-    switch (action) {
-      case "sign-in":
-        // For testing: Mock the sign-in instead of actually authenticating
-        toast({
-          title: "Test Mode: Sign In",
-          description: "Authentication bypassed for testing",
-        });
-        // Mock signed in user with subscription
-        setUser({
-          id: "test-user-id",
-          email: "test@example.com",
-          user_metadata: {
-            is_subscribed: true
-          }
-        });
-        break;
-      case "sign-up":
-        // For testing: Mock the sign-up instead of actually registering
-        toast({
-          title: "Test Mode: Sign Up",
-          description: "Account creation bypassed for testing",
-        });
-        // Mock signed in user with subscription
-        setUser({
-          id: "test-user-id",
-          email: "test@example.com",
-          user_metadata: {
-            is_subscribed: true
-          }
-        });
-        break;
-      case "logout":
-        // For testing: Just clear the user state without calling supabase
-        setUser(null);
-        toast({
-          title: "Test Mode: Signed out",
-          description: "You have been signed out (test mode)",
-        });
-        break;
-      case "saved-reviews":
-        navigate("/saved-reviews");
-        break;
-      default:
-        toast({
-          title: "Action triggered",
-          description: `${action} - Connect Supabase to enable this feature`,
-        });
-    }
-    setIsOpen(false);
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    toast({
+      title: "Signed out successfully",
+      description: "You have been signed out of your account.",
+    });
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-sm border-b">
-      <div className="container mx-auto px-4 h-16">
-        <div className="flex items-center justify-between h-full">
-          <div className="font-semibold text-xl text-neutral-900">
-            Design Critique
-          </div>
+    <header
+      className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
+        isScrolled ? "bg-white shadow-sm" : "bg-transparent"
+      }`}
+    >
+      <div className="container flex items-center justify-between h-16">
+        <Link to="/" className="flex items-center">
+          <img 
+            src="/lovable-uploads/d8111ffc-aa28-4e49-a13a-246b7ce4b6b9.png" 
+            alt="Evolvely.ai Logo" 
+            className="h-12"
+          />
+        </Link>
 
-          <div className="flex items-center gap-4">
-            <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-              <DropdownMenuTrigger asChild>
-                <div className="relative cursor-pointer hover:opacity-80 transition-opacity">
-                  <Avatar className="h-12 w-12">
-                    <AvatarFallback className="bg-accent/10 text-accent">
-                      <User className="h-6 w-6" />
-                    </AvatarFallback>
-                  </Avatar>
-                  <ChevronDown className="h-4 w-4 absolute -right-4 top-1/2 -translate-y-1/2 text-neutral-500" />
-                </div>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="w-56"
-                align="end"
-                forceMount
-              >
-                {!user ? (
-                  <>
-                    <DropdownMenuItem onClick={() => handleAction("sign-in")}>
-                      <LogIn className="mr-2 h-4 w-4" />
-                      <span>Sign In (Test Mode)</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleAction("sign-up")}>
-                      <User className="mr-2 h-4 w-4" />
-                      <span>Sign Up (Test Mode)</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                  </>
-                ) : (
-                  <>
-                    <DropdownMenuLabel className="font-normal">
-                      <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium leading-none">{user.email}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {user.user_metadata?.is_subscribed ? "Premium Plan" : "Free Plan"}
-                        </p>
-                      </div>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => handleAction("saved-reviews")}>
-                      <Bookmark className="mr-2 h-4 w-4" />
-                      <span>Saved Reviews</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                  </>
-                )}
-                <DropdownMenuGroup>
-                  <DropdownMenuItem onClick={() => handleAction("support")}>
-                    <HelpCircle className="mr-2 h-4 w-4" />
-                    <span>Support</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleAction("contact")}>
-                    <Mail className="mr-2 h-4 w-4" />
-                    <span>Contact us</span>
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  className="text-red-600"
-                  onClick={() => handleAction("delete")}
+        {/* Desktop Menu */}
+        <div className="hidden md:flex items-center space-x-1">
+          <nav className="mr-4">
+            <ul className="flex space-x-4">
+              <li>
+                <Link
+                  to="/saved-reviews"
+                  className="text-neutral-600 hover:text-neutral-900 px-3 py-2 rounded-md text-sm font-medium"
                 >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  <span>Delete account</span>
-                </DropdownMenuItem>
-                {user && (
-                  <DropdownMenuItem onClick={() => handleAction("logout")}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Sign out</span>
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  Saved Reviews
+                </Link>
+              </li>
+              <li>
+                <a
+                  href="#features"
+                  className="text-neutral-600 hover:text-neutral-900 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Features
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#pricing"
+                  className="text-neutral-600 hover:text-neutral-900 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Pricing
+                </a>
+              </li>
+            </ul>
+          </nav>
+
+          {user ? (
+            <div className="flex items-center space-x-3">
+              <Button variant="ghost" onClick={() => setIsOpen(true)}>
+                Dashboard
+              </Button>
+              <Button variant="outline" onClick={handleSignOut}>
+                Sign Out
+              </Button>
+            </div>
+          ) : (
+            <div>
+              <Button
+                onClick={() => {
+                  toast({
+                    title: "Test Mode",
+                    description: "Authentication is simulated in this demo.",
+                  });
+                }}
+              >
+                Sign In
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Mobile Menu Button */}
+        <button
+          className="md:hidden rounded-md p-2 text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100"
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+        >
+          {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+      </div>
+
+      {/* Mobile Menu */}
+      {isMenuOpen && (
+        <div className="md:hidden bg-white shadow-lg">
+          <div className="container py-4">
+            <nav className="mb-4">
+              <ul className="space-y-2">
+                <li>
+                  <Link
+                    to="/saved-reviews"
+                    className="block px-3 py-2 rounded-md text-base font-medium text-neutral-900 hover:bg-neutral-100"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Saved Reviews
+                  </Link>
+                </li>
+                <li>
+                  <a
+                    href="#features"
+                    className="block px-3 py-2 rounded-md text-base font-medium text-neutral-900 hover:bg-neutral-100"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Features
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#pricing"
+                    className="block px-3 py-2 rounded-md text-base font-medium text-neutral-900 hover:bg-neutral-100"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Pricing
+                  </a>
+                </li>
+              </ul>
+            </nav>
+
+            {user ? (
+              <div className="space-y-2">
+                <Button
+                  variant="default"
+                  className="w-full"
+                  onClick={() => {
+                    setIsOpen(true);
+                    setIsMenuOpen(false);
+                  }}
+                >
+                  Dashboard
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    handleSignOut();
+                    setIsMenuOpen(false);
+                  }}
+                >
+                  Sign Out
+                </Button>
+              </div>
+            ) : (
+              <Button
+                className="w-full"
+                onClick={() => {
+                  toast({
+                    title: "Test Mode",
+                    description: "Authentication is simulated in this demo.",
+                  });
+                  setIsMenuOpen(false);
+                }}
+              >
+                Sign In
+              </Button>
+            )}
           </div>
         </div>
-      </div>
+      )}
+
+      {/* Dashboard Sidebar */}
+      <SheetSide open={isOpen} onOpenChange={setIsOpen}>
+        <div className="py-4 h-full flex flex-col">
+          <div className="px-6 mb-8">
+            <Link to="/" className="flex items-center" onClick={() => setIsOpen(false)}>
+              <img 
+                src="/lovable-uploads/d8111ffc-aa28-4e49-a13a-246b7ce4b6b9.png" 
+                alt="Evolvely.ai Logo" 
+                className="h-8"
+              />
+            </Link>
+          </div>
+          
+          <div className="flex-1 px-3">
+            <div className="space-y-1">
+              <Button variant="ghost" className="w-full justify-start" asChild>
+                <Link to="/dashboard" onClick={() => setIsOpen(false)}>
+                  <LayoutDashboard className="mr-2 h-4 w-4" />
+                  Dashboard
+                </Link>
+              </Button>
+              <Button variant="ghost" className="w-full justify-start" asChild>
+                <Link to="/saved-reviews" onClick={() => setIsOpen(false)}>
+                  <History className="mr-2 h-4 w-4" />
+                  Analysis History
+                </Link>
+              </Button>
+              <Button variant="ghost" className="w-full justify-start">
+                <Sparkles className="mr-2 h-4 w-4" />
+                Upgrade Plan
+              </Button>
+            </div>
+          </div>
+          
+          <div className="px-3 py-2">
+            <div className="space-y-1">
+              <Button variant="ghost" className="w-full justify-start">
+                <Settings className="mr-2 h-4 w-4" />
+                Settings
+              </Button>
+              <Button variant="ghost" className="w-full justify-start">
+                <LifeBuoy className="mr-2 h-4 w-4" />
+                Help & Support
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full justify-start"
+                onClick={handleSignOut}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign out
+              </Button>
+            </div>
+          </div>
+        </div>
+      </SheetSide>
     </header>
   );
 };

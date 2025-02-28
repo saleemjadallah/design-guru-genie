@@ -43,18 +43,26 @@ const annotations: AnnotationPoint[] = [
 
 export const AnnotationExample = () => {
   const scrollToUploadSection = () => {
-    // Find the upload section element using a selector that targets the upload area
-    const uploadSection = document.querySelector('.tabs-content');
+    // Try multiple selectors to find the upload area
+    const uploadSection = 
+      document.querySelector('[data-state="active"] form') || 
+      document.querySelector('.tabs-content') || 
+      document.querySelector('[role="tabpanel"]') ||
+      document.querySelector('form') ||
+      document.querySelector('.max-w-4xl');
     
     if (uploadSection) {
+      console.log("Found upload section:", uploadSection);
       uploadSection.scrollIntoView({
         behavior: "smooth",
         block: "start"
       });
     } else {
-      // Fallback to scrolling near the top if the element isn't found
+      // If we still can't find the specific element, target a specific scroll position
+      console.log("Could not find upload section, scrolling to specific position");
+      const navHeight = document.querySelector('nav')?.offsetHeight || 0;
       window.scrollTo({
-        top: 0,
+        top: navHeight + 100, // Scroll past the navigation with some padding
         behavior: "smooth"
       });
     }

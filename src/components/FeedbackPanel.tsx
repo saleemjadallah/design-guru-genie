@@ -298,32 +298,6 @@ export const FeedbackPanel = ({
           ))
         )}
       </div>
-      
-      {/* In-Analysis Subscription Prompt */}
-      {displayedIssues.length > 0 && !isSubscribed && !isUrlAnalysis && (
-        <div className="border-t border-gray-200 mt-8 pt-6">
-          <div className="flex items-start">
-            <div className="flex-shrink-0 bg-blue-100 rounded-full p-1">
-              <LineChart className="w-6 h-6 text-blue-600" />
-            </div>
-            <div className="ml-3">
-              <h3 className="font-medium text-gray-900">Track Your Design Evolution</h3>
-              <p className="text-gray-600 mt-1">
-                After implementing our recommendations, come back for a follow-up analysis to see how much you've improved.
-              </p>
-              <div className="mt-3 flex items-center">
-                <span className="text-sm font-medium text-blue-600 mr-2">Premium Feature</span>
-                <Button 
-                  className="text-sm bg-accent hover:bg-accent/90"
-                  size="sm"
-                >
-                  Subscribe to Unlock
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

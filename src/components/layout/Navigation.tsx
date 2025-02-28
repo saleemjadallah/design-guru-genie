@@ -71,7 +71,7 @@ export const Navigation = () => {
           <img 
             src="/lovable-uploads/7a4a7d46-2665-4c5b-9666-801339014a81.png" 
             alt="Evolvely.ai Logo" 
-            className="h-12"
+            className="h-16"
           />
         </Link>
 
@@ -226,7 +226,7 @@ export const Navigation = () => {
                 <img 
                   src="/lovable-uploads/7a4a7d46-2665-4c5b-9666-801339014a81.png" 
                   alt="Evolvely.ai Logo" 
-                  className="h-8"
+                  className="h-12"
                 />
               </Link>
             </div>

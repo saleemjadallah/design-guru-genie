@@ -51,6 +51,8 @@ export const AnalysisView = ({
 }: Props) => {
   // Track image loaded status
   const [imageReady, setImageReady] = useState(false);
+  // Force a re-render when analysis completes
+  const [forceRender, setForceRender] = useState(0);
   
   // Check if this is a URL analysis (no real image, just a placeholder)
   const isUrlAnalysis = uploadedImage?.startsWith('data:image/svg+xml');
@@ -73,6 +75,16 @@ export const AnalysisView = ({
       setImageReady(true);
     }
   }, [uploadedImage, isUrlAnalysis]);
+
+  // Force a re-render when analysis completes
+  useEffect(() => {
+    if (!isAnalyzing && filteredIssues.length > 0) {
+      // Small delay to ensure everything is ready
+      setTimeout(() => {
+        setForceRender(prev => prev + 1);
+      }, 200);
+    }
+  }, [isAnalyzing, filteredIssues.length]);
 
   return (
     <div className="min-h-screen bg-neutral-50 pt-16">
@@ -133,6 +145,7 @@ export const AnalysisView = ({
                     </div>
                     {uploadedImage && imageReady && (
                       <AnnotationCanvas
+                        key={`annotation-canvas-${forceRender}`}
                         image={uploadedImage}
                         onSave={() => {}}
                         annotations={filteredIssues

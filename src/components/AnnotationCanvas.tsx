@@ -29,6 +29,7 @@ export const AnnotationCanvas = ({
   const [imgLoaded, setImgLoaded] = useState(false);
   const [imgError, setImgError] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [initialRender, setInitialRender] = useState(true);
 
   const loadImage = () => {
     console.log("Loading image:", image);
@@ -169,6 +170,9 @@ export const AnnotationCanvas = ({
   useEffect(() => {
     loadImage();
     
+    // Flag to force an initial render
+    setInitialRender(true);
+    
     // Cleanup function
     return () => {
       if (imageRef.current) {
@@ -216,6 +220,25 @@ export const AnnotationCanvas = ({
       drawCanvas();
     }
   }, [annotations, selectedIssue, scale, imgLoaded]);
+
+  // Force redraw after a short delay to ensure rendering happens properly
+  useEffect(() => {
+    if (initialRender && imgLoaded) {
+      // Force multiple redraws to ensure canvas is painted properly
+      const timers = [
+        setTimeout(() => { drawCanvas(); }, 50),
+        setTimeout(() => { drawCanvas(); }, 150),
+        setTimeout(() => { drawCanvas(); }, 500)
+      ];
+      
+      // Set flag to prevent repeated initial renders
+      setInitialRender(false);
+      
+      return () => {
+        timers.forEach(timer => clearTimeout(timer));
+      };
+    }
+  }, [initialRender, imgLoaded]);
 
   // Ensure canvas is initialized properly on component mount
   useEffect(() => {

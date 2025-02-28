@@ -57,15 +57,23 @@ export const AnalysisView = ({
   // Check if this is a URL analysis (no real image, just a placeholder)
   const isUrlAnalysis = uploadedImage?.startsWith('data:image/svg+xml');
   
+  // Debug logs to help diagnose the issue
+  useEffect(() => {
+    console.log("Filter changed:", priorityFilter);
+    console.log("Filtered issues:", filteredIssues.length);
+    console.log("Issues with locations:", filteredIssues.filter(f => f.location).length);
+  }, [priorityFilter, filteredIssues]);
+
   useEffect(() => {
     if (uploadedImage && !isUrlAnalysis) {
       // Create a new Image to preload the image
       const img = new Image();
       img.onload = () => {
+        console.log("Image loaded successfully");
         setImageReady(true);
       };
-      img.onerror = () => {
-        console.error("Failed to load image");
+      img.onerror = (e) => {
+        console.error("Failed to load image:", e);
         // Still set to ready so we can display error fallback
         setImageReady(true);
       };
@@ -76,25 +84,28 @@ export const AnalysisView = ({
     }
   }, [uploadedImage, isUrlAnalysis]);
 
-  // Force a re-render when analysis completes or when filter changes
+  // Force a re-render when analysis completes, when filter changes, or when issues change
   useEffect(() => {
     if (!isAnalyzing && feedback.length > 0) {
+      console.log("Forcing re-render due to completed analysis or filter change");
       // Small delay to ensure everything is ready
       setTimeout(() => {
         setForceRender(prev => prev + 1);
       }, 200);
     }
-  }, [isAnalyzing, feedback.length, priorityFilter]); // Added priorityFilter as dependency
+  }, [isAnalyzing, feedback.length, priorityFilter]); 
 
-  // Compute annotations from the filtered issues
+  // Compute annotations from the filtered issues - ensure we have valid coordinates
   const visibleAnnotations = filteredIssues
-    .filter(f => f.location)
+    .filter(f => f.location && typeof f.location.x === 'number' && typeof f.location.y === 'number')
     .map(f => ({
       id: f.id || 0,
       x: f.location?.x || 0,
       y: f.location?.y || 0,
       priority: f.priority || "medium"
     }));
+
+  console.log("Rendering AnalysisView with", visibleAnnotations.length, "visible annotations");
 
   return (
     <div className="min-h-screen bg-neutral-50 pt-16">

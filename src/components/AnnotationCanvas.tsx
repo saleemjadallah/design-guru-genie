@@ -30,6 +30,8 @@ export const AnnotationCanvas = ({
   const [imgError, setImgError] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [initialRender, setInitialRender] = useState(true);
+  const [canvasWidth, setCanvasWidth] = useState(0);
+  const [canvasHeight, setCanvasHeight] = useState(0);
 
   const loadImage = () => {
     console.log("Loading image:", image);
@@ -49,6 +51,10 @@ export const AnnotationCanvas = ({
         const container = containerRef.current;
         const containerWidth = container.clientWidth;
         const ratio = containerWidth / img.width;
+        
+        // Update canvas dimensions
+        setCanvasWidth(containerWidth);
+        setCanvasHeight(img.height * ratio);
         
         canvasRef.current.width = containerWidth;
         canvasRef.current.height = img.height * ratio;
@@ -92,19 +98,39 @@ export const AnnotationCanvas = ({
     const img = imageRef.current;
     const displayWidth = container.clientWidth;
     const originalWidth = img.naturalWidth;
-    setScale(displayWidth / originalWidth);
+    const newScale = displayWidth / originalWidth;
+    
+    console.log(`Updating scale: ${displayWidth} / ${originalWidth} = ${newScale}`);
+    setScale(newScale);
+    
+    return newScale;
   };
 
   const drawCanvas = () => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
-    if (!canvas || !ctx || !imageRef.current || !imgLoaded) return;
+    if (!canvas || !ctx || !imageRef.current) {
+      console.error("Cannot draw canvas: Missing canvas, context, or image");
+      return;
+    }
+    
+    if (!imgLoaded) {
+      console.warn("Cannot draw canvas: Image not loaded");
+      return;
+    }
+
+    console.log(`Drawing canvas with ${annotations.length} annotations, scale: ${scale}`);
 
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Draw image
-    ctx.drawImage(imageRef.current, 0, 0, canvas.width, canvas.height);
+    try {
+      ctx.drawImage(imageRef.current, 0, 0, canvas.width, canvas.height);
+    } catch (error) {
+      console.error("Error drawing image on canvas:", error);
+      return;
+    }
 
     // Draw annotations with proper scaling and positioning
     annotations.forEach((annotation) => {
@@ -168,6 +194,7 @@ export const AnnotationCanvas = ({
 
   // Initialize image and canvas
   useEffect(() => {
+    console.log("AnnotationCanvas initialized with", annotations.length, "annotations");
     loadImage();
     
     // Flag to force an initial render
@@ -191,6 +218,10 @@ export const AnnotationCanvas = ({
       const img = imageRef.current;
       const containerWidth = container.clientWidth;
       const ratio = containerWidth / img.width;
+      
+      // Update canvas dimensions state
+      setCanvasWidth(containerWidth);
+      setCanvasHeight(img.height * ratio);
       
       canvasRef.current.width = containerWidth;
       canvasRef.current.height = img.height * ratio;
@@ -216,19 +247,30 @@ export const AnnotationCanvas = ({
 
   // Redraw when annotations or selection changes
   useEffect(() => {
+    console.log("Annotations or selection changed, redrawing canvas");
     if (imgLoaded) {
       drawCanvas();
     }
-  }, [annotations, selectedIssue, scale, imgLoaded]);
+  }, [annotations, selectedIssue, imgLoaded]);
 
   // Force redraw after a short delay to ensure rendering happens properly
   useEffect(() => {
     if (initialRender && imgLoaded) {
+      console.log("Initial render with loaded image, scheduling redraws");
       // Force multiple redraws to ensure canvas is painted properly
       const timers = [
-        setTimeout(() => { drawCanvas(); }, 50),
-        setTimeout(() => { drawCanvas(); }, 150),
-        setTimeout(() => { drawCanvas(); }, 500)
+        setTimeout(() => { 
+          console.log("Redraw 1");
+          drawCanvas(); 
+        }, 50),
+        setTimeout(() => { 
+          console.log("Redraw 2");
+          drawCanvas(); 
+        }, 250),
+        setTimeout(() => { 
+          console.log("Redraw 3");
+          drawCanvas(); 
+        }, 500)
       ];
       
       // Set flag to prevent repeated initial renders
@@ -240,15 +282,13 @@ export const AnnotationCanvas = ({
     }
   }, [initialRender, imgLoaded]);
 
-  // Ensure canvas is initialized properly on component mount
+  // Additional effect to react to scale changes
   useEffect(() => {
-    // Force a redraw at the next animation frame to ensure canvas is painted
-    if (imgLoaded) {
-      requestAnimationFrame(() => {
-        drawCanvas();
-      });
+    if (scale > 0 && imgLoaded) {
+      console.log("Scale changed to", scale, "- redrawing canvas");
+      drawCanvas();
     }
-  }, [imgLoaded]);
+  }, [scale]);
 
   const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
     if (!onIssueSelect) return;
@@ -279,7 +319,7 @@ export const AnnotationCanvas = ({
     onIssueSelect(clickedAnnotation?.id || null);
   };
 
-  // Add a fallback image display
+  // Add a fallback display for when canvas errors out
   const renderFallback = () => {
     if (imgError) {
       return (
@@ -293,13 +333,13 @@ export const AnnotationCanvas = ({
           {annotations.map((annotation) => (
             <div 
               key={annotation.id}
-              className={`absolute w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm -ml-4 -mt-4 ${
+              className={`absolute w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${
                 annotation.priority === "high" ? "bg-red-500" : 
                 annotation.priority === "medium" ? "bg-amber-500" : "bg-blue-500"
               } ${selectedIssue === annotation.id ? 'ring-2 ring-white' : ''}`}
               style={{
-                left: `${annotation.x}px`,
-                top: `${annotation.y}px`,
+                left: `${annotation.x * scale}px`,
+                top: `${annotation.y * scale}px`,
                 transform: 'translate(-50%, -50%)',
                 cursor: 'pointer'
               }}
@@ -316,23 +356,29 @@ export const AnnotationCanvas = ({
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-4">
-      <div ref={containerRef} className="relative w-full">
+      <div ref={containerRef} className="relative w-full min-h-[300px]">
         {imgError ? (
           renderFallback()
         ) : (
-          <canvas
-            ref={canvasRef}
-            className="w-full h-auto cursor-pointer"
-            onClick={handleCanvasClick}
-          />
-        )}
-        
-        {!imgLoaded && !imgError && (
-          <div className="w-full py-16 flex items-center justify-center bg-neutral-50 rounded-lg">
-            <div className="animate-pulse text-neutral-500">
-              Loading image...
-            </div>
-          </div>
+          <>
+            <canvas
+              ref={canvasRef}
+              width={canvasWidth || 300}
+              height={canvasHeight || 200}
+              className="w-full h-auto cursor-pointer rounded border border-transparent"
+              onClick={handleCanvasClick}
+              style={{ display: imgLoaded ? 'block' : 'none' }}
+            />
+            
+            {/* Fallback when image isn't loaded yet */}
+            {!imgLoaded && !imgError && (
+              <div className="absolute inset-0 flex items-center justify-center bg-neutral-50 rounded-lg min-h-[300px]">
+                <div className="animate-pulse text-neutral-500">
+                  Loading image...
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ImageUpload } from "@/components/ImageUpload";
 import { UrlUpload } from "@/components/UrlUpload";
 import { AnnotationExample } from "@/components/AnnotationExample";
@@ -10,6 +10,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { AnalysisView } from "@/components/analysis/AnalysisView";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 
 type AnalysisStage = 0 | 1 | 2 | 3;
 
@@ -31,6 +33,56 @@ const Index = () => {
   const [analysisStage, setAnalysisStage] = useState<AnalysisStage>(0);
   const [selectedIssue, setSelectedIssue] = useState<number | null>(null);
   const [priorityFilter, setPriorityFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
+  const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<'upload' | 'url' | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [pendingUrl, setPendingUrl] = useState<string | null>(null);
+  const [pendingAnalysisData, setPendingAnalysisData] = useState<any>(null);
+  const [user, setUser] = useState<any>(null);
+
+  // Check for authenticated user
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user || null);
+    };
+    
+    checkUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user || null);
+        
+        // If user just logged in and there's a pending action, execute it
+        if (event === 'SIGNED_IN' && session?.user) {
+          if (pendingAction === 'upload' && pendingFile) {
+            handleImageUpload(pendingFile);
+            setPendingFile(null);
+          } else if (pendingAction === 'url' && pendingUrl && pendingAnalysisData) {
+            handleUrlAnalyze(pendingUrl, pendingAnalysisData);
+            setPendingUrl(null);
+            setPendingAnalysisData(null);
+          }
+          setPendingAction(null);
+        }
+      }
+    );
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [pendingAction, pendingFile, pendingUrl, pendingAnalysisData]);
+
+  const checkAuthAndProceed = (action: 'upload' | 'url', callback: () => void) => {
+    if (user) {
+      // User is already authenticated, proceed
+      callback();
+    } else {
+      // User is not authenticated, show auth dialog
+      setPendingAction(action);
+      setIsAuthDialogOpen(true);
+    }
+  };
 
   const handleImageUpload = async (file: File) => {
     try {
@@ -191,6 +243,47 @@ const Index = () => {
     }
   };
 
+  // Wrapper functions that check auth before proceeding
+  const handleImageUploadWithAuth = (file: File) => {
+    setPendingFile(file);
+    checkAuthAndProceed('upload', () => handleImageUpload(file));
+  };
+
+  const handleUrlAnalyzeWithAuth = (imageUrl: string, analysisData: any) => {
+    setPendingUrl(imageUrl);
+    setPendingAnalysisData(analysisData);
+    checkAuthAndProceed('url', () => handleUrlAnalyze(imageUrl, analysisData));
+  };
+
+  const handleAuthDialogClose = () => {
+    setIsAuthDialogOpen(false);
+    setPendingAction(null);
+    setPendingFile(null);
+    setPendingUrl(null);
+    setPendingAnalysisData(null);
+  };
+
+  const handleSignIn = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin
+      }
+    });
+
+    if (error) {
+      console.error("Sign in error:", error);
+      toast({
+        title: "Sign in failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+
+    // Close the dialog after initiating sign in
+    setIsAuthDialogOpen(false);
+  };
+
   const filteredIssues = priorityFilter === 'all' 
     ? feedback.filter(f => f.type === "improvement")
     : feedback.filter(f => f.type === "improvement" && f.priority === priorityFilter);
@@ -223,10 +316,10 @@ const Index = () => {
                     <TabsTrigger value="url">Analyze URL</TabsTrigger>
                   </TabsList>
                   <TabsContent value="upload">
-                    <ImageUpload onImageUpload={handleImageUpload} />
+                    <ImageUpload onImageUpload={handleImageUploadWithAuth} />
                   </TabsContent>
                   <TabsContent value="url">
-                    <UrlUpload onUrlAnalyze={handleUrlAnalyze} />
+                    <UrlUpload onUrlAnalyze={handleUrlAnalyzeWithAuth} />
                   </TabsContent>
                 </Tabs>
                 <div className="text-center">
@@ -257,6 +350,26 @@ const Index = () => {
           />
         )}
       </div>
+
+      {/* Authentication Dialog */}
+      <AlertDialog open={isAuthDialogOpen} onOpenChange={setIsAuthDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sign in required</AlertDialogTitle>
+            <AlertDialogDescription>
+              You need to sign in to use this feature. Would you like to sign in now?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleAuthDialogClose}>Cancel</AlertDialogCancel>
+            <AlertDialogAction asChild>
+              <Button onClick={handleSignIn} className="bg-accent hover:bg-accent/90">
+                Sign in with Google
+              </Button>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };

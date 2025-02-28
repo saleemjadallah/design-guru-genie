@@ -1,7 +1,8 @@
 
 import { useState } from "react";
-import { X, CheckSquare, ArrowRight, Clock, Wrench, Download } from "lucide-react";
+import { X, CheckSquare, ArrowRight, Clock, Wrench, Download, ArrowLeft } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 
 type Feedback = {
   type: "positive" | "improvement";
@@ -156,7 +157,17 @@ export const ImplementationGuide = ({ issues, onClose }: Props) => {
   return (
     <div className="bg-white rounded-lg shadow-lg max-w-5xl mx-auto p-6 overflow-auto">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-neutral-900">Prioritized Implementation Guide</h2>
+        <div className="flex items-center">
+          <Button 
+            variant="ghost" 
+            onClick={onClose} 
+            className="mr-4 text-neutral-500 hover:text-neutral-700 -ml-2"
+          >
+            <ArrowLeft size={20} />
+            <span className="ml-1">Back to Analysis</span>
+          </Button>
+          <h2 className="text-2xl font-bold text-neutral-900">Prioritized Implementation Guide</h2>
+        </div>
         <button 
           onClick={onClose}
           className="text-neutral-500 hover:text-neutral-700"

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { FeedbackPanel } from "@/components/FeedbackPanel";
 import { ProcessingState } from "@/components/ProcessingState";
@@ -6,6 +7,7 @@ import { Overview } from "@/components/analysis/Overview";
 import { ArrowLeft } from "lucide-react";
 import { FollowUpPrompt } from "@/components/analysis/FollowUpPrompt";
 import { supabase } from "@/integrations/supabase/client";
+import { ImplementationGuide } from "@/components/implementation/ImplementationGuide";
 
 interface Feedback {
   type: "positive" | "improvement";
@@ -53,6 +55,8 @@ export const AnalysisView = ({
 }: AnalysisViewProps) => {
   const [isSubscribed, setIsSubscribed] = useState(propIsSubscribed || false);
   const [analysisId, setAnalysisId] = useState<string | null>(null);
+  const [showImplementationGuide, setShowImplementationGuide] = useState(false);
+  const [currentIssue, setCurrentIssue] = useState<Feedback | null>(null);
 
   useEffect(() => {
     const checkSubscriptionStatus = async () => {
@@ -70,6 +74,22 @@ export const AnalysisView = ({
 
     checkSubscriptionStatus();
   }, [propIsSubscribed]);
+
+  useEffect(() => {
+    if (selectedIssue !== null) {
+      const issue = feedback.find(f => f.id === selectedIssue);
+      setCurrentIssue(issue || null);
+      setShowImplementationGuide(!!issue);
+    } else {
+      setCurrentIssue(null);
+      setShowImplementationGuide(false);
+    }
+  }, [selectedIssue, feedback]);
+
+  const handleCloseImplementationGuide = () => {
+    setShowImplementationGuide(false);
+    setSelectedIssue(null);
+  };
 
   if (isAnalyzing) {
     return (
@@ -91,47 +111,66 @@ export const AnalysisView = ({
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      {showImplementationGuide && currentIssue ? (
         <div>
-          <div className="bg-white p-4 rounded-xl shadow-sm overflow-hidden mb-8">
-            <h2 className="font-semibold text-xl mb-4">Original Design</h2>
-            {uploadedImage && (
-              <div className="relative rounded-lg overflow-hidden border border-neutral-200">
-                <img
-                  src={uploadedImage}
-                  alt="Uploaded design"
-                  className="w-full h-auto"
-                />
-              </div>
+          <ImplementationGuide 
+            issue={currentIssue} 
+            onBack={handleCloseImplementationGuide} 
+          />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div>
+            <div className="bg-white p-4 rounded-xl shadow-sm overflow-hidden mb-8">
+              <h2 className="font-semibold text-xl mb-4">Original Design</h2>
+              {uploadedImage && (
+                <div className="relative rounded-lg overflow-hidden border border-neutral-200">
+                  <img
+                    src={uploadedImage}
+                    alt="Uploaded design"
+                    className="w-full h-auto"
+                  />
+                </div>
+              )}
+            </div>
+
+            <Overview
+              positiveFeatures={positiveFeatures}
+              getIssueCountByPriority={getIssueCountByPriority}
+            />
+            
+            {analysisStage === 3 && !isAnalyzing && (
+              <FollowUpPrompt isSubscribed={isSubscribed} />
             )}
           </div>
 
-          <Overview
-            positiveFeatures={positiveFeatures}
-            getIssueCountByPriority={getIssueCountByPriority}
-          />
-          
-          {analysisStage === 3 && !isAnalyzing && (
-            <FollowUpPrompt isSubscribed={isSubscribed} />
-          )}
-        </div>
+          <div>
+            <FilterControls
+              priorityFilter={priorityFilter}
+              setPriorityFilter={setPriorityFilter}
+            />
 
-        <div>
-          <FilterControls
-            priorityFilter={priorityFilter}
-            setPriorityFilter={setPriorityFilter}
-          />
-
-          <FeedbackPanel
-            feedback={feedback}
-            filteredIssues={filteredIssues}
-            selectedIssue={selectedIssue}
-            setSelectedIssue={setSelectedIssue}
-            setFeedback={setFeedback}
-            analysisId={analysisId}
-          />
+            <FeedbackPanel
+              feedback={feedback}
+              filteredIssues={filteredIssues}
+              selectedIssue={selectedIssue}
+              setSelectedIssue={setSelectedIssue}
+              setFeedback={setFeedback}
+              analysisId={analysisId}
+              onIssueSelect={(id) => {
+                setSelectedIssue(id);
+                if (id !== null) {
+                  const issue = feedback.find(f => f.id === id);
+                  if (issue) {
+                    setCurrentIssue(issue);
+                    setShowImplementationGuide(true);
+                  }
+                }
+              }}
+            />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

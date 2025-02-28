@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Check, Download, LineChart, Save } from "lucide-react";
+import { Check, Download, LineChart, FileCode, Save } from "lucide-react";
 
 interface Feedback {
   type: "positive" | "improvement";
@@ -285,58 +285,73 @@ export const FeedbackPanel = ({
                 </div>
               )}
 
-              {setFeedback && (
-                <div className="flex flex-wrap gap-1 mt-2">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handlePriorityClick(issue.id || 0, "low");
-                    }}
-                    className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
-                      issue.priority === "low"
-                        ? "bg-green-100 text-green-800 border-green-200"
-                        : "border-neutral-200 text-neutral-600 hover:bg-neutral-50"
-                    }`}
-                  >
-                    {issue.priority === "low" && (
-                      <Check className="inline w-3 h-3 mr-1" />
-                    )}
-                    Low
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handlePriorityClick(issue.id || 0, "medium");
-                    }}
-                    className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
-                      issue.priority === "medium"
-                        ? "bg-orange-100 text-orange-800 border-orange-200"
-                        : "border-neutral-200 text-neutral-600 hover:bg-neutral-50"
-                    }`}
-                  >
-                    {issue.priority === "medium" && (
-                      <Check className="inline w-3 h-3 mr-1" />
-                    )}
-                    Medium
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handlePriorityClick(issue.id || 0, "high");
-                    }}
-                    className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
-                      issue.priority === "high"
-                        ? "bg-red-100 text-red-800 border-red-200"
-                        : "border-neutral-200 text-neutral-600 hover:bg-neutral-50"
-                    }`}
-                  >
-                    {issue.priority === "high" && (
-                      <Check className="inline w-3 h-3 mr-1" />
-                    )}
-                    High
-                  </button>
-                </div>
-              )}
+              <div className="flex justify-between items-center mt-2">
+                {setFeedback && (
+                  <div className="flex flex-wrap gap-1">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePriorityClick(issue.id || 0, "low");
+                      }}
+                      className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
+                        issue.priority === "low"
+                          ? "bg-green-100 text-green-800 border-green-200"
+                          : "border-neutral-200 text-neutral-600 hover:bg-neutral-50"
+                      }`}
+                    >
+                      {issue.priority === "low" && (
+                        <Check className="inline w-3 h-3 mr-1" />
+                      )}
+                      Low
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePriorityClick(issue.id || 0, "medium");
+                      }}
+                      className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
+                        issue.priority === "medium"
+                          ? "bg-orange-100 text-orange-800 border-orange-200"
+                          : "border-neutral-200 text-neutral-600 hover:bg-neutral-50"
+                      }`}
+                    >
+                      {issue.priority === "medium" && (
+                        <Check className="inline w-3 h-3 mr-1" />
+                      )}
+                      Medium
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePriorityClick(issue.id || 0, "high");
+                      }}
+                      className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
+                        issue.priority === "high"
+                          ? "bg-red-100 text-red-800 border-red-200"
+                          : "border-neutral-200 text-neutral-600 hover:bg-neutral-50"
+                      }`}
+                    >
+                      {issue.priority === "high" && (
+                        <Check className="inline w-3 h-3 mr-1" />
+                      )}
+                      High
+                    </button>
+                  </div>
+                )}
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="ml-auto text-xs"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleIssueSelect(issue.id ?? null);
+                  }}
+                >
+                  <FileCode className="w-3.5 h-3.5 mr-1" />
+                  Implementation
+                </Button>
+              </div>
             </div>
           ))
         )}

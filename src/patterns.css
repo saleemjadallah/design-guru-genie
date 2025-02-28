@@ -24,18 +24,6 @@
   opacity: 0.2;
 }
 
-/* Blueprint pattern */
-.blueprint-pattern {
-  background-color: #F9FAFB;
-  background-image: linear-gradient(#E5E7EB 1.5px, transparent 1.5px),
-    linear-gradient(90deg, #E5E7EB 1.5px, transparent 1.5px),
-    linear-gradient(#E5E7EB 0.75px, transparent 0.75px),
-    linear-gradient(90deg, #E5E7EB 0.75px, transparent 0.75px);
-  background-size: 75px 75px, 75px 75px, 15px 15px, 15px 15px;
-  background-position: 0 0, 0 0, 0 0, 0 0;
-  opacity: 0.15;
-}
-
 /* Wave divider styling */
 .wave-divider {
   position: relative;
@@ -48,11 +36,6 @@
   position: absolute;
   width: 100%;
   height: 100%;
-}
-
-/* Geometric accent base styles */
-.geometric-accents {
-  position: relative;
 }
 
 /* Animation for subtle movement of geometric elements */
@@ -75,16 +58,4 @@
 .float-animation-delayed {
   animation: float 18s ease-in-out infinite;
   animation-delay: 2s;
-}
-
-/* Add a subtle texture overlay for increased depth */
-.texture-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cpath fill='%23000000' fill-opacity='0.03' d='M1 3h1v1H1V3zm2-2h1v1H3V1z'%3E%3C/path%3E%3C/svg%3E");
-  opacity: 0.5;
-  pointer-events: none;
 }

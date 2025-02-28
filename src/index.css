@@ -43,15 +43,11 @@
   * {
     @apply border-border;
   }
+  
   body {
     @apply bg-background text-foreground font-sans;
-    background-color: #F9FAFB;
-    background-image: radial-gradient(#E5E7EB 1px, transparent 1px);
-    background-size: 20px 20px;
-    background-position: 0 0;
-    background-attachment: fixed;
-    opacity: 1;
   }
+  
   h1, h2, h3, h4, h5, h6 {
     @apply font-sans font-semibold tracking-tight;
   }
@@ -115,19 +111,6 @@ button, a, input, textarea {
   .gradient-header p {
     font-size: 1rem; /* 16px */
   }
-}
-
-/* New geometric shape styles for background accents */
-.shape-circle {
-  border-radius: 50%;
-}
-
-.shape-square {
-  border-radius: 8px;
-}
-
-.shape-triangle {
-  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
 }
 
 /* Animation for subtle floating effect */

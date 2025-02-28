@@ -12,6 +12,8 @@ import { AnalysisView } from "@/components/analysis/AnalysisView";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type AnalysisStage = 0 | 1 | 2 | 3;
 
@@ -39,6 +41,9 @@ const Index = () => {
   const [pendingUrl, setPendingUrl] = useState<string | null>(null);
   const [pendingAnalysisData, setPendingAnalysisData] = useState<any>(null);
   const [user, setUser] = useState<any>(null);
+  const [email, setEmail] = useState("");
+  const [isEmailSent, setIsEmailSent] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Check for authenticated user
   useEffect(() => {
@@ -261,6 +266,8 @@ const Index = () => {
     setPendingFile(null);
     setPendingUrl(null);
     setPendingAnalysisData(null);
+    setIsEmailSent(false);
+    setEmail("");
   };
 
   const handleSignIn = async () => {
@@ -282,6 +289,49 @@ const Index = () => {
 
     // Close the dialog after initiating sign in
     setIsAuthDialogOpen(false);
+  };
+
+  const handleEmailSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email || !email.includes('@')) {
+      toast({
+        title: "Invalid email",
+        description: "Please enter a valid email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: window.location.origin,
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      setIsEmailSent(true);
+      toast({
+        title: "Magic link sent",
+        description: "Check your email for the login link.",
+      });
+    } catch (error: any) {
+      console.error("Email sign in error:", error);
+      toast({
+        title: "Sign in failed",
+        description: error.message || "Could not send magic link.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const filteredIssues = priorityFilter === 'all' 
@@ -357,16 +407,66 @@ const Index = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Sign in required</AlertDialogTitle>
             <AlertDialogDescription>
-              You need to sign in to use this feature. Would you like to sign in now?
+              You need to sign in to use this feature.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleAuthDialogClose}>Cancel</AlertDialogCancel>
-            <AlertDialogAction asChild>
-              <Button onClick={handleSignIn} className="bg-accent hover:bg-accent/90">
+          
+          {!isEmailSent ? (
+            <div className="grid gap-4 py-4">
+              <form onSubmit={handleEmailSignIn} className="space-y-3">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="your@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Sending link..." : "Sign in with Email"}
+                </Button>
+              </form>
+              
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">
+                    Or continue with
+                  </span>
+                </div>
+              </div>
+              
+              <Button 
+                onClick={handleSignIn} 
+                className="bg-accent hover:bg-accent/90"
+              >
                 Sign in with Google
               </Button>
-            </AlertDialogAction>
+            </div>
+          ) : (
+            <div className="py-6">
+              <div className="rounded-lg bg-slate-50 p-4 text-center">
+                <h3 className="font-medium mb-1">Check your email</h3>
+                <p className="text-sm text-slate-600">
+                  We've sent a magic link to <span className="font-medium">{email}</span>
+                </p>
+              </div>
+            </div>
+          )}
+          
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleAuthDialogClose}>
+              {isEmailSent ? "Close" : "Cancel"}
+            </AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { X, CheckSquare, ArrowRight, Clock, Tool, Download } from "lucide-react";
+import { X, CheckSquare, ArrowRight, Clock, Wrench, Download } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 type Feedback = {
@@ -326,7 +326,7 @@ export const ImplementationGuide = ({ issues, onClose }: Props) => {
                     
                     <div className="flex items-center gap-2">
                       <div className="text-accent">
-                        <Tool size={16} />
+                        <Wrench size={16} />
                       </div>
                       <div>
                         <p className="text-xs font-medium text-neutral-500">Skill Level</p>

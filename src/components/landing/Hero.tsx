@@ -1,5 +1,5 @@
 
-import { Star, FileSearch, Annotation, ArrowUpCircle, Award } from "lucide-react";
+import { Star, FileSearch, MessageCircle, ArrowUpCircle, Award } from "lucide-react";
 
 type FeatureProps = {
   icon: React.ElementType;
@@ -27,7 +27,7 @@ export const Hero = () => {
       color: "#8B5CF6" // Purple for Professional Analysis
     },
     {
-      icon: Annotation,
+      icon: MessageCircle,
       title: "Visual Annotations",
       description: "Clear, actionable visual feedback",
       color: "#3B82F6" // Blue for Visual Annotations

@@ -197,7 +197,7 @@ export const FeedbackPanel = ({
     <div className="bg-white rounded-xl shadow-sm p-6 h-full">
       <div className="flex justify-between items-center mb-4">
         <h2 className="font-semibold text-xl">Design Issues</h2>
-        <div className="space-x-2">
+        <div className="flex flex-row items-center gap-2">
           <Button
             variant="outline"
             size="sm"

@@ -42,6 +42,13 @@ const annotations: AnnotationPoint[] = [
 ];
 
 export const AnnotationExample = () => {
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+  };
+
   return (
     <section className="py-16 bg-white rounded-2xl">
       <div className="container">
@@ -114,7 +121,10 @@ export const AnnotationExample = () => {
 
         {/* Action Button */}
         <div className="text-center mt-8">
-          <button className="px-6 py-3 bg-accent text-white rounded-lg font-medium hover:bg-accent/90 transition-colors">
+          <button 
+            onClick={scrollToTop}
+            className="px-6 py-3 bg-accent text-white rounded-lg font-medium hover:bg-accent/90 transition-colors"
+          >
             Try Design Critique Now
           </button>
         </div>

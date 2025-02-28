@@ -51,7 +51,7 @@ export const AnalysisView = ({
 }: Props) => {
   // Track image loaded status
   const [imageReady, setImageReady] = useState(false);
-  // Force a re-render when analysis completes
+  // Force a re-render when analysis completes or filter changes
   const [forceRender, setForceRender] = useState(0);
   
   // Check if this is a URL analysis (no real image, just a placeholder)
@@ -76,15 +76,25 @@ export const AnalysisView = ({
     }
   }, [uploadedImage, isUrlAnalysis]);
 
-  // Force a re-render when analysis completes
+  // Force a re-render when analysis completes or when filter changes
   useEffect(() => {
-    if (!isAnalyzing && filteredIssues.length > 0) {
+    if (!isAnalyzing && feedback.length > 0) {
       // Small delay to ensure everything is ready
       setTimeout(() => {
         setForceRender(prev => prev + 1);
       }, 200);
     }
-  }, [isAnalyzing, filteredIssues.length]);
+  }, [isAnalyzing, feedback.length, priorityFilter]); // Added priorityFilter as dependency
+
+  // Compute annotations from the filtered issues
+  const visibleAnnotations = filteredIssues
+    .filter(f => f.location)
+    .map(f => ({
+      id: f.id || 0,
+      x: f.location?.x || 0,
+      y: f.location?.y || 0,
+      priority: f.priority || "medium"
+    }));
 
   return (
     <div className="min-h-screen bg-neutral-50 pt-16">
@@ -145,17 +155,10 @@ export const AnalysisView = ({
                     </div>
                     {uploadedImage && imageReady && (
                       <AnnotationCanvas
-                        key={`annotation-canvas-${forceRender}`}
+                        key={`annotation-canvas-${forceRender}-${priorityFilter}`}
                         image={uploadedImage}
                         onSave={() => {}}
-                        annotations={filteredIssues
-                          .filter(f => f.location)
-                          .map(f => ({
-                            id: f.id || 0,
-                            x: f.location?.x || 0,
-                            y: f.location?.y || 0,
-                            priority: f.priority || "medium"
-                          }))}
+                        annotations={visibleAnnotations}
                         selectedIssue={selectedIssue}
                         onIssueSelect={setSelectedIssue}
                       />

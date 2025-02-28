@@ -111,24 +111,24 @@ const Index = () => {
               const mockAnalysis = {
                 strengths: [
                   {
-                    type: "positive",
+                    type: "positive" as const,
                     title: "Strong Color Contrast",
                     description: "The design uses high contrast colors that enhance readability and visual appeal."
                   },
                   {
-                    type: "positive",
+                    type: "positive" as const,
                     title: "Clear Typography Hierarchy",
                     description: "Good use of font sizes and weights creates a clear visual hierarchy."
                   },
                   {
-                    type: "positive",
+                    type: "positive" as const,
                     title: "Consistent Visual Style",
                     description: "The design maintains a consistent visual language throughout the interface."
                   }
                 ],
                 issues: [
                   {
-                    type: "improvement",
+                    type: "improvement" as const,
                     title: "Cluttered Layout",
                     description: "The elements are too tightly packed, making the interface feel cluttered. Consider adding more whitespace.",
                     priority: "high",
@@ -138,7 +138,7 @@ const Index = () => {
                     technical_details: "Increase padding between elements by at least 16px."
                   },
                   {
-                    type: "improvement",
+                    type: "improvement" as const,
                     title: "Inconsistent Button Styles",
                     description: "Button styles vary throughout the interface. Standardize button appearance for better usability.",
                     priority: "medium",
@@ -148,7 +148,7 @@ const Index = () => {
                     technical_details: "Define a single button component with variants for different states."
                   },
                   {
-                    type: "improvement",
+                    type: "improvement" as const,
                     title: "Low Text Contrast",
                     description: "Some text has low contrast with the background, making it difficult to read.",
                     priority: "high",
@@ -158,7 +158,7 @@ const Index = () => {
                     technical_details: "Ensure text meets WCAG AA standards with a minimum contrast ratio of 4.5:1."
                   },
                   {
-                    type: "improvement",
+                    type: "improvement" as const,
                     title: "Overwhelming Color Palette",
                     description: "Too many colors are used, creating visual confusion. Limit the color palette.",
                     priority: "medium",
@@ -168,7 +168,7 @@ const Index = () => {
                     technical_details: "Reduce the palette to 3 primary colors and 2-3 accent colors."
                   },
                   {
-                    type: "improvement",
+                    type: "improvement" as const,
                     title: "Mobile Responsiveness Issues",
                     description: "The design doesn't scale well to smaller screens. Implement a responsive layout.",
                     priority: "high",
@@ -178,7 +178,7 @@ const Index = () => {
                     technical_details: "Use flexible grids and media queries to adapt the layout."
                   },
                   {
-                    type: "improvement",
+                    type: "improvement" as const,
                     title: "Missing Visual Feedback",
                     description: "Interactive elements lack visual feedback for hover and active states.",
                     priority: "low",
@@ -188,7 +188,7 @@ const Index = () => {
                     technical_details: "Add hover and active states to all interactive elements."
                   },
                   {
-                    type: "improvement",
+                    type: "improvement" as const,
                     title: "Form Field Alignment",
                     description: "Form fields are not properly aligned, creating a disorganized appearance.",
                     priority: "low",
@@ -267,13 +267,13 @@ const Index = () => {
             const analysis = JSON.parse(jsonString);
             
             const newFeedback: Feedback[] = [
-              ...analysis.strengths.map((s: any) => ({
-                type: "positive",
+              ...(analysis.strengths || []).map((s: any) => ({
+                type: "positive" as const,
                 title: s.title,
                 description: s.description,
               })),
-              ...analysis.issues.map((i: any) => ({
-                type: "improvement",
+              ...(analysis.issues || []).map((i: any) => ({
+                type: "improvement" as const,
                 title: i.issue,
                 description: i.recommendation,
                 priority: i.priority,

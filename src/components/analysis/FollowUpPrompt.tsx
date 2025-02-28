@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { ArrowUp, Check, LineChart } from "lucide-react";
+import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
@@ -24,10 +24,10 @@ export const FollowUpPrompt = ({ isSubscribed }: FollowUpPromptProps) => {
   return (
     <>
       <div className="mt-8 bg-blue-50 rounded-lg p-6 border border-blue-100">
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Track Your Design Progress</h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">Follow-Up Analysis</h3>
         
         <p className="text-gray-700 mb-4">
-          After implementing our recommended changes, get a discounted follow-up analysis to:
+          After implementing our recommended changes, submit your updated design for a follow-up analysis to:
         </p>
         
         <ul className="list-disc pl-5 mb-4 text-gray-700 space-y-1">
@@ -36,11 +36,6 @@ export const FollowUpPrompt = ({ isSubscribed }: FollowUpPromptProps) => {
           <li>Get expert verification that changes were implemented correctly</li>
           <li>Receive a professional progress report you can share with stakeholders</li>
         </ul>
-        
-        <div className="flex items-center mb-4">
-          <span className="text-lg font-medium text-blue-700">30% off</span>
-          <span className="mx-2 text-gray-500">your first follow-up analysis with any subscription</span>
-        </div>
         
         <Button 
           onClick={handleFollowUpClick}
@@ -55,10 +50,10 @@ export const FollowUpPrompt = ({ isSubscribed }: FollowUpPromptProps) => {
         <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-xl text-center">
-              Upgrade to Track Your Progress
+              Upgrade to Access Follow-Up Analysis
             </AlertDialogTitle>
             <AlertDialogDescription className="text-center text-gray-600">
-              The follow-up analysis is a premium feature that helps you measure your design improvements over time.
+              The follow-up analysis is a premium feature included in our subscription plan.
             </AlertDialogDescription>
           </AlertDialogHeader>
           

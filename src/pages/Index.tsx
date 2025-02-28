@@ -131,7 +131,7 @@ const Index = () => {
                     type: "improvement" as const,
                     title: "Cluttered Layout",
                     description: "The elements are too tightly packed, making the interface feel cluttered. Consider adding more whitespace.",
-                    priority: "high",
+                    priority: "high" as const,
                     location: { x: 200, y: 150 },
                     id: 1,
                     principle: "Visual Clarity",
@@ -141,7 +141,7 @@ const Index = () => {
                     type: "improvement" as const,
                     title: "Inconsistent Button Styles",
                     description: "Button styles vary throughout the interface. Standardize button appearance for better usability.",
-                    priority: "medium",
+                    priority: "medium" as const,
                     location: { x: 400, y: 300 },
                     id: 2,
                     principle: "Consistency",
@@ -151,7 +151,7 @@ const Index = () => {
                     type: "improvement" as const,
                     title: "Low Text Contrast",
                     description: "Some text has low contrast with the background, making it difficult to read.",
-                    priority: "high",
+                    priority: "high" as const,
                     location: { x: 150, y: 400 },
                     id: 3,
                     principle: "Accessibility",
@@ -161,7 +161,7 @@ const Index = () => {
                     type: "improvement" as const,
                     title: "Overwhelming Color Palette",
                     description: "Too many colors are used, creating visual confusion. Limit the color palette.",
-                    priority: "medium",
+                    priority: "medium" as const,
                     location: { x: 300, y: 200 },
                     id: 4,
                     principle: "Visual Harmony",
@@ -171,7 +171,7 @@ const Index = () => {
                     type: "improvement" as const,
                     title: "Mobile Responsiveness Issues",
                     description: "The design doesn't scale well to smaller screens. Implement a responsive layout.",
-                    priority: "high",
+                    priority: "high" as const,
                     location: { x: 250, y: 350 },
                     id: 5,
                     principle: "Responsive Design",
@@ -181,7 +181,7 @@ const Index = () => {
                     type: "improvement" as const,
                     title: "Missing Visual Feedback",
                     description: "Interactive elements lack visual feedback for hover and active states.",
-                    priority: "low",
+                    priority: "low" as const,
                     location: { x: 350, y: 250 },
                     id: 6,
                     principle: "User Feedback",
@@ -191,7 +191,7 @@ const Index = () => {
                     type: "improvement" as const,
                     title: "Form Field Alignment",
                     description: "Form fields are not properly aligned, creating a disorganized appearance.",
-                    priority: "low",
+                    priority: "low" as const,
                     location: { x: 450, y: 400 },
                     id: 7,
                     principle: "Alignment",
@@ -266,22 +266,31 @@ const Index = () => {
             const jsonString = analysisText.substring(jsonStartIndex, jsonEndIndex);
             const analysis = JSON.parse(jsonString);
             
+            // Make sure to cast priority values to the appropriate type
             const newFeedback: Feedback[] = [
               ...(analysis.strengths || []).map((s: any) => ({
                 type: "positive" as const,
                 title: s.title,
                 description: s.description,
               })),
-              ...(analysis.issues || []).map((i: any) => ({
-                type: "improvement" as const,
-                title: i.issue,
-                description: i.recommendation,
-                priority: i.priority,
-                location: i.location,
-                id: i.id,
-                principle: i.principle,
-                technical_details: i.technical_details
-              })),
+              ...(analysis.issues || []).map((i: any) => {
+                // Ensure priority is one of the allowed values
+                let priority: "low" | "medium" | "high" | undefined = undefined;
+                if (i.priority === "low" || i.priority === "medium" || i.priority === "high") {
+                  priority = i.priority as "low" | "medium" | "high";
+                }
+                
+                return {
+                  type: "improvement" as const,
+                  title: i.issue,
+                  description: i.recommendation,
+                  priority: priority,
+                  location: i.location,
+                  id: i.id,
+                  principle: i.principle,
+                  technical_details: i.technical_details
+                };
+              }),
             ];
             
             setFeedback(newFeedback);

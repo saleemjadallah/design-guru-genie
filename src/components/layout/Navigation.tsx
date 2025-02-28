@@ -69,7 +69,7 @@ export const Navigation = () => {
       <div className="container flex items-center justify-between h-16">
         <Link to="/" className="flex items-center">
           <img 
-            src="/lovable-uploads/d8111ffc-aa28-4e49-a13a-246b7ce4b6b9.png" 
+            src="/lovable-uploads/8a185f10-55e0-4b70-a0c0-bf46f5b8d8b7.png" 
             alt="Evolvely.ai Logo" 
             className="h-12"
           />
@@ -224,7 +224,7 @@ export const Navigation = () => {
             <div className="px-6 mb-8">
               <Link to="/" className="flex items-center" onClick={() => setIsOpen(false)}>
                 <img 
-                  src="/lovable-uploads/d8111ffc-aa28-4e49-a13a-246b7ce4b6b9.png" 
+                  src="/lovable-uploads/8a185f10-55e0-4b70-a0c0-bf46f5b8d8b7.png" 
                   alt="Evolvely.ai Logo" 
                   className="h-8"
                 />

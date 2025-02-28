@@ -114,8 +114,8 @@ export const AnalysisView = ({
       {showImplementationGuide && currentIssue ? (
         <div>
           <ImplementationGuide 
-            issue={currentIssue} 
-            onBack={handleCloseImplementationGuide} 
+            issues={[currentIssue]} 
+            onClose={handleCloseImplementationGuide} 
           />
         </div>
       ) : (

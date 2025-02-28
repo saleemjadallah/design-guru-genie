@@ -1,7 +1,7 @@
 
 import { Check, AlertCircle, Copy, FileText } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ImplementationGuide } from "./implementation/ImplementationGuide";
 
 type Feedback = {
@@ -30,6 +30,28 @@ export const FeedbackPanel = ({
   isUrlAnalysis = false
 }: Props) => {
   const [showImplementationGuide, setShowImplementationGuide] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+        setShowImplementationGuide(false);
+      }
+    };
+    
+    if (showImplementationGuide) {
+      document.addEventListener('mousedown', handleClickOutside);
+      // Prevent body scrolling when modal is open
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.body.style.overflow = '';
+    };
+  }, [showImplementationGuide]);
   
   const handleCopyRecommendation = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -133,8 +155,11 @@ export const FeedbackPanel = ({
       
       {/* Implementation Guide Modal */}
       {showImplementationGuide && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="max-w-5xl w-full">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center p-4 overflow-y-auto">
+          <div 
+            ref={modalRef}
+            className="max-w-5xl w-full my-8"
+          >
             <ImplementationGuide 
               issues={feedback} 
               onClose={() => setShowImplementationGuide(false)} 

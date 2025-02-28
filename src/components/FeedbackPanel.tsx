@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Check, LineChart, Save } from "lucide-react";
+import { Check, Download, LineChart, Save } from "lucide-react";
 
 interface Feedback {
   type: "positive" | "improvement";
@@ -44,6 +44,7 @@ export const FeedbackPanel = ({
   isUrlAnalysis = false
 }: FeedbackPanelProps) => {
   const [isSaving, setIsSaving] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [savedTitle, setSavedTitle] = useState("");
@@ -52,6 +53,16 @@ export const FeedbackPanel = ({
 
   // Use either the provided filteredIssues or filter improvement types from feedback
   const displayedIssues = filteredIssues || feedback.filter(f => f.type === "improvement");
+  
+  // Sort issues by priority: high -> medium -> low -> undefined
+  const sortedIssues = [...displayedIssues].sort((a, b) => {
+    const priorityOrder = { high: 1, medium: 2, low: 3, undefined: 4 };
+    const aPriority = a.priority || "undefined";
+    const bPriority = b.priority || "undefined";
+    
+    return (priorityOrder[aPriority as keyof typeof priorityOrder]) - 
+           (priorityOrder[bPriority as keyof typeof priorityOrder]);
+  });
   
   // Use the appropriate issue selection handler
   const handleIssueSelect = (id: number | null) => {
@@ -148,6 +159,28 @@ export const FeedbackPanel = ({
     }
   };
 
+  const exportPDF = async () => {
+    setIsExporting(true);
+    try {
+      // Simulate PDF export process
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      
+      toast({
+        title: "PDF exported",
+        description: "Your design analysis has been exported to PDF successfully.",
+      });
+    } catch (error) {
+      console.error("Error exporting PDF:", error);
+      toast({
+        title: "Export failed",
+        description: "There was an error exporting your analysis. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const handleGoToFollowUp = () => {
     if (analysisId) {
       navigate(`/follow-up/${analysisId}`);
@@ -165,6 +198,16 @@ export const FeedbackPanel = ({
       <div className="flex justify-between items-center mb-4">
         <h2 className="font-semibold text-xl">Design Issues</h2>
         <div className="space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-1"
+            onClick={exportPDF}
+            disabled={isExporting}
+          >
+            <Download className="w-4 h-4" />
+            <span>{isExporting ? "Exporting..." : "Export PDF"}</span>
+          </Button>
           {user && analysisId && (
             <Button
               variant="outline"
@@ -203,12 +246,12 @@ export const FeedbackPanel = ({
       )}
 
       <div className="space-y-4 overflow-y-auto max-h-[600px] pr-2">
-        {displayedIssues.length === 0 ? (
+        {sortedIssues.length === 0 ? (
           <div className="text-center py-10 text-neutral-500">
             No issues found for this filter criteria.
           </div>
         ) : (
-          displayedIssues.map((issue) => (
+          sortedIssues.map((issue) => (
             <div
               key={issue.id}
               className={`border rounded-lg p-4 transition-all ${

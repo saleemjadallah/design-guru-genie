@@ -53,22 +53,35 @@ export const Navigation = () => {
   const handleAction = async (action: string) => {
     switch (action) {
       case "sign-in":
+        // For testing: Mock the sign-in instead of actually authenticating
         toast({
-          title: "Sign In",
-          description: "Sign in coming soon",
+          title: "Test Mode: Sign In",
+          description: "Authentication bypassed for testing",
+        });
+        // Mock signed in user
+        setUser({
+          id: "test-user-id",
+          email: "test@example.com"
         });
         break;
       case "sign-up":
+        // For testing: Mock the sign-up instead of actually registering
         toast({
-          title: "Sign Up",
-          description: "Sign up coming soon",
+          title: "Test Mode: Sign Up",
+          description: "Account creation bypassed for testing",
+        });
+        // Mock signed in user
+        setUser({
+          id: "test-user-id",
+          email: "test@example.com"
         });
         break;
       case "logout":
-        await supabase.auth.signOut();
+        // For testing: Just clear the user state without calling supabase
+        setUser(null);
         toast({
-          title: "Signed out",
-          description: "You have been signed out successfully",
+          title: "Test Mode: Signed out",
+          description: "You have been signed out (test mode)",
         });
         break;
       case "saved-reviews":
@@ -112,11 +125,11 @@ export const Navigation = () => {
                   <>
                     <DropdownMenuItem onClick={() => handleAction("sign-in")}>
                       <LogIn className="mr-2 h-4 w-4" />
-                      <span>Sign In</span>
+                      <span>Sign In (Test Mode)</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleAction("sign-up")}>
                       <User className="mr-2 h-4 w-4" />
-                      <span>Sign Up</span>
+                      <span>Sign Up (Test Mode)</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                   </>

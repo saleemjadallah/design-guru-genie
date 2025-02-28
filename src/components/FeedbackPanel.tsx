@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Check, Download, LineChart, FileCode, Save } from "lucide-react";
+import { Check, Download, LineChart, FileCode, Save, ListChecks } from "lucide-react";
 
 interface Feedback {
   type: "positive" | "improvement";
@@ -28,6 +28,7 @@ interface FeedbackPanelProps {
   strengths?: Feedback[];
   onSave?: () => void;
   onIssueSelect?: (id: number | null) => void;
+  onViewAllImplementation?: () => void;
   isUrlAnalysis?: boolean;
 }
 
@@ -41,6 +42,7 @@ export const FeedbackPanel = ({
   strengths,
   onSave,
   onIssueSelect,
+  onViewAllImplementation,
   isUrlAnalysis = false
 }: FeedbackPanelProps) => {
   const [isSaving, setIsSaving] = useState(false);
@@ -242,6 +244,19 @@ export const FeedbackPanel = ({
             placeholder="Enter a title to save this analysis"
             className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
           />
+        </div>
+      )}
+
+      {displayedIssues.length > 0 && onViewAllImplementation && (
+        <div className="mb-4">
+          <Button 
+            variant="outline" 
+            className="w-full flex items-center justify-center gap-2"
+            onClick={onViewAllImplementation}
+          >
+            <ListChecks className="w-4 h-4" />
+            <span>View All Implementation Steps</span>
+          </Button>
         </div>
       )}
 

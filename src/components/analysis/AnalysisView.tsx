@@ -4,10 +4,11 @@ import { FeedbackPanel } from "@/components/FeedbackPanel";
 import { ProcessingState } from "@/components/ProcessingState";
 import { FilterControls } from "@/components/analysis/FilterControls";
 import { Overview } from "@/components/analysis/Overview";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, FileCode } from "lucide-react";
 import { FollowUpPrompt } from "@/components/analysis/FollowUpPrompt";
 import { supabase } from "@/integrations/supabase/client";
 import { ImplementationGuide } from "@/components/implementation/ImplementationGuide";
+import { Button } from "@/components/ui/button";
 
 interface Feedback {
   type: "positive" | "improvement";
@@ -56,7 +57,11 @@ export const AnalysisView = ({
   const [isSubscribed, setIsSubscribed] = useState(propIsSubscribed || false);
   const [analysisId, setAnalysisId] = useState<string | null>(null);
   const [showImplementationGuide, setShowImplementationGuide] = useState(false);
+  const [showAllImplementationGuide, setShowAllImplementationGuide] = useState(false);
   const [currentIssue, setCurrentIssue] = useState<Feedback | null>(null);
+
+  // Get all improvement issues
+  const allIssues = feedback.filter(f => f.type === "improvement");
 
   useEffect(() => {
     const checkSubscriptionStatus = async () => {
@@ -88,6 +93,13 @@ export const AnalysisView = ({
 
   const handleCloseImplementationGuide = () => {
     setShowImplementationGuide(false);
+    setShowAllImplementationGuide(false);
+    setSelectedIssue(null);
+  };
+
+  const handleViewAllImplementation = () => {
+    setShowAllImplementationGuide(true);
+    setShowImplementationGuide(false);
     setSelectedIssue(null);
   };
 
@@ -109,12 +121,30 @@ export const AnalysisView = ({
           <ArrowLeft className="w-4 h-4 mr-2" />
           <span>Back</span>
         </button>
+        
+        {!showImplementationGuide && !showAllImplementationGuide && allIssues.length > 0 && (
+          <Button
+            onClick={handleViewAllImplementation}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <FileCode size={16} />
+            <span>View All Implementation Steps</span>
+          </Button>
+        )}
       </div>
 
       {showImplementationGuide && currentIssue ? (
         <div>
           <ImplementationGuide 
             issues={[currentIssue]} 
+            onClose={handleCloseImplementationGuide} 
+          />
+        </div>
+      ) : showAllImplementationGuide ? (
+        <div>
+          <ImplementationGuide 
+            issues={allIssues} 
             onClose={handleCloseImplementationGuide} 
           />
         </div>
@@ -167,6 +197,7 @@ export const AnalysisView = ({
                   }
                 }
               }}
+              onViewAllImplementation={handleViewAllImplementation}
             />
           </div>
         </div>

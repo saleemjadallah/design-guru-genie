@@ -1,13 +1,14 @@
 
-import { ArrowLeft } from "lucide-react";
-import { Overview } from "./Overview";
-import { FilterControls } from "./FilterControls";
-import { AnnotationCanvas } from "@/components/AnnotationCanvas";
+import { useState, useEffect } from "react";
 import { FeedbackPanel } from "@/components/FeedbackPanel";
 import { ProcessingState } from "@/components/ProcessingState";
-import { useEffect, useState } from "react";
+import { FilterControls } from "@/components/analysis/FilterControls";
+import { Overview } from "@/components/analysis/Overview";
+import { ArrowLeft } from "lucide-react";
+import { FollowUpPrompt } from "@/components/analysis/FollowUpPrompt";
+import { supabase } from "@/integrations/supabase/client";
 
-type Feedback = {
+interface Feedback {
   type: "positive" | "improvement";
   title: string;
   description: string;
@@ -16,11 +17,11 @@ type Feedback = {
   id?: number;
   principle?: string;
   technical_details?: string;
-};
+}
 
-type Props = {
+interface AnalysisViewProps {
   isAnalyzing: boolean;
-  analysisStage: number;
+  analysisStage: 0 | 1 | 2 | 3;
   uploadedImage: string | null;
   feedback: Feedback[];
   selectedIssue: number | null;
@@ -32,7 +33,7 @@ type Props = {
   setSelectedIssue: (id: number | null) => void;
   setFeedback: (feedback: Feedback[]) => void;
   getIssueCountByPriority: (priority: string) => number;
-};
+}
 
 export const AnalysisView = ({
   isAnalyzing,
@@ -47,157 +48,90 @@ export const AnalysisView = ({
   setPriorityFilter,
   setSelectedIssue,
   setFeedback,
-  getIssueCountByPriority,
-}: Props) => {
-  // Track image loaded status
-  const [imageReady, setImageReady] = useState(false);
-  // Force a re-render when analysis completes or filter changes
-  const [forceRender, setForceRender] = useState(0);
-  
-  // Check if this is a URL analysis (no real image, just a placeholder)
-  const isUrlAnalysis = uploadedImage?.startsWith('data:image/svg+xml');
-  
-  // Debug logs to help diagnose the issue
-  useEffect(() => {
-    console.log("Filter changed:", priorityFilter);
-    console.log("Filtered issues:", filteredIssues.length);
-    console.log("Issues with locations:", filteredIssues.filter(f => f.location).length);
-  }, [priorityFilter, filteredIssues]);
+  getIssueCountByPriority
+}: AnalysisViewProps) => {
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [analysisId, setAnalysisId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (uploadedImage && !isUrlAnalysis) {
-      // Create a new Image to preload the image
-      const img = new Image();
-      img.onload = () => {
-        console.log("Image loaded successfully");
-        setImageReady(true);
-      };
-      img.onerror = (e) => {
-        console.error("Failed to load image:", e);
-        // Still set to ready so we can display error fallback
-        setImageReady(true);
-      };
-      img.src = uploadedImage;
-    } else {
-      // For URL analysis or if no image, we're ready
-      setImageReady(true);
-    }
-  }, [uploadedImage, isUrlAnalysis]);
+    const checkSubscriptionStatus = async () => {
+      // Here you would normally check if the user has an active subscription
+      // For now, we'll simulate that the user is not subscribed
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsSubscribed(!!session);
+      
+      // Generate a temporary analysis ID for demo purposes
+      setAnalysisId(crypto.randomUUID());
+    };
 
-  // Force a re-render when analysis completes, when filter changes, or when issues change
-  useEffect(() => {
-    if (!isAnalyzing && feedback.length > 0) {
-      console.log("Forcing re-render due to completed analysis or filter change");
-      // Small delay to ensure everything is ready
-      setTimeout(() => {
-        setForceRender(prev => prev + 1);
-      }, 200);
-    }
-  }, [isAnalyzing, feedback.length, priorityFilter]); 
+    checkSubscriptionStatus();
+  }, []);
 
-  // Compute annotations from the filtered issues - ensure we have valid coordinates
-  const visibleAnnotations = filteredIssues
-    .filter(f => f.location && typeof f.location.x === 'number' && typeof f.location.y === 'number')
-    .map(f => ({
-      id: f.id || 0,
-      x: f.location?.x || 0,
-      y: f.location?.y || 0,
-      priority: f.priority || "medium"
-    }));
-
-  console.log("Rendering AnalysisView with", visibleAnnotations.length, "visible annotations");
+  if (isAnalyzing) {
+    return (
+      <div className="container py-12">
+        <ProcessingState stage={analysisStage} />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-neutral-50 pt-16">
-      <header className="fixed top-16 left-0 right-0 bg-white shadow-sm z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <div className="flex items-center">
-            <button 
-              className="mr-4 text-neutral-600 hover:text-neutral-900"
-              onClick={onBack}
-            >
-              <ArrowLeft size={20} />
-            </button>
-            <h1 className="text-xl font-bold text-neutral-900">
-              {isUrlAnalysis ? "Website Analysis" : "Design Analysis"}
-            </h1>
-          </div>
-        </div>
-      </header>
+    <div className="container py-12">
+      <div className="flex justify-between items-center mb-8">
+        <button
+          onClick={onBack}
+          className="flex items-center text-neutral-600 hover:text-neutral-900 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          <span>Back</span>
+        </button>
+      </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-20">
-        {isAnalyzing ? (
-          <ProcessingState currentStage={analysisStage} />
-        ) : (
-          <div className="space-y-6">
-            <Overview 
-              positiveFeatures={positiveFeatures}
-              getIssueCountByPriority={getIssueCountByPriority}
-              isUrlAnalysis={isUrlAnalysis}
-            />
-
-            <FilterControls 
-              priorityFilter={priorityFilter}
-              setPriorityFilter={setPriorityFilter}
-              uploadedImage={uploadedImage}
-              feedback={feedback}
-              isUrlAnalysis={isUrlAnalysis}
-            />
-
-            {isUrlAnalysis ? (
-              // URL Analysis Layout - Full-width feedback panel
-              <div className="bg-white rounded-lg shadow-sm">
-                <FeedbackPanel 
-                  feedback={filteredIssues} 
-                  strengths={positiveFeatures}
-                  onSave={setFeedback}
-                  selectedIssue={selectedIssue}
-                  onIssueSelect={setSelectedIssue}
-                  isUrlAnalysis={true}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div>
+          <div className="bg-white p-4 rounded-xl shadow-sm overflow-hidden mb-8">
+            <h2 className="font-semibold text-xl mb-4">Original Design</h2>
+            {uploadedImage && (
+              <div className="relative rounded-lg overflow-hidden border border-neutral-200">
+                <img
+                  src={uploadedImage}
+                  alt="Uploaded design"
+                  className="w-full h-auto"
                 />
-              </div>
-            ) : (
-              // Image Analysis Layout - Split view with annotations
-              <div className="flex flex-col lg:flex-row gap-6">
-                <div className="lg:w-3/5">
-                  <div className="bg-white rounded-lg shadow-sm p-4">
-                    <div className="text-center text-sm font-medium text-neutral-500 mb-4">
-                      With AI Annotations
-                    </div>
-                    {uploadedImage && imageReady && (
-                      <AnnotationCanvas
-                        key={`annotation-canvas-${forceRender}-${priorityFilter}`}
-                        image={uploadedImage}
-                        onSave={() => {}}
-                        annotations={visibleAnnotations}
-                        selectedIssue={selectedIssue}
-                        onIssueSelect={setSelectedIssue}
-                      />
-                    )}
-                    
-                    {uploadedImage && !imageReady && (
-                      <div className="w-full py-20 flex items-center justify-center bg-neutral-50 rounded-lg">
-                        <div className="animate-pulse text-neutral-500">
-                          Preparing image...
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="lg:w-2/5">
-                  <FeedbackPanel 
-                    feedback={filteredIssues} 
-                    strengths={positiveFeatures}
-                    onSave={setFeedback}
-                    selectedIssue={selectedIssue}
-                    onIssueSelect={setSelectedIssue}
-                  />
-                </div>
               </div>
             )}
           </div>
-        )}
+
+          <Overview
+            positiveFeatures={positiveFeatures}
+            issueCount={feedback.filter(f => f.type === "improvement").length}
+            getIssueCountByPriority={getIssueCountByPriority}
+          />
+          
+          {/* Follow-Up Analysis CTA */}
+          {analysisStage === 3 && !isAnalyzing && (
+            <FollowUpPrompt isSubscribed={isSubscribed} />
+          )}
+        </div>
+
+        <div>
+          <FilterControls
+            priorityFilter={priorityFilter}
+            setPriorityFilter={setPriorityFilter}
+            issueCountHigh={getIssueCountByPriority("high")}
+            issueCountMedium={getIssueCountByPriority("medium")}
+            issueCountLow={getIssueCountByPriority("low")}
+          />
+
+          <FeedbackPanel
+            feedback={feedback}
+            filteredIssues={filteredIssues}
+            selectedIssue={selectedIssue}
+            setSelectedIssue={setSelectedIssue}
+            setFeedback={setFeedback}
+            analysisId={analysisId}
+          />
+        </div>
       </div>
     </div>
   );

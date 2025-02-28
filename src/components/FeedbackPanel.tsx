@@ -1,172 +1,299 @@
 
-import { Check, AlertCircle, Copy, FileText } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { useState, useRef, useEffect } from "react";
-import { ImplementationGuide } from "./implementation/ImplementationGuide";
+import { Button } from "@/components/ui/button";
+import { Check, LineChart, Save } from "lucide-react";
 
-type Feedback = {
+interface Feedback {
   type: "positive" | "improvement";
   title: string;
   description: string;
   priority?: "low" | "medium" | "high";
+  location?: { x: number; y: number };
   id?: number;
   principle?: string;
   technical_details?: string;
-};
+}
 
-type Props = {
+interface FeedbackPanelProps {
   feedback: Feedback[];
-  strengths: Feedback[];
-  onSave: (feedback: Feedback[]) => void;
-  selectedIssue?: number | null;
-  onIssueSelect?: (id: number | null) => void;
-  isUrlAnalysis?: boolean;
-};
+  filteredIssues: Feedback[];
+  selectedIssue: number | null;
+  setSelectedIssue: (id: number | null) => void;
+  setFeedback: (feedback: Feedback[]) => void;
+  analysisId?: string | null;
+}
 
-export const FeedbackPanel = ({ 
-  feedback, 
+export const FeedbackPanel = ({
+  feedback,
+  filteredIssues,
   selectedIssue,
-  onIssueSelect,
-  isUrlAnalysis = false
-}: Props) => {
-  const [showImplementationGuide, setShowImplementationGuide] = useState(false);
-  const modalRef = useRef<HTMLDivElement>(null);
-  
+  setSelectedIssue,
+  setFeedback,
+  analysisId
+}: FeedbackPanelProps) => {
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [savedTitle, setSavedTitle] = useState("");
+  const titleInputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
+
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
-        setShowImplementationGuide(false);
-      }
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user || null);
+      // Here you would normally check if the user has an active subscription
+      // For now, we'll simulate that based on authentication status
+      setIsSubscribed(!!session?.user);
     };
     
-    if (showImplementationGuide) {
-      document.addEventListener('mousedown', handleClickOutside);
-      // Prevent body scrolling when modal is open
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
+    checkAuth();
+  }, []);
+
+  const handlePriorityClick = (id: number, newPriority: 'low' | 'medium' | 'high') => {
+    setFeedback(
+      feedback.map((item) =>
+        item.id === id
+          ? { ...item, priority: newPriority }
+          : item
+      )
+    );
+  };
+
+  const getPriorityClasses = (priority?: string) => {
+    switch (priority) {
+      case "high":
+        return "bg-red-100 text-red-800";
+      case "medium":
+        return "bg-orange-100 text-orange-800";
+      case "low":
+        return "bg-green-100 text-green-800";
+      default:
+        return "bg-neutral-100 text-neutral-800";
     }
-    
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.body.style.overflow = '';
-    };
-  }, [showImplementationGuide]);
-  
-  const handleCopyRecommendation = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast({
-      title: "Copied to clipboard",
-      description: "The recommendation has been copied to your clipboard.",
-    });
+  };
+
+  const saveAnalysis = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to save your analysis.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!savedTitle.trim()) {
+      toast({
+        title: "Title required",
+        description: "Please enter a title for your saved analysis.",
+        variant: "destructive",
+      });
+      titleInputRef.current?.focus();
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      // Simulate saving to database 
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      
+      toast({
+        title: "Analysis saved",
+        description: "Your design analysis has been saved successfully.",
+      });
+      
+      // Simulate navigating to saved reviews
+      // navigate('/saved-reviews');
+    } catch (error) {
+      console.error("Error saving analysis:", error);
+      toast({
+        title: "Save failed",
+        description: "There was an error saving your analysis. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleGoToFollowUp = () => {
+    if (analysisId) {
+      navigate(`/follow-up/${analysisId}`);
+    } else {
+      toast({
+        title: "Error",
+        description: "Could not find analysis ID.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
-    <>
-      <div className="bg-white rounded-lg shadow-sm divide-y divide-neutral-200">
-        <div className="p-4 flex justify-between items-center">
-          <div>
-            <h3 className="font-medium text-neutral-900 mb-2">Issues & Recommendations</h3>
-            <p className="text-sm text-neutral-500">
-              {isUrlAnalysis 
-                ? "Improvements suggested for this website design" 
-                : "Click on an issue to see detailed recommendations"}
-            </p>
-          </div>
-          
-          {feedback.length > 0 && (
-            <button 
-              onClick={() => setShowImplementationGuide(true)}
-              className="flex items-center gap-2 px-3 py-1.5 bg-accent text-white rounded-md hover:bg-accent/90 transition-colors text-sm"
+    <div className="bg-white rounded-xl shadow-sm p-6 h-full">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="font-semibold text-xl">Design Issues</h2>
+        <div className="space-x-2">
+          {user && analysisId && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-1"
+              onClick={handleGoToFollowUp}
             >
-              <FileText size={14} />
-              Implementation Guide
-            </button>
+              <LineChart className="w-4 h-4" />
+              <span>Follow-Up</span>
+            </Button>
           )}
-        </div>
-        
-        <div className="max-h-[600px] overflow-y-auto">
-          {feedback.length === 0 ? (
-            <div className="p-8 text-center text-neutral-500">
-              No issues found matching the current filter.
-            </div>
-          ) : (
-            feedback.map(issue => (
-              <div 
-                key={issue.id}
-                className={`p-4 ${isUrlAnalysis ? 'border-b border-neutral-100 last:border-b-0' : 'cursor-pointer transition-colors'} ${
-                  selectedIssue === issue.id ? 'bg-neutral-50' : ''
-                }`}
-                onClick={() => !isUrlAnalysis && onIssueSelect?.(issue.id || null)}
-              >
-                <div className="flex items-start gap-3">
-                  <div className={`mt-0.5 w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    issue.priority === 'high' ? 'bg-red-500' : 
-                    issue.priority === 'medium' ? 'bg-amber-500' : 'bg-blue-500'
-                  }`}>
-                    <span className="text-white text-xs font-bold">{issue.id}</span>
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-1">
-                      <h4 className="font-medium text-neutral-900">{issue.title}</h4>
-                      <span className={`ml-2 text-xs px-2 py-0.5 rounded ${
-                        issue.priority === 'high' ? 'bg-red-100 text-red-800' : 
-                        issue.priority === 'medium' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'
-                      }`}>
-                        {issue.priority} priority
-                      </span>
-                    </div>
-                    <p className="text-sm text-neutral-700">{issue.description}</p>
-                    
-                    {/* Always show details for URL analysis */}
-                    {(selectedIssue === issue.id || isUrlAnalysis) && issue.technical_details && (
-                      <div className="mt-3 pt-3 border-t border-neutral-100">
-                        {issue.principle && (
-                          <div className="mb-3">
-                            <span className="inline-block text-xs font-medium bg-neutral-100 text-neutral-800 px-2 py-0.5 rounded">
-                              {issue.principle}
-                            </span>
-                          </div>
-                        )}
-                        
-                        <div className="bg-neutral-50 rounded p-2 mb-3">
-                          <p className="text-xs text-neutral-600">{issue.technical_details}</p>
-                        </div>
-                        
-                        <button 
-                          className="flex items-center text-xs text-accent hover:text-accent/80"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleCopyRecommendation(issue.description);
-                          }}
-                        >
-                          <Copy size={14} className="mr-1" />
-                          Copy recommendation
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-1"
+            onClick={() => saveAnalysis()}
+            disabled={isSaving}
+          >
+            <Save className="w-4 h-4" />
+            <span>{isSaving ? "Saving..." : "Save"}</span>
+          </Button>
         </div>
       </div>
+
+      {user && (
+        <div className="mb-4">
+          <input
+            ref={titleInputRef}
+            type="text"
+            value={savedTitle}
+            onChange={(e) => setSavedTitle(e.target.value)}
+            placeholder="Enter a title to save this analysis"
+            className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+          />
+        </div>
+      )}
+
+      <div className="space-y-4 overflow-y-auto max-h-[600px] pr-2">
+        {filteredIssues.length === 0 ? (
+          <div className="text-center py-10 text-neutral-500">
+            No issues found for this filter criteria.
+          </div>
+        ) : (
+          filteredIssues.map((issue) => (
+            <div
+              key={issue.id}
+              className={`border rounded-lg p-4 transition-all ${
+                selectedIssue === issue.id
+                  ? "border-accent ring-1 ring-accent"
+                  : "border-neutral-200 hover:border-neutral-300"
+              }`}
+              onClick={() => setSelectedIssue(issue.id ?? null)}
+            >
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="font-medium text-neutral-900">
+                  {issue.title}
+                </h3>
+                <div
+                  className={`text-xs px-2 py-0.5 rounded-full ${getPriorityClasses(
+                    issue.priority
+                  )}`}
+                >
+                  {issue.priority || "unset"} priority
+                </div>
+              </div>
+
+              <p className="text-neutral-600 text-sm mb-3">
+                {issue.description}
+              </p>
+
+              {issue.principle && (
+                <div className="text-xs text-neutral-500 mb-3">
+                  <span className="font-medium">Principle: </span>
+                  {issue.principle}
+                </div>
+              )}
+
+              <div className="flex flex-wrap gap-1 mt-2">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePriorityClick(issue.id || 0, "low");
+                  }}
+                  className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
+                    issue.priority === "low"
+                      ? "bg-green-100 text-green-800 border-green-200"
+                      : "border-neutral-200 text-neutral-600 hover:bg-neutral-50"
+                  }`}
+                >
+                  {issue.priority === "low" && (
+                    <Check className="inline w-3 h-3 mr-1" />
+                  )}
+                  Low
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePriorityClick(issue.id || 0, "medium");
+                  }}
+                  className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
+                    issue.priority === "medium"
+                      ? "bg-orange-100 text-orange-800 border-orange-200"
+                      : "border-neutral-200 text-neutral-600 hover:bg-neutral-50"
+                  }`}
+                >
+                  {issue.priority === "medium" && (
+                    <Check className="inline w-3 h-3 mr-1" />
+                  )}
+                  Medium
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePriorityClick(issue.id || 0, "high");
+                  }}
+                  className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
+                    issue.priority === "high"
+                      ? "bg-red-100 text-red-800 border-red-200"
+                      : "border-neutral-200 text-neutral-600 hover:bg-neutral-50"
+                  }`}
+                >
+                  {issue.priority === "high" && (
+                    <Check className="inline w-3 h-3 mr-1" />
+                  )}
+                  High
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
       
-      {/* Implementation Guide Modal */}
-      {showImplementationGuide && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center p-4 overflow-y-auto">
-          <div 
-            ref={modalRef}
-            className="max-w-5xl w-full my-8"
-          >
-            <ImplementationGuide 
-              issues={feedback} 
-              onClose={() => setShowImplementationGuide(false)} 
-            />
+      {/* In-Analysis Subscription Prompt */}
+      {filteredIssues.length > 0 && !isSubscribed && (
+        <div className="border-t border-gray-200 mt-8 pt-6">
+          <div className="flex items-start">
+            <div className="flex-shrink-0 bg-blue-100 rounded-full p-1">
+              <LineChart className="w-6 h-6 text-blue-600" />
+            </div>
+            <div className="ml-3">
+              <h3 className="font-medium text-gray-900">Track Your Design Evolution</h3>
+              <p className="text-gray-600 mt-1">
+                After implementing our recommendations, come back for a follow-up analysis to see how much you've improved.
+              </p>
+              <div className="mt-3 flex items-center">
+                <span className="text-sm font-medium text-blue-600 mr-2">Premium Feature</span>
+                <Button 
+                  className="text-sm bg-accent hover:bg-accent/90"
+                  size="sm"
+                >
+                  Subscribe to Unlock
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 };

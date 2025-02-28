@@ -1,15 +1,18 @@
 
-import { Star, MousePointer, Layout, Palette } from "lucide-react";
+import { Star, FileSearch, Annotation, ArrowUpCircle, Award } from "lucide-react";
 
 type FeatureProps = {
   icon: React.ElementType;
   title: string;
   description: string;
+  color: string;
 };
 
-const Feature = ({ icon: Icon, title, description }: FeatureProps) => (
+const Feature = ({ icon: Icon, title, description, color }: FeatureProps) => (
   <div className="flex flex-col items-center text-center p-4 rounded-lg hover:bg-white hover:shadow-sm transition-all">
-    <Icon className="w-8 h-8 mb-3 text-accent" />
+    <div className="mb-3">
+      <Icon className="w-8 h-8" style={{ color }} />
+    </div>
     <h3 className="font-semibold text-neutral-800 mb-2">{title}</h3>
     <p className="text-sm text-neutral-600">{description}</p>
   </div>
@@ -18,24 +21,28 @@ const Feature = ({ icon: Icon, title, description }: FeatureProps) => (
 export const Hero = () => {
   const features = [
     {
-      icon: Palette,
+      icon: FileSearch,
       title: "Professional Analysis",
       description: "Get expert insights on your design",
+      color: "#8B5CF6" // Purple for Professional Analysis
     },
     {
-      icon: MousePointer,
+      icon: Annotation,
       title: "Visual Annotations",
       description: "Clear, actionable visual feedback",
+      color: "#3B82F6" // Blue for Visual Annotations
     },
     {
-      icon: Layout,
+      icon: ArrowUpCircle,
       title: "Actionable Feedback",
       description: "Concrete steps to improve",
+      color: "#10B981" // Green for Actionable Feedback
     },
     {
-      icon: Star,
+      icon: Award,
       title: "Design Best Practices",
       description: "Industry-standard guidelines",
+      color: "#F59E0B" // Gold/Yellow for Design Best Practices
     },
   ];
 

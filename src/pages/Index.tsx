@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { ImageUpload } from "@/components/ImageUpload";
 import { UrlUpload } from "@/components/UrlUpload";
@@ -45,7 +44,8 @@ const Index = () => {
   const [isEmailSent, setIsEmailSent] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Check for authenticated user
+  const isUserSubscribed = user?.user_metadata?.is_subscribed === true;
+
   useEffect(() => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -58,7 +58,6 @@ const Index = () => {
       (event, session) => {
         setUser(session?.user || null);
         
-        // If user just logged in and there's a pending action, execute it
         if (event === 'SIGNED_IN' && session?.user) {
           if (pendingAction === 'upload' && pendingFile) {
             handleImageUpload(pendingFile);
@@ -78,10 +77,8 @@ const Index = () => {
     };
   }, [pendingAction, pendingFile, pendingUrl, pendingAnalysisData]);
 
-  // For testing purposes, let's skip authentication check
   const handleImageUploadWithAuth = (file: File) => {
     console.log("handleImageUploadWithAuth called with file:", file.name);
-    // Directly process the file without checking auth
     handleImageUpload(file);
   };
 
@@ -103,7 +100,6 @@ const Index = () => {
             console.log("Moving to analysis stage 2");
             setAnalysisStage(2);
             
-            // For testing, let's simulate the analysis rather than calling the actual API
             setTimeout(() => {
               console.log("Simulating analysis completion");
               setAnalysisStage(3);
@@ -240,7 +236,6 @@ const Index = () => {
   const handleUrlAnalyzeWithAuth = (imageUrl: string, analysisData: any) => {
     setPendingUrl(imageUrl);
     setPendingAnalysisData(analysisData);
-    // For testing, bypass auth check
     handleUrlAnalyze(imageUrl, analysisData);
   };
 
@@ -249,16 +244,14 @@ const Index = () => {
       setIsAnalyzing(true);
       setAnalysisStage(0);
       setUploadedImage(imageUrl);
-      setAnalysisStage(3); // Skip the intermediate stages since we already have the analysis
-      
+      setAnalysisStage(3);
+
       console.log("URL analysis results:", analysisData);
       
       if (analysisData?.content) {
         try {
-          // Extract just the JSON part from the text response
           const analysisText = analysisData.content[0].text;
           
-          // Find where the JSON starts (looking for first '{') and ends (looking for last '}')
           const jsonStartIndex = analysisText.indexOf('{');
           const jsonEndIndex = analysisText.lastIndexOf('}') + 1;
           
@@ -266,7 +259,6 @@ const Index = () => {
             const jsonString = analysisText.substring(jsonStartIndex, jsonEndIndex);
             const analysis = JSON.parse(jsonString);
             
-            // Make sure to cast priority values to the appropriate type
             const newFeedback: Feedback[] = [
               ...(analysis.strengths || []).map((s: any) => ({
                 type: "positive" as const,
@@ -274,7 +266,6 @@ const Index = () => {
                 description: s.description,
               })),
               ...(analysis.issues || []).map((i: any) => {
-                // Ensure priority is one of the allowed values
                 let priority: "low" | "medium" | "high" | undefined = undefined;
                 if (i.priority === "low" || i.priority === "medium" || i.priority === "high") {
                   priority = i.priority as "low" | "medium" | "high";
@@ -337,22 +328,18 @@ const Index = () => {
   };
 
   const handleSignIn = async () => {
-    // For testing: Mock the sign-in instead of actually authenticating
     toast({
       title: "Test Mode: Sign In",
       description: "Authentication bypassed for testing",
     });
     
-    // Mock signed in user
     setUser({
       id: "test-user-id",
       email: "test@example.com"
     });
 
-    // Close the dialog after initiating sign in
     setIsAuthDialogOpen(false);
     
-    // Process any pending actions
     if (pendingAction === 'upload' && pendingFile) {
       handleImageUpload(pendingFile);
       setPendingFile(null);
@@ -379,7 +366,6 @@ const Index = () => {
     setIsSubmitting(true);
 
     try {
-      // For testing: Skip actual authentication
       setTimeout(() => {
         setIsEmailSent(true);
         toast({
@@ -387,7 +373,6 @@ const Index = () => {
           description: "Email verification bypassed for testing",
         });
         
-        // Simulate completed authentication
         setUser({
           id: "test-user-id",
           email: email
@@ -395,7 +380,6 @@ const Index = () => {
         
         setIsAuthDialogOpen(false);
         
-        // Process any pending actions
         if (pendingAction === 'upload' && pendingFile) {
           handleImageUpload(pendingFile);
           setPendingFile(null);
@@ -481,11 +465,11 @@ const Index = () => {
             setSelectedIssue={setSelectedIssue}
             setFeedback={setFeedback}
             getIssueCountByPriority={getIssueCountByPriority}
+            isSubscribed={isUserSubscribed}
           />
         )}
       </div>
 
-      {/* Authentication Dialog */}
       <AlertDialog open={isAuthDialogOpen} onOpenChange={setIsAuthDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

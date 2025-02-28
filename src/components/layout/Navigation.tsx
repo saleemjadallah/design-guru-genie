@@ -58,10 +58,13 @@ export const Navigation = () => {
           title: "Test Mode: Sign In",
           description: "Authentication bypassed for testing",
         });
-        // Mock signed in user
+        // Mock signed in user with subscription
         setUser({
           id: "test-user-id",
-          email: "test@example.com"
+          email: "test@example.com",
+          user_metadata: {
+            is_subscribed: true
+          }
         });
         break;
       case "sign-up":
@@ -70,10 +73,13 @@ export const Navigation = () => {
           title: "Test Mode: Sign Up",
           description: "Account creation bypassed for testing",
         });
-        // Mock signed in user
+        // Mock signed in user with subscription
         setUser({
           id: "test-user-id",
-          email: "test@example.com"
+          email: "test@example.com",
+          user_metadata: {
+            is_subscribed: true
+          }
         });
         break;
       case "logout":
@@ -138,6 +144,9 @@ export const Navigation = () => {
                     <DropdownMenuLabel className="font-normal">
                       <div className="flex flex-col space-y-1">
                         <p className="text-sm font-medium leading-none">{user.email}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {user.user_metadata?.is_subscribed ? "Premium Plan" : "Free Plan"}
+                        </p>
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />

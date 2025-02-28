@@ -1,23 +1,42 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 interface FollowUpPromptProps {
-  isSubscribed: boolean;
+  isSubscribed?: boolean;
 }
 
-export const FollowUpPrompt = ({ isSubscribed }: FollowUpPromptProps) => {
+export const FollowUpPrompt = ({ isSubscribed: propIsSubscribed }: FollowUpPromptProps) => {
   const [showSubscribeModal, setShowSubscribeModal] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(propIsSubscribed || false);
+  const [user, setUser] = useState<any>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkSubscription = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session?.user) {
+        setUser(session.user);
+        // Check if the user has is_subscribed in their metadata
+        const isUserSubscribed = session.user.user_metadata?.is_subscribed === true;
+        setIsSubscribed(isUserSubscribed);
+      }
+    };
+    
+    checkSubscription();
+  }, [propIsSubscribed]);
 
   const handleFollowUpClick = () => {
     if (!isSubscribed) {
       setShowSubscribeModal(true);
     } else {
-      // Navigate to follow-up upload page or open follow-up upload UI
-      // This will be implemented in a later step
-      console.log("Navigate to follow-up upload");
+      // Navigate to follow-up upload page
+      navigate("/follow-up-analysis");
     }
   };
 
@@ -84,7 +103,23 @@ export const FollowUpPrompt = ({ isSubscribed }: FollowUpPromptProps) => {
           
           <AlertDialogFooter className="flex-col gap-2 sm:gap-0">
             <AlertDialogAction asChild>
-              <Button className="w-full sm:w-auto bg-accent hover:bg-accent/90">
+              <Button 
+                className="w-full sm:w-auto bg-accent hover:bg-accent/90"
+                onClick={() => {
+                  // For testing: Set the user as subscribed
+                  if (user) {
+                    const updatedUser = {
+                      ...user,
+                      user_metadata: {
+                        ...user.user_metadata,
+                        is_subscribed: true
+                      }
+                    };
+                    setUser(updatedUser);
+                    setIsSubscribed(true);
+                  }
+                }}
+              >
                 Subscribe for $18/month
               </Button>
             </AlertDialogAction>

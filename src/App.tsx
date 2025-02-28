@@ -1,20 +1,24 @@
+import { Routes, Route } from "react-router-dom";
+import { Toaster } from "@/components/ui/toaster";
 
-import { Route, Routes } from "react-router-dom";
-import Index from "./pages/Index";
-import SavedReviews from "./pages/SavedReviews";
-import ReviewDetail from "./pages/ReviewDetail";
-import FollowUpAnalysis from "./pages/FollowUpAnalysis";
-import NotFound from "./pages/NotFound";
+import Index from "@/pages/Index";
+import SavedReviews from "@/pages/SavedReviews";
+import ReviewDetail from "@/pages/ReviewDetail";
+import NotFound from "@/pages/NotFound";
+import FollowUpAnalysis from "@/pages/FollowUpAnalysis"; // Import the new page
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Index />} />
-      <Route path="/saved-reviews" element={<SavedReviews />} />
-      <Route path="/review/:id" element={<ReviewDetail />} />
-      <Route path="/follow-up/:id" element={<FollowUpAnalysis />} />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <div>
+      <Toaster />
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/saved-reviews" element={<SavedReviews />} />
+        <Route path="/review/:id" element={<ReviewDetail />} />
+        <Route path="/follow-up-analysis" element={<FollowUpAnalysis />} /> {/* Add the new route */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </div>
   );
 }
 

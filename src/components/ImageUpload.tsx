@@ -27,6 +27,7 @@ export const ImageUpload = ({ onImageUpload }: { onImageUpload: (file: File) => 
       );
 
       if (imageFile) {
+        console.log("File dropped, calling onImageUpload with:", imageFile.name);
         onImageUpload(imageFile);
       }
     },
@@ -40,6 +41,7 @@ export const ImageUpload = ({ onImageUpload }: { onImageUpload: (file: File) => 
     );
 
     if (imageFile) {
+      console.log("File selected, calling onImageUpload with:", imageFile.name);
       onImageUpload(imageFile);
     }
   };

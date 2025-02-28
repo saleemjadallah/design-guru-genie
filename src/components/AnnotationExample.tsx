@@ -42,11 +42,22 @@ const annotations: AnnotationPoint[] = [
 ];
 
 export const AnnotationExample = () => {
-  const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
-    });
+  const scrollToUploadSection = () => {
+    // Find the upload section element using a selector that targets the upload area
+    const uploadSection = document.querySelector('.tabs-content');
+    
+    if (uploadSection) {
+      uploadSection.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+    } else {
+      // Fallback to scrolling near the top if the element isn't found
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+      });
+    }
   };
 
   return (
@@ -122,7 +133,7 @@ export const AnnotationExample = () => {
         {/* Action Button */}
         <div className="text-center mt-8">
           <button 
-            onClick={scrollToTop}
+            onClick={scrollToUploadSection}
             className="px-6 py-3 bg-accent text-white rounded-lg font-medium hover:bg-accent/90 transition-colors"
           >
             Try Design Critique Now

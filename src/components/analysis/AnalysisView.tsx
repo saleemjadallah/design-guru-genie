@@ -70,7 +70,7 @@ export const AnalysisView = ({
   if (isAnalyzing) {
     return (
       <div className="container py-12">
-        <ProcessingState stage={analysisStage} />
+        <ProcessingState currentStage={analysisStage} />
       </div>
     );
   }
@@ -104,7 +104,6 @@ export const AnalysisView = ({
 
           <Overview
             positiveFeatures={positiveFeatures}
-            issueCount={feedback.filter(f => f.type === "improvement").length}
             getIssueCountByPriority={getIssueCountByPriority}
           />
           
@@ -118,9 +117,6 @@ export const AnalysisView = ({
           <FilterControls
             priorityFilter={priorityFilter}
             setPriorityFilter={setPriorityFilter}
-            issueCountHigh={getIssueCountByPriority("high")}
-            issueCountMedium={getIssueCountByPriority("medium")}
-            issueCountLow={getIssueCountByPriority("low")}
           />
 
           <FeedbackPanel

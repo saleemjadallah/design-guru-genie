@@ -1,139 +1,62 @@
 
-import { Download, Share2, Save } from "lucide-react";
-import { useState } from "react";
-import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 
-type Props = {
+interface Props {
   priorityFilter: 'all' | 'high' | 'medium' | 'low';
   setPriorityFilter: (filter: 'all' | 'high' | 'medium' | 'low') => void;
-  uploadedImage: string | null;
-  feedback: any[];
-  isUrlAnalysis: boolean;
-};
+}
 
-export const FilterControls = ({ 
-  priorityFilter, 
-  setPriorityFilter,
-  uploadedImage,
-  feedback,
-  isUrlAnalysis
-}: Props) => {
-  const [isSaving, setIsSaving] = useState(false);
-
-  const handleSaveReview = async () => {
-    const { data: session } = await supabase.auth.getSession();
-    if (!session?.session?.user) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to save reviews",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      const title = isUrlAnalysis ? "Website Analysis" : "Design Analysis";
-      const currentDate = new Date().toISOString();
-      
-      const { data, error } = await supabase
-        .from('saved_reviews')
-        .insert({
-          title: `${title} - ${currentDate.split('T')[0]}`,
-          image_url: uploadedImage,
-          feedback: feedback, // Send the feedback as JSON directly
-          user_id: session.session.user.id
-        })
-        .select();
-
-      if (error) throw error;
-
-      toast({
-        title: "Review saved",
-        description: "Your review has been saved successfully",
-      });
-    } catch (error) {
-      console.error("Error saving review:", error);
-      toast({
-        title: "Failed to save review",
-        description: "There was an error saving your review",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
+export const FilterControls = ({ priorityFilter, setPriorityFilter }: Props) => {
   return (
-    <div className="flex flex-wrap justify-between items-center gap-4">
-      <div className="flex items-center">
-        <span className="text-sm text-neutral-700 mr-2">Filter by:</span>
-        <div className="inline-flex rounded-md shadow-sm" role="group">
-          <button
-            type="button"
-            className={`px-4 py-2 text-sm font-medium rounded-l-lg ${
-              priorityFilter === 'all'
-                ? 'bg-indigo-600 text-white'
-                : 'bg-white text-neutral-700 hover:bg-neutral-50'
-            } border border-neutral-300`}
-            onClick={() => setPriorityFilter('all')}
-          >
-            All
-          </button>
-          <button
-            type="button"
-            className={`px-4 py-2 text-sm font-medium ${
-              priorityFilter === 'high'
-                ? 'bg-red-500 text-white'
-                : 'bg-white text-neutral-700 hover:bg-neutral-50'
-            } border-t border-b border-r border-neutral-300`}
-            onClick={() => setPriorityFilter('high')}
-          >
-            High
-          </button>
-          <button
-            type="button"
-            className={`px-4 py-2 text-sm font-medium ${
-              priorityFilter === 'medium'
-                ? 'bg-amber-500 text-white'
-                : 'bg-white text-neutral-700 hover:bg-neutral-50'
-            } border-t border-b border-r border-neutral-300`}
-            onClick={() => setPriorityFilter('medium')}
-          >
-            Medium
-          </button>
-          <button
-            type="button"
-            className={`px-4 py-2 text-sm font-medium rounded-r-lg ${
-              priorityFilter === 'low'
-                ? 'bg-blue-500 text-white'
-                : 'bg-white text-neutral-700 hover:bg-neutral-50'
-            } border-t border-b border-r border-neutral-300`}
-            onClick={() => setPriorityFilter('low')}
-          >
-            Low
-          </button>
-        </div>
+    <div className="mb-6">
+      <div className="flex items-center mb-4">
+        <h3 className="text-sm font-medium text-neutral-600">Filter by priority</h3>
       </div>
-      
-      <div className="flex gap-2">
-        <button 
-          className="flex items-center px-4 py-2 bg-white border border-neutral-300 rounded-md text-sm font-medium text-neutral-700 hover:bg-neutral-50"
-          onClick={handleSaveReview}
-          disabled={isSaving}
+      <div className="flex flex-wrap gap-2">
+        <Button
+          onClick={() => setPriorityFilter('all')}
+          variant={priorityFilter === 'all' ? 'default' : 'outline'}
+          size="sm"
+          className={priorityFilter === 'all' ? 'bg-accent hover:bg-accent/90' : ''}
         >
-          <Save size={16} className="mr-2" />
-          {isSaving ? "Saving..." : "Save Review"}
-        </button>
-        <button className="flex items-center px-4 py-2 bg-white border border-neutral-300 rounded-md text-sm font-medium text-neutral-700 hover:bg-neutral-50">
-          <Download size={16} className="mr-2" />
-          Export PDF
-        </button>
-        <button className="flex items-center px-4 py-2 bg-white border border-neutral-300 rounded-md text-sm font-medium text-neutral-700 hover:bg-neutral-50">
-          <Share2 size={16} className="mr-2" />
-          Share
-        </button>
+          All
+        </Button>
+        <Button
+          onClick={() => setPriorityFilter('high')}
+          variant={priorityFilter === 'high' ? 'default' : 'outline'}
+          size="sm"
+          className={`${
+            priorityFilter === 'high'
+              ? 'bg-red-500 hover:bg-red-600 border-red-500'
+              : 'border-red-200 text-red-700 hover:border-red-300 hover:bg-red-50'
+          }`}
+        >
+          High
+        </Button>
+        <Button
+          onClick={() => setPriorityFilter('medium')}
+          variant={priorityFilter === 'medium' ? 'default' : 'outline'}
+          size="sm"
+          className={`${
+            priorityFilter === 'medium'
+              ? 'bg-orange-500 hover:bg-orange-600 border-orange-500'
+              : 'border-orange-200 text-orange-700 hover:border-orange-300 hover:bg-orange-50'
+          }`}
+        >
+          Medium
+        </Button>
+        <Button
+          onClick={() => setPriorityFilter('low')}
+          variant={priorityFilter === 'low' ? 'default' : 'outline'}
+          size="sm"
+          className={`${
+            priorityFilter === 'low'
+              ? 'bg-green-500 hover:bg-green-600 border-green-500'
+              : 'border-green-200 text-green-700 hover:border-green-300 hover:bg-green-50'
+          }`}
+        >
+          Low
+        </Button>
       </div>
     </div>
   );

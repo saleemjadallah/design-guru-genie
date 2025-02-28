@@ -19,11 +19,16 @@ interface Feedback {
 
 interface FeedbackPanelProps {
   feedback: Feedback[];
-  filteredIssues: Feedback[];
+  filteredIssues?: Feedback[];
   selectedIssue: number | null;
-  setSelectedIssue: (id: number | null) => void;
-  setFeedback: (feedback: Feedback[]) => void;
+  setSelectedIssue?: (id: number | null) => void;
+  setFeedback?: (feedback: Feedback[]) => void;
   analysisId?: string | null;
+  // For ReviewDetail.tsx compatibility
+  strengths?: Feedback[];
+  onSave?: () => void;
+  onIssueSelect?: (id: number | null) => void;
+  isUrlAnalysis?: boolean;
 }
 
 export const FeedbackPanel = ({
@@ -32,7 +37,11 @@ export const FeedbackPanel = ({
   selectedIssue,
   setSelectedIssue,
   setFeedback,
-  analysisId
+  analysisId,
+  strengths,
+  onSave,
+  onIssueSelect,
+  isUrlAnalysis = false
 }: FeedbackPanelProps) => {
   const [isSaving, setIsSaving] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
@@ -40,6 +49,18 @@ export const FeedbackPanel = ({
   const [savedTitle, setSavedTitle] = useState("");
   const titleInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+
+  // Use either the provided filteredIssues or filter improvement types from feedback
+  const displayedIssues = filteredIssues || feedback.filter(f => f.type === "improvement");
+  
+  // Use the appropriate issue selection handler
+  const handleIssueSelect = (id: number | null) => {
+    if (onIssueSelect) {
+      onIssueSelect(id);
+    } else if (setSelectedIssue) {
+      setSelectedIssue(id);
+    }
+  };
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -54,6 +75,8 @@ export const FeedbackPanel = ({
   }, []);
 
   const handlePriorityClick = (id: number, newPriority: 'low' | 'medium' | 'high') => {
+    if (!setFeedback) return;
+    
     setFeedback(
       feedback.map((item) =>
         item.id === id
@@ -77,6 +100,11 @@ export const FeedbackPanel = ({
   };
 
   const saveAnalysis = async () => {
+    if (onSave) {
+      onSave();
+      return;
+    }
+    
     if (!user) {
       toast({
         title: "Authentication required",
@@ -161,7 +189,7 @@ export const FeedbackPanel = ({
         </div>
       </div>
 
-      {user && (
+      {user && setFeedback && (
         <div className="mb-4">
           <input
             ref={titleInputRef}
@@ -175,12 +203,12 @@ export const FeedbackPanel = ({
       )}
 
       <div className="space-y-4 overflow-y-auto max-h-[600px] pr-2">
-        {filteredIssues.length === 0 ? (
+        {displayedIssues.length === 0 ? (
           <div className="text-center py-10 text-neutral-500">
             No issues found for this filter criteria.
           </div>
         ) : (
-          filteredIssues.map((issue) => (
+          displayedIssues.map((issue) => (
             <div
               key={issue.id}
               className={`border rounded-lg p-4 transition-all ${
@@ -188,7 +216,7 @@ export const FeedbackPanel = ({
                   ? "border-accent ring-1 ring-accent"
                   : "border-neutral-200 hover:border-neutral-300"
               }`}
-              onClick={() => setSelectedIssue(issue.id ?? null)}
+              onClick={() => handleIssueSelect(issue.id ?? null)}
             >
               <div className="flex justify-between items-start mb-2">
                 <h3 className="font-medium text-neutral-900">
@@ -214,63 +242,65 @@ export const FeedbackPanel = ({
                 </div>
               )}
 
-              <div className="flex flex-wrap gap-1 mt-2">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handlePriorityClick(issue.id || 0, "low");
-                  }}
-                  className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
-                    issue.priority === "low"
-                      ? "bg-green-100 text-green-800 border-green-200"
-                      : "border-neutral-200 text-neutral-600 hover:bg-neutral-50"
-                  }`}
-                >
-                  {issue.priority === "low" && (
-                    <Check className="inline w-3 h-3 mr-1" />
-                  )}
-                  Low
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handlePriorityClick(issue.id || 0, "medium");
-                  }}
-                  className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
-                    issue.priority === "medium"
-                      ? "bg-orange-100 text-orange-800 border-orange-200"
-                      : "border-neutral-200 text-neutral-600 hover:bg-neutral-50"
-                  }`}
-                >
-                  {issue.priority === "medium" && (
-                    <Check className="inline w-3 h-3 mr-1" />
-                  )}
-                  Medium
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handlePriorityClick(issue.id || 0, "high");
-                  }}
-                  className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
-                    issue.priority === "high"
-                      ? "bg-red-100 text-red-800 border-red-200"
-                      : "border-neutral-200 text-neutral-600 hover:bg-neutral-50"
-                  }`}
-                >
-                  {issue.priority === "high" && (
-                    <Check className="inline w-3 h-3 mr-1" />
-                  )}
-                  High
-                </button>
-              </div>
+              {setFeedback && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePriorityClick(issue.id || 0, "low");
+                    }}
+                    className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
+                      issue.priority === "low"
+                        ? "bg-green-100 text-green-800 border-green-200"
+                        : "border-neutral-200 text-neutral-600 hover:bg-neutral-50"
+                    }`}
+                  >
+                    {issue.priority === "low" && (
+                      <Check className="inline w-3 h-3 mr-1" />
+                    )}
+                    Low
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePriorityClick(issue.id || 0, "medium");
+                    }}
+                    className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
+                      issue.priority === "medium"
+                        ? "bg-orange-100 text-orange-800 border-orange-200"
+                        : "border-neutral-200 text-neutral-600 hover:bg-neutral-50"
+                    }`}
+                  >
+                    {issue.priority === "medium" && (
+                      <Check className="inline w-3 h-3 mr-1" />
+                    )}
+                    Medium
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePriorityClick(issue.id || 0, "high");
+                    }}
+                    className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
+                      issue.priority === "high"
+                        ? "bg-red-100 text-red-800 border-red-200"
+                        : "border-neutral-200 text-neutral-600 hover:bg-neutral-50"
+                    }`}
+                  >
+                    {issue.priority === "high" && (
+                      <Check className="inline w-3 h-3 mr-1" />
+                    )}
+                    High
+                  </button>
+                </div>
+              )}
             </div>
           ))
         )}
       </div>
       
       {/* In-Analysis Subscription Prompt */}
-      {filteredIssues.length > 0 && !isSubscribed && (
+      {displayedIssues.length > 0 && !isSubscribed && !isUrlAnalysis && (
         <div className="border-t border-gray-200 mt-8 pt-6">
           <div className="flex items-start">
             <div className="flex-shrink-0 bg-blue-100 rounded-full p-1">

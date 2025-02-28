@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { FeedbackPanel } from "@/components/FeedbackPanel";
 import { ProcessingState } from "@/components/ProcessingState";
@@ -33,6 +32,7 @@ interface AnalysisViewProps {
   setSelectedIssue: (id: number | null) => void;
   setFeedback: (feedback: Feedback[]) => void;
   getIssueCountByPriority: (priority: string) => number;
+  isSubscribed?: boolean;
 }
 
 export const AnalysisView = ({
@@ -48,24 +48,28 @@ export const AnalysisView = ({
   setPriorityFilter,
   setSelectedIssue,
   setFeedback,
-  getIssueCountByPriority
+  getIssueCountByPriority,
+  isSubscribed: propIsSubscribed
 }: AnalysisViewProps) => {
-  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(propIsSubscribed || false);
   const [analysisId, setAnalysisId] = useState<string | null>(null);
 
   useEffect(() => {
     const checkSubscriptionStatus = async () => {
-      // Here you would normally check if the user has an active subscription
-      // For now, we'll simulate that the user is not subscribed
-      const { data: { session } } = await supabase.auth.getSession();
-      setIsSubscribed(!!session);
+      if (propIsSubscribed !== undefined) {
+        setIsSubscribed(propIsSubscribed);
+        return;
+      }
       
-      // Generate a temporary analysis ID for demo purposes
+      const { data: { session } } = await supabase.auth.getSession();
+      const isUserSubscribed = session?.user?.user_metadata?.is_subscribed === true;
+      setIsSubscribed(!!session && isUserSubscribed);
+      
       setAnalysisId(crypto.randomUUID());
     };
 
     checkSubscriptionStatus();
-  }, []);
+  }, [propIsSubscribed]);
 
   if (isAnalyzing) {
     return (
@@ -107,7 +111,6 @@ export const AnalysisView = ({
             getIssueCountByPriority={getIssueCountByPriority}
           />
           
-          {/* Follow-Up Analysis CTA */}
           {analysisStage === 3 && !isAnalyzing && (
             <FollowUpPrompt isSubscribed={isSubscribed} />
           )}

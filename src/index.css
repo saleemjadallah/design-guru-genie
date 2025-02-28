@@ -45,6 +45,12 @@
   }
   body {
     @apply bg-background text-foreground font-sans;
+    background-color: #F9FAFB;
+    background-image: radial-gradient(#E5E7EB 1px, transparent 1px);
+    background-size: 20px 20px;
+    background-position: 0 0;
+    background-attachment: fixed;
+    opacity: 1;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-sans font-semibold tracking-tight;
@@ -74,6 +80,7 @@ button, a, input, textarea {
   background: linear-gradient(135deg, #4F46E5 0%, #7E22CE 100%);
   position: relative;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
 }
 
 /* Create a dot pattern overlay */
@@ -108,4 +115,39 @@ button, a, input, textarea {
   .gradient-header p {
     font-size: 1rem; /* 16px */
   }
+}
+
+/* New geometric shape styles for background accents */
+.shape-circle {
+  border-radius: 50%;
+}
+
+.shape-square {
+  border-radius: 8px;
+}
+
+.shape-triangle {
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+}
+
+/* Animation for subtle floating effect */
+@keyframes float-subtle {
+  0% {
+    transform: translateY(0) rotate(0);
+  }
+  50% {
+    transform: translateY(-15px) rotate(2deg);
+  }
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+}
+
+.float-animation {
+  animation: float-subtle 20s ease-in-out infinite;
+}
+
+.float-animation-alt {
+  animation: float-subtle 25s ease-in-out infinite reverse;
+  animation-delay: 5s;
 }

@@ -58,10 +58,10 @@ export const Hero = () => {
         
         <div className="pt-16 pb-14 px-6 md:px-10 relative z-10">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-white drop-shadow-sm">
-            Design Critique
+            EVOLVELY.AI
           </h1>
           <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto font-medium">
-            Get expert design feedback with AI-powered visual annotations in minutes
+            Transform Designs Through Expert AI Critique
           </p>
         </div>
       </div>

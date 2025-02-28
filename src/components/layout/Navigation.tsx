@@ -67,12 +67,9 @@ export const Navigation = () => {
       }`}
     >
       <div className="container flex items-center justify-between h-16">
-        <Link to="/" className="flex items-center">
-          <img 
-            src="/lovable-uploads/7a4a7d46-2665-4c5b-9666-801339014a81.png" 
-            alt="Evolvely.ai Logo" 
-            className="h-16"
-          />
+        <Link to="/" className="flex flex-col items-start">
+          <div className="text-2xl font-bold tracking-tighter text-accent">EVOLVELY.AI</div>
+          <div className="text-xs text-neutral-600">Transform Designs Through Expert AI Critique</div>
         </Link>
 
         {/* Desktop Menu */}
@@ -222,12 +219,9 @@ export const Navigation = () => {
         <SheetContent side="left" className="p-0">
           <div className="py-4 h-full flex flex-col">
             <div className="px-6 mb-8">
-              <Link to="/" className="flex items-center" onClick={() => setIsOpen(false)}>
-                <img 
-                  src="/lovable-uploads/7a4a7d46-2665-4c5b-9666-801339014a81.png" 
-                  alt="Evolvely.ai Logo" 
-                  className="h-12"
-                />
+              <Link to="/" className="flex flex-col items-start" onClick={() => setIsOpen(false)}>
+                <div className="text-xl font-bold tracking-tighter text-accent">EVOLVELY.AI</div>
+                <div className="text-[10px] text-neutral-600">Transform Designs Through Expert AI Critique</div>
               </Link>
             </div>
             

@@ -33,7 +33,19 @@ export const ImplementationGuide = ({ issues, onClose }: Props) => {
   // Process the feedback items to add implementation details
   const implementationItems: ImplementationItem[] = issues.map((issue) => {
     // Create implementation details based on priority and issue type
-    let impact: "low" | "medium" | "high" = issue.priority as "low" | "medium" | "high" || "medium";
+    let impact: "low" | "medium" | "high";
+    
+    // Map priority directly to impact if available
+    if (issue.priority === "high") {
+      impact = "high";
+    } else if (issue.priority === "medium") {
+      impact = "medium";
+    } else if (issue.priority === "low") {
+      impact = "low";
+    } else {
+      // Default to medium if no priority specified
+      impact = "medium";
+    }
     
     // Determine effort based on a combination of priority and description length
     // This is a simple heuristic - in a real app this would use more sophisticated logic
@@ -181,11 +193,14 @@ export const ImplementationGuide = ({ issues, onClose }: Props) => {
               <p className="text-xs text-green-700 mb-2">Implement first</p>
               <div className="flex flex-wrap gap-2 mt-4">
                 {implementationItems
-                  .filter(item => item.impact === "high" && item.effort === "low")
+                  .filter(item => item.impact === "high" && (item.effort === "low" || item.effort === "medium"))
                   .map(item => (
                     <div 
                       key={item.id}
-                      className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center text-white font-bold text-sm"
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${
+                        item.priority === "high" ? "bg-red-500" : 
+                        item.priority === "medium" ? "bg-amber-500" : "bg-blue-500"
+                      }`}
                       title={item.title}
                     >
                       {item.id}
@@ -222,7 +237,7 @@ export const ImplementationGuide = ({ issues, onClose }: Props) => {
               <p className="text-xs text-blue-700 mb-2">Do when time permits</p>
               <div className="flex flex-wrap gap-2 mt-4">
                 {implementationItems
-                  .filter(item => item.impact === "low" && item.effort === "low")
+                  .filter(item => (item.impact === "low" || item.impact === "medium") && item.effort === "low")
                   .map(item => (
                     <div 
                       key={item.id}
@@ -244,7 +259,8 @@ export const ImplementationGuide = ({ issues, onClose }: Props) => {
               <p className="text-xs text-neutral-600 mb-2">Consider if worth effort</p>
               <div className="flex flex-wrap gap-2 mt-4">
                 {implementationItems
-                  .filter(item => item.impact === "low" && item.effort === "high")
+                  .filter(item => (item.impact === "low" || item.impact === "medium") && 
+                                 (item.effort === "high" || item.effort === "medium"))
                   .map(item => (
                     <div 
                       key={item.id}

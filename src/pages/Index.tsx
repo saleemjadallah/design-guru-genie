@@ -47,6 +47,82 @@ const Index = () => {
 
   const isUserSubscribed = user?.user_metadata?.is_subscribed === true;
 
+  // Helper method to validate priority
+  const validatePriority = (priority: any): "low" | "medium" | "high" => {
+    if (priority === "low" || priority === "medium" || priority === "high") {
+      return priority;
+    }
+    return "medium"; // Default to medium if invalid
+  };
+
+  // Helper method to complete potentially incomplete JSON
+  const completeJSONIfNeeded = (json: string): string => {
+    let openBraces = 0;
+    let openBrackets = 0;
+    
+    // Count open braces/brackets
+    for (let i = 0; i < json.length; i++) {
+      if (json[i] === '{') openBraces++;
+      else if (json[i] === '}') openBraces--;
+      else if (json[i] === '[') openBrackets++;
+      else if (json[i] === ']') openBrackets--;
+    }
+    
+    // Complete JSON if needed
+    let completedJson = json;
+    
+    // Close any open arrays
+    while (openBrackets > 0) {
+      completedJson += ']';
+      openBrackets--;
+    }
+    
+    // Close any open objects
+    while (openBraces > 0) {
+      completedJson += '}';
+      openBraces--;
+    }
+    
+    return completedJson;
+  };
+
+  // Handle analysis error
+  const handleAnalysisError = () => {
+    // Provide a mock analysis as fallback
+    const fallbackAnalysis = {
+      strengths: [
+        {
+          type: "positive" as const,
+          title: "Fallback Strength",
+          description: "This is a fallback analysis as the original analysis failed."
+        }
+      ],
+      issues: [
+        {
+          type: "improvement" as const,
+          title: "Analysis Error",
+          description: "There was an error processing the analysis results. This is a generic fallback issue.",
+          priority: "medium" as const,
+          id: 1
+        }
+      ]
+    };
+    
+    const newFeedback: Feedback[] = [
+      ...fallbackAnalysis.strengths,
+      ...fallbackAnalysis.issues
+    ];
+    
+    setFeedback(newFeedback);
+    setIsAnalyzing(false);
+    
+    toast({
+      title: "Analysis partially completed",
+      description: "There was an issue with the analysis. Some results may be incomplete.",
+      variant: "destructive",
+    });
+  };
+
   useEffect(() => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -251,7 +327,7 @@ const Index = () => {
       
       if (analysisData?.content) {
         try {
-          const analysisText = analysisData.content[0].text;
+          const analysisText = analysisData.content[0]?.text || "";
           
           // Create a fallback analysis in case parsing fails
           const fallbackAnalysis = {
@@ -307,7 +383,7 @@ const Index = () => {
               try {
                 const jsonString = analysisText.substring(jsonStartIndex);
                 // Use a JSON parser that can handle incomplete JSON
-                analysis = JSON.parse(this.completeJSONIfNeeded(jsonString));
+                analysis = JSON.parse(completeJSONIfNeeded(jsonString));
               } catch (parseError) {
                 console.warn("Failed to parse potentially incomplete JSON, trying to extract complete JSON object...");
                 
@@ -354,7 +430,7 @@ const Index = () => {
               type: "improvement" as const,
               title: i.issue || `Issue ${index + 1}`,
               description: i.recommendation || "No recommendation provided",
-              priority: this.validatePriority(i.priority),
+              priority: validatePriority(i.priority),
               location: i.location || { x: 0, y: 0 },
               id: i.id || index + 1,
               principle: i.principle || "Design Principle",
@@ -376,91 +452,15 @@ const Index = () => {
           });
         } catch (parseError) {
           console.error("Error parsing URL analysis:", parseError);
-          this.handleAnalysisError();
+          handleAnalysisError();
         }
       } else {
         throw new Error("Invalid analysis data format");
       }
     } catch (error) {
       console.error("URL analysis error:", error);
-      this.handleAnalysisError();
+      handleAnalysisError();
     }
-  };
-
-  // Helper method to validate priority
-  validatePriority = (priority: any): "low" | "medium" | "high" => {
-    if (priority === "low" || priority === "medium" || priority === "high") {
-      return priority;
-    }
-    return "medium"; // Default to medium if invalid
-  };
-
-  // Helper method to complete potentially incomplete JSON
-  completeJSONIfNeeded = (json: string): string => {
-    let openBraces = 0;
-    let openBrackets = 0;
-    
-    // Count open braces/brackets
-    for (let i = 0; i < json.length; i++) {
-      if (json[i] === '{') openBraces++;
-      else if (json[i] === '}') openBraces--;
-      else if (json[i] === '[') openBrackets++;
-      else if (json[i] === ']') openBrackets--;
-    }
-    
-    // Complete JSON if needed
-    let completedJson = json;
-    
-    // Close any open arrays
-    while (openBrackets > 0) {
-      completedJson += ']';
-      openBrackets--;
-    }
-    
-    // Close any open objects
-    while (openBraces > 0) {
-      completedJson += '}';
-      openBraces--;
-    }
-    
-    return completedJson;
-  };
-
-  // Handle analysis error
-  handleAnalysisError = () => {
-    // Provide a mock analysis as fallback
-    const fallbackAnalysis = {
-      strengths: [
-        {
-          type: "positive" as const,
-          title: "Fallback Strength",
-          description: "This is a fallback analysis as the original analysis failed."
-        }
-      ],
-      issues: [
-        {
-          type: "improvement" as const,
-          title: "Analysis Error",
-          description: "There was an error processing the analysis results. This is a generic fallback issue.",
-          priority: "medium" as const,
-          id: 1
-        }
-      ]
-    };
-    
-    const newFeedback: Feedback[] = [
-      ...fallbackAnalysis.strengths,
-      ...fallbackAnalysis.issues
-    ];
-    
-    setFeedback(newFeedback);
-    setIsAnalyzing(false);
-    
-    toast({
-      title: "Analysis partially completed",
-      description: "There was an issue with the analysis. Some results may be incomplete.",
-      variant: "destructive",
-    });
   };
 
   const handleAuthDialogClose = () => {

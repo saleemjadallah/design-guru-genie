@@ -2,52 +2,40 @@
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { DropResult } from "react-beautiful-dnd";
-import { supabase } from "@/integrations/supabase/client";
-import { stitchImages } from "@/utils/image-stitching";
 import { ScreenshotFile, UploadStep } from "./types";
+import { initialState } from "./upload-state";
+import { 
+  validateImageFiles,
+  createScreenshotPreviews,
+  handleSuccessfulUpload,
+  revokeObjectURLs
+} from "./file-handlers";
+import {
+  updateScreenshotOverlap,
+  removeScreenshotById,
+  handleDragEndReordering
+} from "./screenshot-manager";
+import {
+  generateCombinedImagePreview,
+  processCombinedImage
+} from "./image-processor";
 
 export function useMultiUpload(onImageUpload: (file: File) => void) {
-  const [screenshots, setScreenshots] = useState<ScreenshotFile[]>([]);
-  const [step, setStep] = useState<UploadStep>("upload");
-  const [combinedImage, setCombinedImage] = useState<string | null>(null);
-  const [processingStage, setProcessingStage] = useState(0);
-  const [activeScreenshot, setActiveScreenshot] = useState<string | null>(null);
+  const [screenshots, setScreenshots] = useState<ScreenshotFile[]>(initialState.screenshots);
+  const [step, setStep] = useState<UploadStep>(initialState.step);
+  const [combinedImage, setCombinedImage] = useState<string | null>(initialState.combinedImage);
+  const [processingStage, setProcessingStage] = useState(initialState.processingStage);
+  const [activeScreenshot, setActiveScreenshot] = useState<string | null>(initialState.activeScreenshot);
 
   const handleFiles = (files: File[]) => {
-    const imageFiles = files.filter((file) => 
-      file.type === "image/jpeg" || 
-      file.type === "image/png" || 
-      file.type === "image/webp"
-    );
-
-    if (imageFiles.length === 0) {
-      toast({
-        title: "Invalid files",
-        description: "Please upload only image files (JPG, PNG, WebP).",
-        variant: "destructive",
-      });
-      return;
-    }
+    const imageFiles = validateImageFiles(files);
+    if (imageFiles.length === 0) return;
 
     // Create preview URLs for the images
-    const newScreenshots = imageFiles.map((file, index) => {
-      return {
-        id: crypto.randomUUID(),
-        file,
-        preview: URL.createObjectURL(file),
-        order: screenshots.length + index,
-        overlap: 20, // Default overlap percentage
-      };
-    });
-
+    const newScreenshots = createScreenshotPreviews(imageFiles, screenshots);
     setScreenshots([...screenshots, ...newScreenshots]);
     
-    if (imageFiles.length > 0) {
-      toast({
-        title: "Images uploaded",
-        description: `${imageFiles.length} screenshot${imageFiles.length > 1 ? 's' : ''} added successfully.`,
-      });
-    }
+    handleSuccessfulUpload(imageFiles.length);
   };
 
   const removeScreenshot = (id: string) => {
@@ -62,66 +50,27 @@ export function useMultiUpload(onImageUpload: (file: File) => void) {
       setActiveScreenshot(null);
     }
     
-    const updatedScreenshots = screenshots.filter(s => s.id !== id);
-    // Reorder the remaining screenshots
-    const reorderedScreenshots = updatedScreenshots.map((s, index) => ({
-      ...s,
-      order: index
-    }));
-    
-    setScreenshots(reorderedScreenshots);
+    const updatedScreenshots = removeScreenshotById(screenshots, id);
+    setScreenshots(updatedScreenshots);
   };
 
   const handleDragEnd = (result: DropResult) => {
     console.log("DragEnd result:", result);
-    
-    // Dropped outside the list or no destination
-    if (!result.destination) {
-      console.log("Dropped outside the list or no destination");
-      return;
-    }
-
-    const sourceIndex = result.source.index;
-    const destinationIndex = result.destination.index;
-    
-    console.log(`Moving from index ${sourceIndex} to ${destinationIndex}`);
-    
-    // Don't do anything if dropped in the same place
-    if (sourceIndex === destinationIndex) {
-      console.log("Dropped in the same position, no change needed");
-      return;
-    }
-
-    // Sort by order first to ensure we're working with the right sequence
-    const orderedItems = [...screenshots].sort((a, b) => a.order - b.order);
-    const [reorderedItem] = orderedItems.splice(sourceIndex, 1);
-    orderedItems.splice(destinationIndex, 0, reorderedItem);
-
-    // Update the order properties
-    const updatedItems = orderedItems.map((item, index) => ({
-      ...item,
-      order: index
-    }));
-    
-    console.log("Updated screenshots:", updatedItems);
-    setScreenshots(updatedItems);
+    const updatedScreenshots = handleDragEndReordering(screenshots, result);
+    console.log("Updated screenshots:", updatedScreenshots);
+    setScreenshots(updatedScreenshots);
   };
 
   const updateOverlap = (id: string, overlap: number) => {
-    setScreenshots(screenshots.map(screenshot => 
-      screenshot.id === id ? { ...screenshot, overlap } : screenshot
-    ));
+    const updatedScreenshots = updateScreenshotOverlap(screenshots, id, overlap);
+    setScreenshots(updatedScreenshots);
   };
 
   const handleGeneratePreview = async () => {
     setStep("preview");
     
     try {
-      // Sort screenshots by order
-      const orderedScreenshots = [...screenshots].sort((a, b) => a.order - b.order);
-      
-      // Generate the combined image
-      const stitchedImageUrl = await stitchImages(orderedScreenshots);
+      const stitchedImageUrl = await generateCombinedImagePreview(screenshots);
       setCombinedImage(stitchedImageUrl);
     } catch (error) {
       console.error("Error generating preview:", error);
@@ -140,38 +89,7 @@ export function useMultiUpload(onImageUpload: (file: File) => void) {
     setStep("processing");
     
     try {
-      // Process the combined image
-      setProcessingStage(0);
-      
-      // Convert data URL to File
-      const response = await fetch(combinedImage);
-      const blob = await response.blob();
-      const file = new File([blob], "combined-screenshot.png", { type: "image/png" });
-      
-      // Update processing stages
-      setProcessingStage(1);
-      
-      // Upload to storage if needed
-      const timestamp = new Date().getTime();
-      const filePath = `combined_screenshots/${timestamp}_${file.name}`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from('designs')
-        .upload(filePath, file);
-        
-      if (uploadError) {
-        throw uploadError;
-      }
-      
-      setProcessingStage(2);
-      
-      // Get the public URL
-      const { data } = supabase.storage
-        .from('designs')
-        .getPublicUrl(filePath);
-        
-      // Use the uploaded file for analysis
-      setProcessingStage(3);
+      const file = await processCombinedImage(combinedImage, setProcessingStage);
       
       // Call the onImageUpload callback with the combined file
       onImageUpload(file);
@@ -188,9 +106,7 @@ export function useMultiUpload(onImageUpload: (file: File) => void) {
 
   const resetToUpload = () => {
     // Clean up URL objects to prevent memory leaks
-    screenshots.forEach(screenshot => {
-      URL.revokeObjectURL(screenshot.preview);
-    });
+    revokeObjectURLs(screenshots);
     
     if (combinedImage) {
       URL.revokeObjectURL(combinedImage);

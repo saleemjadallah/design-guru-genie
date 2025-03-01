@@ -66,9 +66,9 @@ export const SeeItInAction = () => {
   return (
     <>
       {/* Wave divider before section */}
-      <WaveDivider fillColor="#ffffff" height={60} className="my-8" />
+      <WaveDivider fillColor="#ffffff" height={30} className="my-0" />
       
-      <section className="py-16 bg-gradient-to-br from-indigo-50 via-white to-purple-50 rounded-2xl relative mt-20 overflow-hidden">
+      <section className="py-12 bg-gradient-to-br from-indigo-50 via-white to-purple-50 rounded-2xl relative mt-2 overflow-hidden">
         {/* Background patterns and geometric accents */}
         <div className="absolute inset-0 topographic-pattern rounded-2xl opacity-20"></div>
         <GeometricAccents variant="cta" className="opacity-70" />
@@ -201,7 +201,7 @@ export const SeeItInAction = () => {
       </section>
       
       {/* Wave divider after section */}
-      <WaveDivider fillColor="#F9FAFB" height={60} className="my-8 transform rotate-180" />
+      <WaveDivider fillColor="#F9FAFB" height={30} className="my-0 transform rotate-180" />
     </>
   );
 };

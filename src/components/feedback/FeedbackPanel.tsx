@@ -1,4 +1,3 @@
-
 import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,7 +24,6 @@ interface FeedbackPanelProps {
   setSelectedIssue?: (id: number | null) => void;
   setFeedback?: (feedback: Feedback[]) => void;
   analysisId?: string | null;
-  // For ReviewDetail.tsx compatibility
   strengths?: Feedback[];
   onSave?: () => void;
   onIssueSelect?: (id: number | null) => void;
@@ -54,10 +52,8 @@ export const FeedbackPanel = ({
   const titleInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
-  // Use either the provided filteredIssues or filter improvement types from feedback
   const displayedIssues = filteredIssues || feedback.filter(f => f.type === "improvement");
-  
-  // Use the appropriate issue selection handler
+
   const handleIssueSelect = (id: number | null) => {
     if (onIssueSelect) {
       onIssueSelect(id);
@@ -70,8 +66,6 @@ export const FeedbackPanel = ({
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user || null);
-      // Here you would normally check if the user has an active subscription
-      // For now, we'll simulate that based on authentication status
       setIsSubscribed(!!session?.user);
     };
     
@@ -117,7 +111,6 @@ export const FeedbackPanel = ({
 
     setIsSaving(true);
     try {
-      // Simulate saving to database 
       await new Promise((resolve) => setTimeout(resolve, 1000));
       
       toast({
@@ -125,8 +118,7 @@ export const FeedbackPanel = ({
         description: "Your design analysis has been saved successfully.",
       });
       
-      // Simulate navigating to saved reviews
-      // navigate('/saved-reviews');
+      navigate('/saved-reviews');
     } catch (error) {
       console.error("Error saving analysis:", error);
       toast({
@@ -142,7 +134,6 @@ export const FeedbackPanel = ({
   const exportPDF = async () => {
     setIsExporting(true);
     try {
-      // Simulate PDF export process
       await new Promise((resolve) => setTimeout(resolve, 1500));
       
       toast({

@@ -68,6 +68,7 @@ export const FeedbackIssueList = ({
               isSelected={selectedIssue === issue.id}
               onIssueSelect={onIssueSelect}
               onPriorityClick={onPriorityClick}
+              onImplementationClick={onViewAllImplementation}
             />
           ))
         )}

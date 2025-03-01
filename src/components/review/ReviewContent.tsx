@@ -1,3 +1,4 @@
+
 import { AnnotationCanvas } from "@/components/AnnotationCanvas";
 import { FeedbackPanel } from "@/components/feedback/FeedbackPanel";
 import { Overview } from "@/components/analysis/Overview";

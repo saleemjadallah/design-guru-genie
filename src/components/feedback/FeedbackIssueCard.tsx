@@ -22,13 +22,15 @@ interface FeedbackIssueCardProps {
   isSelected: boolean;
   onIssueSelect: (id: number | null) => void;
   onPriorityClick?: (id: number, priority: "low" | "medium" | "high") => void;
+  onImplementationClick?: () => void;
 }
 
 export const FeedbackIssueCard = ({
   issue,
   isSelected,
   onIssueSelect,
-  onPriorityClick
+  onPriorityClick,
+  onImplementationClick
 }: FeedbackIssueCardProps) => {
   const getPriorityClasses = (priority?: string) => {
     switch (priority) {
@@ -171,6 +173,9 @@ export const FeedbackIssueCard = ({
           onClick={(e) => {
             e.stopPropagation();
             onIssueSelect(issue.id ?? null);
+            if (onImplementationClick) {
+              onImplementationClick();
+            }
           }}
         >
           <FileCode className="w-3.5 h-3.5 mr-1" />

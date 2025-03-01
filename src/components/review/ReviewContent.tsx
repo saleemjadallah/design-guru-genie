@@ -45,6 +45,11 @@ export const ReviewContent = ({
     setIsImplementationGuideOpen(false);
   };
 
+  const handleViewSingleImplementation = (id: number) => {
+    setSelectedIssue(id);
+    setIsImplementationGuideOpen(true);
+  };
+
   return (
     <div className="space-y-6">
       {isImplementationGuideOpen ? (
@@ -71,6 +76,7 @@ export const ReviewContent = ({
                 onIssueSelect={setSelectedIssue}
                 isUrlAnalysis={true}
                 onViewAllImplementation={handleViewAllImplementation}
+                onViewSingleImplementation={handleViewSingleImplementation}
               />
             </div>
           ) : (
@@ -107,6 +113,7 @@ export const ReviewContent = ({
                   selectedIssue={selectedIssue}
                   onIssueSelect={setSelectedIssue}
                   onViewAllImplementation={handleViewAllImplementation}
+                  onViewSingleImplementation={handleViewSingleImplementation}
                 />
               </div>
             </div>

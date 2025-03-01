@@ -21,6 +21,7 @@ interface FeedbackIssueListProps {
   onIssueSelect: (id: number | null) => void;
   onPriorityClick?: (id: number, priority: "low" | "medium" | "high") => void;
   onViewAllImplementation?: () => void;
+  onViewSingleImplementation?: (id: number) => void;
 }
 
 export const FeedbackIssueList = ({
@@ -28,7 +29,8 @@ export const FeedbackIssueList = ({
   selectedIssue,
   onIssueSelect,
   onPriorityClick,
-  onViewAllImplementation
+  onViewAllImplementation,
+  onViewSingleImplementation
 }: FeedbackIssueListProps) => {
   // Sort issues by priority: high -> medium -> low -> undefined
   const sortedIssues = [...issues].sort((a, b) => {
@@ -68,7 +70,7 @@ export const FeedbackIssueList = ({
               isSelected={selectedIssue === issue.id}
               onIssueSelect={onIssueSelect}
               onPriorityClick={onPriorityClick}
-              onImplementationClick={onViewAllImplementation}
+              onImplementationClick={onViewSingleImplementation}
             />
           ))
         )}

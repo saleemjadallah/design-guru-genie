@@ -7,12 +7,14 @@ interface ImpactEffortMatrixProps {
   issues: ImplementationFeedback[];
   completedItems: number[];
   onIssueClick: (id: number | null) => void;
+  onViewImplementation: (id: number) => void;
 }
 
 export const ImpactEffortMatrix = ({ 
   issues, 
   completedItems,
-  onIssueClick
+  onIssueClick,
+  onViewImplementation
 }: ImpactEffortMatrixProps) => {
   // Filter issues by their impact/effort combinations
   const quickWins = issues.filter(issue => issue.impact === "high" && issue.effort === "low");
@@ -53,7 +55,7 @@ export const ImpactEffortMatrix = ({
                       ? 'bg-green-100 border-green-200 text-green-500 opacity-60' 
                       : 'bg-green-600 border-green-700 text-white'
                   } text-xs font-medium cursor-pointer hover:opacity-90 transition-opacity flex items-center`}
-                  onClick={() => onIssueClick(issue.id)}
+                  onClick={() => onViewImplementation(issue.id || 0)}
                   title={issue.title}
                 >
                   <Star className="w-3 h-3 mr-1" />
@@ -88,7 +90,7 @@ export const ImpactEffortMatrix = ({
                       ? 'bg-orange-100 border-orange-200 text-orange-500 opacity-60' 
                       : 'bg-orange-600 border-orange-700 text-white'
                   } text-xs font-medium cursor-pointer hover:opacity-90 transition-opacity flex items-center`}
-                  onClick={() => onIssueClick(issue.id)}
+                  onClick={() => onViewImplementation(issue.id || 0)}
                   title={issue.title}
                 >
                   <AlertCircle className="w-3 h-3 mr-1" />
@@ -123,7 +125,7 @@ export const ImpactEffortMatrix = ({
                       ? 'bg-blue-100 border-blue-200 text-blue-500 opacity-60' 
                       : 'bg-blue-600 border-blue-700 text-white'
                   } text-xs font-medium cursor-pointer hover:opacity-90 transition-opacity flex items-center`}
-                  onClick={() => onIssueClick(issue.id)}
+                  onClick={() => onViewImplementation(issue.id || 0)}
                   title={issue.title}
                 >
                   {issue.id}
@@ -157,7 +159,7 @@ export const ImpactEffortMatrix = ({
                       ? 'bg-neutral-100 border-neutral-200 text-neutral-500 opacity-60' 
                       : 'bg-neutral-600 border-neutral-700 text-white'
                   } text-xs font-medium cursor-pointer hover:opacity-90 transition-opacity flex items-center`}
-                  onClick={() => onIssueClick(issue.id)}
+                  onClick={() => onViewImplementation(issue.id || 0)}
                   title={issue.title}
                 >
                   {issue.id}

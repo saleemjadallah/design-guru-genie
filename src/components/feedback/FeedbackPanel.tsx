@@ -1,3 +1,4 @@
+
 import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,6 +29,7 @@ interface FeedbackPanelProps {
   onSave?: () => void;
   onIssueSelect?: (id: number | null) => void;
   onViewAllImplementation?: () => void;
+  onViewSingleImplementation?: (id: number) => void;
   isUrlAnalysis?: boolean;
 }
 
@@ -42,6 +44,7 @@ export const FeedbackPanel = ({
   onSave,
   onIssueSelect,
   onViewAllImplementation,
+  onViewSingleImplementation,
   isUrlAnalysis = false
 }: FeedbackPanelProps) => {
   const [isSaving, setIsSaving] = useState(false);
@@ -179,6 +182,7 @@ export const FeedbackPanel = ({
         onIssueSelect={handleIssueSelect}
         onPriorityClick={setFeedback ? handlePriorityClick : undefined}
         onViewAllImplementation={onViewAllImplementation}
+        onViewSingleImplementation={onViewSingleImplementation}
       />
     </div>
   );

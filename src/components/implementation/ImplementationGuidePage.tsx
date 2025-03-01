@@ -7,7 +7,8 @@ import { toast } from "@/hooks/use-toast";
 import { ImplementationFeedback, TimeInvestmentSummary } from "./types";
 import { ImpactEffortMatrix } from "./ImpactEffortMatrix";
 import { ImplementationChecklist } from "./ImplementationChecklist";
-import { TimeInvestmentSummary as TimeInvestmentSummaryComponent } from "./TimeInvestmentSummary";
+import { TimeInvestmentSummaryComponent } from "./TimeInvestmentSummary";
+import { SingleIssueImplementation } from "./SingleIssueImplementation";
 import { calculateTotalTime, processIssues, sortIssuesByPriority } from "./utils";
 
 interface ImplementationGuidePageProps {
@@ -24,6 +25,8 @@ export const ImplementationGuidePage = ({
   // State for tracking completed items
   const [completedItems, setCompletedItems] = useState<number[]>([]);
   const [activeTab, setActiveTab] = useState<'matrix' | 'checklist' | 'summary'>('matrix');
+  const [currentView, setCurrentView] = useState<'overview' | 'single-issue'>('overview');
+  const [activeIssueId, setActiveIssueId] = useState<number | null>(null);
   
   // Process and sort issues
   const processedIssues = processIssues(issues, completedItems);
@@ -60,14 +63,22 @@ export const ImplementationGuidePage = ({
     }
   };
 
+  // Handle viewing implementation for a specific issue
+  const handleViewImplementation = (id: number) => {
+    setActiveIssueId(id);
+    setCurrentView('single-issue');
+  };
+
+  // Return to the overview
+  const handleBackToOverview = () => {
+    setCurrentView('overview');
+    setActiveIssueId(null);
+  };
+
   // Auto-scroll to selected issue if provided
   useEffect(() => {
     if (selectedIssue) {
-      const element = document.getElementById(`implementation-${selectedIssue}`);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        setActiveTab('checklist'); // Switch to checklist tab when selecting an issue
-      }
+      handleViewImplementation(selectedIssue);
     }
   }, [selectedIssue]);
 
@@ -85,89 +96,107 @@ export const ImplementationGuidePage = ({
     }
   };
 
+  // Find the active issue
+  const activeIssue = sortedIssues.find(issue => issue.id === activeIssueId);
+
   return (
     <div className="fixed inset-0 bg-white z-50 overflow-auto">
       <div className="container mx-auto py-8 px-4 md:px-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="mr-2"
-              onClick={onClose}
-            >
-              <ArrowLeft className="w-4 h-4 mr-1" />
-              Back to Analysis Review
-            </Button>
-            <h2 className="text-xl font-bold">Implementation Guide</h2>
-          </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleExportPdf}
-          >
-            <Download className="w-4 h-4 mr-1" />
-            Export PDF
-          </Button>
-        </div>
+        {currentView === 'overview' ? (
+          <>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="mr-2"
+                  onClick={onClose}
+                >
+                  <ArrowLeft className="w-4 h-4 mr-1" />
+                  Back to Analysis Review
+                </Button>
+                <h2 className="text-xl font-bold">Implementation Guide</h2>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleExportPdf}
+              >
+                <Download className="w-4 h-4 mr-1" />
+                Export PDF
+              </Button>
+            </div>
 
-        <div className="mb-4">
-          <p className="text-sm text-neutral-600">
-            This guide provides a prioritized implementation plan for all design issues. 
-            Follow the recommended sequence to achieve maximum impact with minimum effort.
-          </p>
-        </div>
+            <div className="mb-4">
+              <p className="text-sm text-neutral-600">
+                This guide provides a prioritized implementation plan for all design issues. 
+                Follow the recommended sequence to achieve maximum impact with minimum effort.
+              </p>
+            </div>
 
-        <div className="flex border-b border-neutral-200 mb-6 overflow-x-auto">
-          <Button 
-            variant="ghost" 
-            className={`pb-2 rounded-none ${activeTab === 'matrix' ? 'border-b-2 border-primary' : ''}`}
-            onClick={() => setActiveTab('matrix')}
-          >
-            Impact/Effort Matrix
-          </Button>
-          <Button 
-            variant="ghost" 
-            className={`pb-2 rounded-none ${activeTab === 'checklist' ? 'border-b-2 border-primary' : ''}`}
-            onClick={() => setActiveTab('checklist')}
-          >
-            Implementation Checklist
-          </Button>
-          <Button 
-            variant="ghost" 
-            className={`pb-2 rounded-none ${activeTab === 'summary' ? 'border-b-2 border-primary' : ''}`}
-            onClick={() => setActiveTab('summary')}
-          >
-            Time Investment
-          </Button>
-        </div>
+            <div className="flex border-b border-neutral-200 mb-6 overflow-x-auto">
+              <Button 
+                variant="ghost" 
+                className={`pb-2 rounded-none ${activeTab === 'matrix' ? 'border-b-2 border-primary' : ''}`}
+                onClick={() => setActiveTab('matrix')}
+              >
+                Impact/Effort Matrix
+              </Button>
+              <Button 
+                variant="ghost" 
+                className={`pb-2 rounded-none ${activeTab === 'checklist' ? 'border-b-2 border-primary' : ''}`}
+                onClick={() => setActiveTab('checklist')}
+              >
+                Implementation Checklist
+              </Button>
+              <Button 
+                variant="ghost" 
+                className={`pb-2 rounded-none ${activeTab === 'summary' ? 'border-b-2 border-primary' : ''}`}
+                onClick={() => setActiveTab('summary')}
+              >
+                Time Investment
+              </Button>
+            </div>
 
-        <div id="implementation-guide-content" className="pb-16 max-w-6xl mx-auto">
-          {activeTab === 'matrix' && (
-            <ImpactEffortMatrix 
-              issues={sortedIssues} 
-              completedItems={completedItems}
-              onIssueClick={handleIssueClick}
+            <div id="implementation-guide-content" className="pb-16 max-w-6xl mx-auto">
+              {activeTab === 'matrix' && (
+                <ImpactEffortMatrix 
+                  issues={sortedIssues} 
+                  completedItems={completedItems}
+                  onIssueClick={handleIssueClick}
+                  onViewImplementation={handleViewImplementation}
+                />
+              )}
+
+              {activeTab === 'checklist' && (
+                <ImplementationChecklist 
+                  issues={sortedIssues}
+                  completedItems={completedItems}
+                  toggleCompleted={toggleCompleted}
+                  selectedIssue={selectedIssue || null}
+                  onViewImplementation={handleViewImplementation}
+                />
+              )}
+
+              {activeTab === 'summary' && (
+                <TimeInvestmentSummaryComponent 
+                  issues={sortedIssues}
+                  completedItems={completedItems}
+                  timeInvestmentSummary={timeInvestmentSummary}
+                />
+              )}
+            </div>
+          </>
+        ) : (
+          activeIssue && (
+            <SingleIssueImplementation
+              issue={activeIssue}
+              onBack={handleBackToOverview}
+              isCompleted={completedItems.includes(activeIssue.id || 0)}
+              onToggleComplete={toggleCompleted}
             />
-          )}
-
-          {activeTab === 'checklist' && (
-            <ImplementationChecklist 
-              issues={sortedIssues}
-              completedItems={completedItems}
-              toggleCompleted={toggleCompleted}
-              selectedIssue={selectedIssue || null}
-            />
-          )}
-
-          {activeTab === 'summary' && (
-            <TimeInvestmentSummaryComponent 
-              issues={sortedIssues}
-              completedItems={completedItems}
-              timeInvestmentSummary={timeInvestmentSummary}
-            />
-          )}
-        </div>
+          )
+        )}
       </div>
     </div>
   );

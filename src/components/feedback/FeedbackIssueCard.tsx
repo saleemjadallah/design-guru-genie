@@ -22,7 +22,7 @@ interface FeedbackIssueCardProps {
   isSelected: boolean;
   onIssueSelect: (id: number | null) => void;
   onPriorityClick?: (id: number, priority: "low" | "medium" | "high") => void;
-  onImplementationClick?: () => void;
+  onImplementationClick?: (id: number) => void;
 }
 
 export const FeedbackIssueCard = ({
@@ -79,6 +79,13 @@ export const FeedbackIssueCard = ({
         )}
       </div>
     );
+  };
+
+  const handleImplementationClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (issue.id && onImplementationClick) {
+      onImplementationClick(issue.id);
+    }
   };
 
   return (
@@ -170,13 +177,7 @@ export const FeedbackIssueCard = ({
           variant="outline"
           size="sm"
           className="ml-auto text-xs bg-primary/10 hover:bg-primary/20 text-primary hover:text-primary"
-          onClick={(e) => {
-            e.stopPropagation();
-            onIssueSelect(issue.id ?? null);
-            if (onImplementationClick) {
-              onImplementationClick();
-            }
-          }}
+          onClick={handleImplementationClick}
         >
           <FileCode className="w-3.5 h-3.5 mr-1" />
           Implementation

@@ -1,20 +1,11 @@
-
 import { AnnotationCanvas } from "@/components/AnnotationCanvas";
 import { FeedbackPanel } from "@/components/feedback/FeedbackPanel";
 import { Overview } from "@/components/analysis/Overview";
 import { useState } from "react";
 import { ImplementationGuidePage } from "@/components/implementation/ImplementationGuidePage";
+import { ImplementationFeedback } from "@/components/implementation/types";
 
-type Feedback = {
-  type: "positive" | "improvement";
-  title: string;
-  description: string;
-  priority?: "low" | "medium" | "high";
-  location?: { x: number; y: number };
-  id?: number;
-  principle?: string;
-  technical_details?: string;
-};
+type Feedback = ImplementationFeedback;
 
 interface ReviewContentProps {
   review: {

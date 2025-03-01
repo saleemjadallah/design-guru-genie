@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,17 +40,6 @@ const ReviewDetail = () => {
   useEffect(() => {
     const fetchReviewDetails = async () => {
       try {
-        const { data: session } = await supabase.auth.getSession();
-        if (!session?.session?.user) {
-          navigate("/");
-          toast({
-            title: "Authentication required",
-            description: "Please sign in to view review details",
-            variant: "destructive",
-          });
-          return;
-        }
-
         const { data, error } = await supabase
           .from('saved_reviews')
           .select('*')
@@ -72,9 +60,7 @@ const ReviewDetail = () => {
 
         setReview(data);
         
-        // Parse the feedback JSON
         try {
-          // Handle both cases - if feedback is already an object or still a string
           const parsedFeedback = typeof data.feedback === 'string' 
             ? JSON.parse(data.feedback) 
             : data.feedback;
@@ -104,11 +90,9 @@ const ReviewDetail = () => {
     fetchReviewDetails();
   }, [id, navigate]);
 
-  // Filter feedback items
   const positiveFeatures = feedbackItems.filter(f => f.type === "positive");
   const issues = feedbackItems.filter(f => f.type === "improvement");
 
-  // Check if this is a URL analysis (no real image, just a placeholder)
   const isUrlAnalysis = review?.image_url?.startsWith('data:image/svg+xml');
 
   const getIssueCountByPriority = (priority: string) => {
@@ -157,7 +141,6 @@ const ReviewDetail = () => {
               />
 
               {isUrlAnalysis ? (
-                // URL Analysis Layout - Full-width feedback panel
                 <div className="bg-white rounded-lg shadow-sm">
                   <FeedbackPanel 
                     feedback={issues} 
@@ -169,7 +152,6 @@ const ReviewDetail = () => {
                   />
                 </div>
               ) : (
-                // Image Analysis Layout - Split view with annotations
                 <div className="flex flex-col lg:flex-row gap-6">
                   <div className="lg:w-3/5">
                     <div className="bg-white rounded-lg shadow-sm p-4">

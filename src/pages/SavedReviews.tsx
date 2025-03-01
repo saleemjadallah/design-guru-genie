@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Navigation } from "@/components/layout/Navigation";
@@ -22,17 +21,6 @@ const SavedReviews = () => {
 
   useEffect(() => {
     const fetchReviews = async () => {
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.session?.user) {
-        navigate("/");
-        toast({
-          title: "Authentication required",
-          description: "Please sign in to view saved reviews",
-          variant: "destructive",
-        });
-        return;
-      }
-
       try {
         const { data, error } = await supabase
           .from('saved_reviews')

@@ -4,6 +4,8 @@ import { Navigation } from "@/components/layout/Navigation";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ArrowUpRight, Download, Share2, Star, AlertCircle, AlertTriangle, Check, ThumbsUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { FeedbackPanel } from "@/components/FeedbackPanel";
+import { Overview } from "@/components/analysis/Overview";
 
 const FollowUpResults = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -49,6 +51,52 @@ const FollowUpResults = () => {
     ],
     overallFeedback: "Excellent improvement! Your design now follows most best practices and shows significant progress in all key areas. The visual hierarchy is much clearer, spacing is more consistent, and the accessibility has been greatly improved. Just a few minor issues remain that could be addressed in future iterations."
   });
+
+  // Transform positive aspects to the format expected by Overview component
+  const positiveFeatures = results.positiveAspects.map((aspect, index) => ({
+    type: "positive" as const,
+    title: aspect.title,
+    description: aspect.description,
+    id: index
+  }));
+
+  // Transform issues to the format expected by FeedbackPanel
+  const issuesList = [
+    ...results.issues.high.map((issue, index) => ({
+      type: "improvement" as const,
+      title: issue.title,
+      description: issue.description,
+      priority: "high" as const,
+      id: index
+    })),
+    ...results.issues.medium.map((issue, index) => ({
+      type: "improvement" as const,
+      title: issue.title,
+      description: issue.description,
+      priority: "medium" as const,
+      id: index + results.issues.high.length
+    })),
+    ...results.issues.low.map((issue, index) => ({
+      type: "improvement" as const,
+      title: issue.title,
+      description: issue.description,
+      priority: "low" as const,
+      id: index + results.issues.high.length + results.issues.medium.length
+    }))
+  ];
+
+  const getIssueCountByPriority = (priority: string) => {
+    switch (priority) {
+      case "high":
+        return results.issues.high.length;
+      case "medium":
+        return results.issues.medium.length;
+      case "low":
+        return results.issues.low.length;
+      default:
+        return 0;
+    }
+  };
   
   useEffect(() => {
     // Simulate loading time for analysis data
@@ -64,7 +112,7 @@ const FollowUpResults = () => {
       <Navigation />
       <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100 pt-16">
         <div className="container py-12">
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-5xl mx-auto">
             <Button 
               variant="ghost" 
               className="mb-6 flex items-center gap-1 text-neutral-600 hover:text-neutral-900"

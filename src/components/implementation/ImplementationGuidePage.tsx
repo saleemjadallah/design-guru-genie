@@ -66,6 +66,7 @@ export const ImplementationGuidePage = ({
 
   // Handle viewing implementation for a specific issue
   const handleViewImplementation = (id: number) => {
+    console.log("View implementation for issue:", id);
     setActiveIssueId(id);
     setCurrentView('single-issue');
   };

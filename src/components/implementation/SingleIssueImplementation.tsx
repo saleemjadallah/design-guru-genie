@@ -29,6 +29,13 @@ export const SingleIssueImplementation: React.FC<SingleIssueImplementationProps>
     }
   };
 
+  const handleToggleComplete = () => {
+    if (issue.id !== undefined) {
+      console.log("Toggling completion for single issue:", issue.id);
+      onToggleComplete(issue.id);
+    }
+  };
+
   return (
     <div className="max-w-3xl mx-auto">
       <div className="flex items-center gap-2 mb-6">
@@ -69,7 +76,7 @@ export const SingleIssueImplementation: React.FC<SingleIssueImplementationProps>
             variant={isCompleted ? "outline" : "default"}
             size="sm"
             className={`${isCompleted ? "bg-green-50 text-green-700 border-green-200" : ""}`}
-            onClick={() => onToggleComplete(issue.id || 0)}
+            onClick={handleToggleComplete}
           >
             {isCompleted ? (
               <>

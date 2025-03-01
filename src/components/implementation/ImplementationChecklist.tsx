@@ -26,24 +26,9 @@ export const ImplementationChecklist = ({
   };
 
   const renderIssue = (issue: ImplementationFeedback) => {
-    const isCompleted = completedItems.includes(issue.id || 0);
+    const isCompleted = issue.id !== undefined && completedItems.includes(issue.id);
     const isSelected = selectedIssue === issue.id;
     
-    const handleViewImplementationClick = (e: React.MouseEvent) => {
-      e.stopPropagation();
-      if (onViewImplementation && issue.id !== undefined) {
-        onViewImplementation(issue.id);
-      }
-    };
-
-    const handleToggleCompleted = (e: React.MouseEvent) => {
-      // We only need to stopPropagation if this is nested in a clickable container
-      // that would conflict with this click
-      if (issue.id !== undefined) {
-        toggleCompleted(issue.id);
-      }
-    };
-
     return (
       <div 
         key={issue.id} 
@@ -75,7 +60,11 @@ export const ImplementationChecklist = ({
               variant={isCompleted ? "outline" : "default"}
               size="sm"
               className={`mr-2 ${isCompleted ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100 hover:text-green-800" : ""}`}
-              onClick={handleToggleCompleted}
+              onClick={() => {
+                if (issue.id !== undefined) {
+                  toggleCompleted(issue.id);
+                }
+              }}
             >
               {isCompleted ? (
                 <>
@@ -86,12 +75,12 @@ export const ImplementationChecklist = ({
                 "Mark Done"
               )}
             </Button>
-            {onViewImplementation && (
+            {onViewImplementation && issue.id !== undefined && (
               <Button
                 variant="outline"
                 size="sm"
                 className="bg-primary/10 text-primary hover:bg-primary/20"
-                onClick={handleViewImplementationClick}
+                onClick={() => onViewImplementation(issue.id as number)}
               >
                 <FileCode className="w-4 h-4 mr-1" />
                 View Steps
@@ -123,12 +112,12 @@ export const ImplementationChecklist = ({
         </p>
 
         <div className="flex justify-end">
-          {onViewImplementation && (
+          {onViewImplementation && issue.id !== undefined && (
             <Button
               variant="ghost"
               size="sm"
               className="text-primary hover:text-primary hover:bg-primary/10"
-              onClick={handleViewImplementationClick}
+              onClick={() => onViewImplementation(issue.id as number)}
             >
               <span>Detailed Implementation</span>
               <ArrowRight className="w-4 h-4 ml-1" />

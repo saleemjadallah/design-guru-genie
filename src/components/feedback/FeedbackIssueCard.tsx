@@ -167,7 +167,7 @@ export const FeedbackIssueCard = ({
         <Button
           variant="outline"
           size="sm"
-          className="ml-auto text-xs"
+          className="ml-auto text-xs bg-primary/10 hover:bg-primary/20 text-primary hover:text-primary"
           onClick={(e) => {
             e.stopPropagation();
             onIssueSelect(issue.id ?? null);

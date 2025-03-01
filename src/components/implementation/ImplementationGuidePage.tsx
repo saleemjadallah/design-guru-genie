@@ -1,6 +1,4 @@
-
 import React, { useState } from "react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { FileCode, ArrowLeft, CheckCircle2, Download, Clock } from "lucide-react";
 import { exportResultsAsPdf } from "@/utils/pdf-export";
@@ -166,172 +164,173 @@ export const ImplementationGuidePage = ({
   };
 
   return (
-    <div className="h-full overflow-auto">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center">
+    <div className="fixed inset-0 bg-white z-50 overflow-auto">
+      <div className="container mx-auto py-8 px-4 md:px-6">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="mr-2"
+              onClick={onClose}
+            >
+              <ArrowLeft className="w-4 h-4 mr-1" />
+              Back to Analysis Review
+            </Button>
+            <h2 className="text-xl font-bold">Implementation Guide</h2>
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleExportPdf}
+          >
+            <Download className="w-4 h-4 mr-1" />
+            Export PDF
+          </Button>
+        </div>
+
+        <div className="mb-4">
+          <p className="text-sm text-neutral-600">
+            This guide provides a prioritized implementation plan for all design issues. 
+            Follow the recommended sequence to achieve maximum impact with minimum effort.
+          </p>
+        </div>
+
+        <div className="flex border-b border-neutral-200 mb-6 overflow-x-auto">
           <Button 
             variant="ghost" 
-            size="sm" 
-            className="mr-2"
-            onClick={onClose}
+            className={`pb-2 rounded-none ${activeTab === 'matrix' ? 'border-b-2 border-primary' : ''}`}
+            onClick={() => setActiveTab('matrix')}
           >
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Back
+            Impact/Effort Matrix
           </Button>
-          <h2 className="text-xl font-bold">Implementation Guide</h2>
+          <Button 
+            variant="ghost" 
+            className={`pb-2 rounded-none ${activeTab === 'checklist' ? 'border-b-2 border-primary' : ''}`}
+            onClick={() => setActiveTab('checklist')}
+          >
+            Implementation Checklist
+          </Button>
+          <Button 
+            variant="ghost" 
+            className={`pb-2 rounded-none ${activeTab === 'summary' ? 'border-b-2 border-primary' : ''}`}
+            onClick={() => setActiveTab('summary')}
+          >
+            Time Investment
+          </Button>
         </div>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={handleExportPdf}
-        >
-          <Download className="w-4 h-4 mr-1" />
-          Export PDF
-        </Button>
-      </div>
 
-      <div className="mb-4">
-        <p className="text-sm text-neutral-600">
-          This guide provides a prioritized implementation plan for all design issues. 
-          Follow the recommended sequence to achieve maximum impact with minimum effort.
-        </p>
-      </div>
-
-      <div className="flex border-b border-neutral-200 mb-6">
-        <Button 
-          variant="ghost" 
-          className={`pb-2 rounded-none ${activeTab === 'matrix' ? 'border-b-2 border-primary' : ''}`}
-          onClick={() => setActiveTab('matrix')}
-        >
-          Impact/Effort Matrix
-        </Button>
-        <Button 
-          variant="ghost" 
-          className={`pb-2 rounded-none ${activeTab === 'checklist' ? 'border-b-2 border-primary' : ''}`}
-          onClick={() => setActiveTab('checklist')}
-        >
-          Implementation Checklist
-        </Button>
-        <Button 
-          variant="ghost" 
-          className={`pb-2 rounded-none ${activeTab === 'summary' ? 'border-b-2 border-primary' : ''}`}
-          onClick={() => setActiveTab('summary')}
-        >
-          Time Investment
-        </Button>
-      </div>
-
-      <div id="implementation-guide-content" className="pb-16">
-        {activeTab === 'matrix' && (
-          <div className="implementation-matrix mb-8">
-            <h3 className="text-lg font-medium mb-3">Impact vs. Effort Matrix</h3>
-            <p className="text-sm text-neutral-600 mb-4">
-              This matrix helps prioritize changes based on their impact and required effort.
-              Focus first on Quick Wins (high impact, low effort) for maximum effectiveness.
-            </p>
-            
-            <div className="matrix-grid bg-neutral-50 p-4 rounded-lg border border-neutral-200">
-              <div className="quadrant bg-green-50 border border-green-200 rounded-lg">
-                <h4 className="text-green-800 font-medium text-sm mb-1">Quick Wins</h4>
-                <p className="text-xs text-green-700 mb-2">Do these first</p>
-                <div className="flex flex-wrap">
-                  {sortedIssues
-                    .filter(issue => issue.impact === "high" && issue.effort === "low")
-                    .map(issue => (
-                      <div 
-                        key={issue.id}
-                        className={`recommendation-marker bg-green-600 cursor-pointer ${issue.completed ? 'opacity-50' : ''}`}
-                        onClick={() => {
-                          const element = document.getElementById(`implementation-${issue.id}`);
-                          if (element) {
-                            setActiveTab('checklist');
-                            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                          }
-                        }}
-                      >
-                        {issue.id}
-                      </div>
-                    ))}
-                </div>
-              </div>
+        <div id="implementation-guide-content" className="pb-16 max-w-6xl mx-auto">
+          {activeTab === 'matrix' && (
+            <div className="implementation-matrix mb-8">
+              <h3 className="text-lg font-medium mb-3">Impact vs. Effort Matrix</h3>
+              <p className="text-sm text-neutral-600 mb-4">
+                This matrix helps prioritize changes based on their impact and required effort.
+                Focus first on Quick Wins (high impact, low effort) for maximum effectiveness.
+              </p>
               
-              <div className="quadrant bg-orange-50 border border-orange-200 rounded-lg">
-                <h4 className="text-orange-800 font-medium text-sm mb-1">Major Projects</h4>
-                <p className="text-xs text-orange-700 mb-2">Plan and prioritize</p>
-                <div className="flex flex-wrap">
-                  {sortedIssues
-                    .filter(issue => issue.impact === "high" && issue.effort === "high")
-                    .map(issue => (
-                      <div 
-                        key={issue.id}
-                        className={`recommendation-marker bg-orange-600 cursor-pointer ${issue.completed ? 'opacity-50' : ''}`}
-                        onClick={() => {
-                          const element = document.getElementById(`implementation-${issue.id}`);
-                          if (element) {
-                            setActiveTab('checklist');
-                            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                          }
-                        }}
-                      >
-                        {issue.id}
-                      </div>
-                    ))}
+              <div className="grid grid-cols-2 gap-4 mt-6">
+                <div className="quadrant bg-green-50 border border-green-200 rounded-lg p-4">
+                  <h4 className="text-green-800 font-medium text-sm mb-1">Quick Wins</h4>
+                  <p className="text-xs text-green-700 mb-2">Do these first</p>
+                  <div className="flex flex-wrap gap-2">
+                    {sortedIssues
+                      .filter(issue => issue.impact === "high" && issue.effort === "low")
+                      .map(issue => (
+                        <div 
+                          key={issue.id}
+                          className={`w-8 h-8 rounded-full flex items-center justify-center bg-green-600 text-white text-xs font-medium cursor-pointer ${issue.completed ? 'opacity-50' : ''}`}
+                          onClick={() => {
+                            const element = document.getElementById(`implementation-${issue.id}`);
+                            if (element) {
+                              setActiveTab('checklist');
+                              element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }
+                          }}
+                        >
+                          {issue.id}
+                        </div>
+                      ))}
+                  </div>
                 </div>
-              </div>
-              
-              <div className="quadrant bg-blue-50 border border-blue-200 rounded-lg">
-                <h4 className="text-blue-800 font-medium text-sm mb-1">Fill-Ins</h4>
-                <p className="text-xs text-blue-700 mb-2">Do when time permits</p>
-                <div className="flex flex-wrap">
-                  {sortedIssues
-                    .filter(issue => issue.impact === "low" && issue.effort === "low")
-                    .map(issue => (
-                      <div 
-                        key={issue.id}
-                        className={`recommendation-marker bg-blue-600 cursor-pointer ${issue.completed ? 'opacity-50' : ''}`}
-                        onClick={() => {
-                          const element = document.getElementById(`implementation-${issue.id}`);
-                          if (element) {
-                            setActiveTab('checklist');
-                            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                          }
-                        }}
-                      >
-                        {issue.id}
-                      </div>
-                    ))}
+                
+                <div className="quadrant bg-orange-50 border border-orange-200 rounded-lg p-4">
+                  <h4 className="text-orange-800 font-medium text-sm mb-1">Major Projects</h4>
+                  <p className="text-xs text-orange-700 mb-2">Plan and prioritize</p>
+                  <div className="flex flex-wrap gap-2">
+                    {sortedIssues
+                      .filter(issue => issue.impact === "high" && issue.effort === "high")
+                      .map(issue => (
+                        <div 
+                          key={issue.id}
+                          className={`w-8 h-8 rounded-full flex items-center justify-center bg-orange-600 text-white text-xs font-medium cursor-pointer ${issue.completed ? 'opacity-50' : ''}`}
+                          onClick={() => {
+                            const element = document.getElementById(`implementation-${issue.id}`);
+                            if (element) {
+                              setActiveTab('checklist');
+                              element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }
+                          }}
+                        >
+                          {issue.id}
+                        </div>
+                      ))}
+                  </div>
                 </div>
-              </div>
-              
-              <div className="quadrant bg-neutral-50 border border-neutral-200 rounded-lg">
-                <h4 className="text-neutral-800 font-medium text-sm mb-1">Think Twice</h4>
-                <p className="text-xs text-neutral-700 mb-2">Consider if worth effort</p>
-                <div className="flex flex-wrap">
-                  {sortedIssues
-                    .filter(issue => issue.impact === "low" && issue.effort === "high")
-                    .map(issue => (
-                      <div 
-                        key={issue.id}
-                        className={`recommendation-marker bg-neutral-600 cursor-pointer ${issue.completed ? 'opacity-50' : ''}`}
-                        onClick={() => {
-                          const element = document.getElementById(`implementation-${issue.id}`);
-                          if (element) {
-                            setActiveTab('checklist');
-                            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                          }
-                        }}
-                      >
-                        {issue.id}
-                      </div>
-                    ))}
+                
+                <div className="quadrant bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h4 className="text-blue-800 font-medium text-sm mb-1">Fill-Ins</h4>
+                  <p className="text-xs text-blue-700 mb-2">Do when time permits</p>
+                  <div className="flex flex-wrap gap-2">
+                    {sortedIssues
+                      .filter(issue => issue.impact === "low" && issue.effort === "low")
+                      .map(issue => (
+                        <div 
+                          key={issue.id}
+                          className={`w-8 h-8 rounded-full flex items-center justify-center bg-blue-600 text-white text-xs font-medium cursor-pointer ${issue.completed ? 'opacity-50' : ''}`}
+                          onClick={() => {
+                            const element = document.getElementById(`implementation-${issue.id}`);
+                            if (element) {
+                              setActiveTab('checklist');
+                              element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }
+                          }}
+                        >
+                          {issue.id}
+                        </div>
+                      ))}
+                  </div>
+                </div>
+                
+                <div className="quadrant bg-neutral-50 border border-neutral-200 rounded-lg p-4">
+                  <h4 className="text-neutral-800 font-medium text-sm mb-1">Think Twice</h4>
+                  <p className="text-xs text-neutral-700 mb-2">Consider if worth effort</p>
+                  <div className="flex flex-wrap gap-2">
+                    {sortedIssues
+                      .filter(issue => issue.impact === "low" && issue.effort === "high")
+                      .map(issue => (
+                        <div 
+                          key={issue.id}
+                          className={`w-8 h-8 rounded-full flex items-center justify-center bg-neutral-600 text-white text-xs font-medium cursor-pointer ${issue.completed ? 'opacity-50' : ''}`}
+                          onClick={() => {
+                            const element = document.getElementById(`implementation-${issue.id}`);
+                            if (element) {
+                              setActiveTab('checklist');
+                              element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }
+                          }}
+                        >
+                          {issue.id}
+                        </div>
+                      ))}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {activeTab === 'checklist' && (
-          <div className="space-y-8">
+          {activeTab === 'checklist' && (
+            <div className="space-y-8">
             <h3 className="text-lg font-medium mb-3">Implementation Checklist</h3>
             <p className="text-sm text-neutral-600 mb-4">
               Follow this recommended sequence for implementing changes. Items are ordered by priority and impact-to-effort ratio.
@@ -447,10 +446,10 @@ export const ImplementationGuidePage = ({
               </div>
             ))}
           </div>
-        )}
+          )}
 
-        {activeTab === 'summary' && (
-          <div className="space-y-6">
+          {activeTab === 'summary' && (
+            <div className="space-y-6">
             <h3 className="text-lg font-medium mb-3">Time Investment Summary</h3>
             <p className="text-sm text-neutral-600 mb-4">
               This overview shows the estimated time required to implement all recommendations, 
@@ -550,7 +549,8 @@ export const ImplementationGuidePage = ({
               </div>
             </div>
           </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

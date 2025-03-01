@@ -2,7 +2,6 @@
 import { AnnotationCanvas } from "@/components/AnnotationCanvas";
 import { FeedbackPanel } from "@/components/feedback/FeedbackPanel";
 import { Overview } from "@/components/analysis/Overview";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useState } from "react";
 import { ImplementationGuidePage } from "@/components/implementation/ImplementationGuidePage";
 
@@ -56,72 +55,72 @@ export const ReviewContent = ({
 
   return (
     <div className="space-y-6">
-      <Overview 
-        positiveFeatures={positiveFeatures}
-        getIssueCountByPriority={getIssueCountByPriority}
-        isUrlAnalysis={isUrlAnalysis}
-      />
-
-      {isUrlAnalysis ? (
-        <div className="bg-white rounded-lg shadow-sm">
-          <FeedbackPanel 
-            feedback={issues} 
-            strengths={positiveFeatures}
-            onSave={() => {}}
-            selectedIssue={selectedIssue}
-            onIssueSelect={setSelectedIssue}
-            isUrlAnalysis={true}
-            onViewAllImplementation={handleViewAllImplementation}
-          />
-        </div>
+      {isImplementationGuideOpen ? (
+        <ImplementationGuidePage 
+          issues={issues} 
+          onClose={handleCloseImplementationGuide}
+          selectedIssue={selectedIssue}
+        />
       ) : (
-        <div className="flex flex-col lg:flex-row gap-6">
-          <div className="lg:w-3/5">
-            <div className="bg-white rounded-lg shadow-sm p-4">
-              <div className="text-center text-sm font-medium text-neutral-500 mb-4">
-                With AI Annotations
+        <>
+          <Overview 
+            positiveFeatures={positiveFeatures}
+            getIssueCountByPriority={getIssueCountByPriority}
+            isUrlAnalysis={isUrlAnalysis}
+          />
+
+          {isUrlAnalysis ? (
+            <div className="bg-white rounded-lg shadow-sm">
+              <FeedbackPanel 
+                feedback={issues} 
+                strengths={positiveFeatures}
+                onSave={() => {}}
+                selectedIssue={selectedIssue}
+                onIssueSelect={setSelectedIssue}
+                isUrlAnalysis={true}
+                onViewAllImplementation={handleViewAllImplementation}
+              />
+            </div>
+          ) : (
+            <div className="flex flex-col lg:flex-row gap-6">
+              <div className="lg:w-3/5">
+                <div className="bg-white rounded-lg shadow-sm p-4">
+                  <div className="text-center text-sm font-medium text-neutral-500 mb-4">
+                    With AI Annotations
+                  </div>
+                  {review.image_url && (
+                    <AnnotationCanvas
+                      image={review.image_url}
+                      onSave={() => {}}
+                      annotations={issues
+                        .filter(f => f.location)
+                        .map(f => ({
+                          id: f.id || 0,
+                          x: f.location?.x || 0,
+                          y: f.location?.y || 0,
+                          priority: f.priority || "medium"
+                        }))}
+                      selectedIssue={selectedIssue}
+                      onIssueSelect={setSelectedIssue}
+                    />
+                  )}
+                </div>
               </div>
-              {review.image_url && (
-                <AnnotationCanvas
-                  image={review.image_url}
+
+              <div className="lg:w-2/5">
+                <FeedbackPanel 
+                  feedback={issues} 
+                  strengths={positiveFeatures}
                   onSave={() => {}}
-                  annotations={issues
-                    .filter(f => f.location)
-                    .map(f => ({
-                      id: f.id || 0,
-                      x: f.location?.x || 0,
-                      y: f.location?.y || 0,
-                      priority: f.priority || "medium"
-                    }))}
                   selectedIssue={selectedIssue}
                   onIssueSelect={setSelectedIssue}
+                  onViewAllImplementation={handleViewAllImplementation}
                 />
-              )}
+              </div>
             </div>
-          </div>
-
-          <div className="lg:w-2/5">
-            <FeedbackPanel 
-              feedback={issues} 
-              strengths={positiveFeatures}
-              onSave={() => {}}
-              selectedIssue={selectedIssue}
-              onIssueSelect={setSelectedIssue}
-              onViewAllImplementation={handleViewAllImplementation}
-            />
-          </div>
-        </div>
+          )}
+        </>
       )}
-
-      <Sheet open={isImplementationGuideOpen} onOpenChange={setIsImplementationGuideOpen}>
-        <SheetContent className="w-full sm:w-[540px] p-6 overflow-y-auto" side="right">
-          <ImplementationGuidePage 
-            issues={issues} 
-            onClose={handleCloseImplementationGuide}
-            selectedIssue={selectedIssue}
-          />
-        </SheetContent>
-      </Sheet>
     </div>
   );
 };

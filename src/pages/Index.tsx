@@ -16,6 +16,8 @@ export const Index = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [currentStage, setCurrentStage] = useState(0);
+  const [feedback, setFeedback] = useState([]);
+  const [analysisData, setAnalysisData] = useState(null);
 
   const handleImageUpload = (file: File) => {
     console.log("Handling image upload:", file.name);
@@ -23,8 +25,9 @@ export const Index = () => {
     simulateProcessing();
   };
 
-  const handleUrlUpload = (url: string) => {
-    console.log("Handling URL upload:", url);
+  const handleUrlUpload = (imageUrl: string, data: any) => {
+    console.log("Handling URL upload:", imageUrl);
+    setAnalysisData(data);
     setIsUploading(true);
     simulateProcessing();
   };
@@ -69,7 +72,11 @@ export const Index = () => {
                 side="right"
                 className="w-full sm:max-w-md md:max-w-lg lg:max-w-xl p-0"
               >
-                <FeedbackPanel onReset={handleReset} />
+                <FeedbackPanel 
+                  feedback={feedback}
+                  selectedIssue={null}
+                  setFeedback={setFeedback}
+                />
               </SheetContent>
 
               <div className="p-8">
@@ -169,7 +176,7 @@ export const Index = () => {
                     >
                       ← Back to options
                     </Button>
-                    <UrlUpload onUrlSubmit={handleUrlUpload} />
+                    <UrlUpload onUrlAnalyze={handleUrlUpload} />
                   </div>
                 )}
 
@@ -186,3 +193,6 @@ export const Index = () => {
     </div>
   );
 };
+
+// Add default export
+export default Index;

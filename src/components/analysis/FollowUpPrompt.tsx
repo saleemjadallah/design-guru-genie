@@ -11,8 +11,8 @@ interface FollowUpPromptProps {
 }
 
 export const FollowUpPrompt = ({ isSubscribed: propIsSubscribed }: FollowUpPromptProps) => {
-  const [showSubscribeModal, setShowSubscribeModal] = useState(false);
-  const [isSubscribed, setIsSubscribed] = useState(propIsSubscribed || false);
+  // For demo purposes, we'll always set isSubscribed to true
+  const [isSubscribed, setIsSubscribed] = useState(true);
   const [user, setUser] = useState<any>(null);
   const navigate = useNavigate();
 
@@ -22,9 +22,8 @@ export const FollowUpPrompt = ({ isSubscribed: propIsSubscribed }: FollowUpPromp
       
       if (session?.user) {
         setUser(session.user);
-        // Check if the user has is_subscribed in their metadata
-        const isUserSubscribed = session.user.user_metadata?.is_subscribed === true;
-        setIsSubscribed(isUserSubscribed);
+        // In demo mode, always set as subscribed regardless of metadata
+        setIsSubscribed(true);
       }
     };
     
@@ -32,12 +31,8 @@ export const FollowUpPrompt = ({ isSubscribed: propIsSubscribed }: FollowUpPromp
   }, [propIsSubscribed]);
 
   const handleFollowUpClick = () => {
-    if (!isSubscribed) {
-      setShowSubscribeModal(true);
-    } else {
-      // Navigate to follow-up upload page
-      navigate("/follow-up-analysis");
-    }
+    // Always navigate to follow-up analysis in demo mode
+    navigate("/follow-up-analysis");
   };
 
   return (
@@ -60,75 +55,9 @@ export const FollowUpPrompt = ({ isSubscribed: propIsSubscribed }: FollowUpPromp
           onClick={handleFollowUpClick}
           className="bg-accent hover:bg-accent/90"
         >
-          {isSubscribed ? "Submit Follow-Up Design" : "Subscribe to Unlock Follow-Up Analysis"}
+          Submit Follow-Up Design
         </Button>
       </div>
-
-      {/* Subscription Modal */}
-      <AlertDialog open={showSubscribeModal} onOpenChange={setShowSubscribeModal}>
-        <AlertDialogContent className="max-w-md">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-xl text-center">
-              Upgrade to Access Follow-Up Analysis
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-center text-gray-600">
-              The follow-up analysis is a premium feature included in our subscription plan.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          
-          <div className="bg-blue-50 p-4 rounded-lg my-4">
-            <div className="flex items-center text-blue-700 font-medium mb-2">
-              <Check className="w-5 h-5 mr-2" />
-              Your free initial analysis doesn't count
-            </div>
-            <p className="text-gray-700 text-sm">
-              Your first design critique is always free. The follow-up analysis is a separate premium feature available only to subscribers.
-            </p>
-          </div>
-          
-          <div className="space-y-3 mb-6">
-            <div className="flex items-start">
-              <Check className="w-5 h-5 text-green-500 mt-0.5 mr-2" />
-              <span className="text-gray-700">Track progress with before/after metrics</span>
-            </div>
-            <div className="flex items-start">
-              <Check className="w-5 h-5 text-green-500 mt-0.5 mr-2" />
-              <span className="text-gray-700">Get professional verification of improvements</span>
-            </div>
-            <div className="flex items-start">
-              <Check className="w-5 h-5 text-green-500 mt-0.5 mr-2" />
-              <span className="text-gray-700">Share progress reports with your team</span>
-            </div>
-          </div>
-          
-          <AlertDialogFooter className="flex-col gap-2 sm:gap-0">
-            <AlertDialogAction asChild>
-              <Button 
-                className="w-full sm:w-auto bg-accent hover:bg-accent/90"
-                onClick={() => {
-                  // For testing: Set the user as subscribed
-                  if (user) {
-                    const updatedUser = {
-                      ...user,
-                      user_metadata: {
-                        ...user.user_metadata,
-                        is_subscribed: true
-                      }
-                    };
-                    setUser(updatedUser);
-                    setIsSubscribed(true);
-                  }
-                }}
-              >
-                Subscribe for $18/month
-              </Button>
-            </AlertDialogAction>
-            <AlertDialogCancel className="w-full sm:w-auto mt-2 sm:mt-0">
-              Cancel
-            </AlertDialogCancel>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 };

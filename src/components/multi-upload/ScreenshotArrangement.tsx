@@ -70,7 +70,7 @@ export const ScreenshotArrangement = ({
                   ref={provided.innerRef}
                   className="flex items-center space-x-4 overflow-x-auto pb-4"
                 >
-                  {[...screenshots].sort((a, b) => a.order - b.order).map((screenshot, index) => (
+                  {screenshots.map((screenshot, index) => (
                     <Draggable key={screenshot.id} draggableId={screenshot.id} index={index}>
                       {(provided) => (
                         <div
@@ -124,15 +124,15 @@ export const ScreenshotArrangement = ({
           </p>
           
           <div className="space-y-6">
-            {screenshots.filter(s => s.order < screenshots.length - 1).map((screenshot) => {
-              const nextScreenshot = screenshots.find(s => s.order === screenshot.order + 1);
+            {screenshots.slice(0, -1).map((screenshot, index) => {
+              const nextScreenshot = screenshots[index + 1];
               if (!nextScreenshot) return null;
               
               return (
                 <div key={screenshot.id} className="bg-gray-50 p-4 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium">
-                      Screenshot {screenshot.order + 1} & {screenshot.order + 2}
+                      Screenshot {index + 1} & {index + 2}
                     </span>
                     <span className="text-sm text-accent font-medium">
                       {screenshot.overlap}% overlap
@@ -142,7 +142,7 @@ export const ScreenshotArrangement = ({
                     <div className="w-1/3 relative overflow-hidden rounded border border-gray-200">
                       <img
                         src={screenshot.preview}
-                        alt={`Screenshot ${screenshot.order + 1}`}
+                        alt={`Screenshot ${index + 1}`}
                         className="w-full object-cover"
                       />
                       <div 

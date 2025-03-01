@@ -2,6 +2,9 @@
 import { AnnotationCanvas } from "@/components/AnnotationCanvas";
 import { FeedbackPanel } from "@/components/feedback/FeedbackPanel";
 import { Overview } from "@/components/analysis/Overview";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { useState } from "react";
+import { ImplementationGuidePage } from "@/components/implementation/ImplementationGuidePage";
 
 type Feedback = {
   type: "positive" | "improvement";
@@ -41,6 +44,16 @@ export const ReviewContent = ({
   getIssueCountByPriority,
   isUrlAnalysis
 }: ReviewContentProps) => {
+  const [isImplementationGuideOpen, setIsImplementationGuideOpen] = useState(false);
+
+  const handleViewAllImplementation = () => {
+    setIsImplementationGuideOpen(true);
+  };
+
+  const handleCloseImplementationGuide = () => {
+    setIsImplementationGuideOpen(false);
+  };
+
   return (
     <div className="space-y-6">
       <Overview 
@@ -58,6 +71,7 @@ export const ReviewContent = ({
             selectedIssue={selectedIssue}
             onIssueSelect={setSelectedIssue}
             isUrlAnalysis={true}
+            onViewAllImplementation={handleViewAllImplementation}
           />
         </div>
       ) : (
@@ -93,10 +107,21 @@ export const ReviewContent = ({
               onSave={() => {}}
               selectedIssue={selectedIssue}
               onIssueSelect={setSelectedIssue}
+              onViewAllImplementation={handleViewAllImplementation}
             />
           </div>
         </div>
       )}
+
+      <Sheet open={isImplementationGuideOpen} onOpenChange={setIsImplementationGuideOpen}>
+        <SheetContent className="w-full sm:w-[540px] p-6 overflow-y-auto" side="right">
+          <ImplementationGuidePage 
+            issues={issues} 
+            onClose={handleCloseImplementationGuide}
+            selectedIssue={selectedIssue}
+          />
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };

@@ -1,5 +1,5 @@
 
-import { Upload, Brain, MessageCircle, Rocket, Globe, Link } from "lucide-react";
+import { Upload, Brain, MessageCircle, Rocket } from "lucide-react";
 
 const steps = [
   {

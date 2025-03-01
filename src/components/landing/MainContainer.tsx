@@ -6,6 +6,7 @@ import { GeometricAccents } from "@/components/patterns/GeometricAccents";
 import { Hero } from "@/components/landing/Hero";
 import { HowItWorks } from "@/components/landing/HowItWorks";
 import { SeeItInAction } from "@/components/landing/SeeItInAction";
+import { PricingSection } from "@/components/landing/PricingSection";
 import { UploadSection } from "../upload/UploadSection";
 
 export const MainContainer = () => {
@@ -41,6 +42,8 @@ export const MainContainer = () => {
         <HowItWorks />
         
         <SeeItInAction />
+        
+        <PricingSection />
       </div>
     </div>
   );

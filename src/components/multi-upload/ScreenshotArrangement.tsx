@@ -26,6 +26,11 @@ export const ScreenshotArrangement = ({
 }: ScreenshotArrangementProps) => {
   console.log("Rendering ScreenshotArrangement with screenshots:", screenshots);
   
+  // Find the active screenshot object if there is an active ID
+  const selectedScreenshot = activeScreenshot 
+    ? screenshots.find(s => s.id === activeScreenshot) 
+    : undefined;
+  
   return (
     <div className="space-y-6">
       <ScreenshotOrdering
@@ -37,7 +42,7 @@ export const ScreenshotArrangement = ({
       
       {activeScreenshot && (
         <OverlapAdjustment
-          selectedScreenshot={screenshots.find(s => s.id === activeScreenshot)}
+          selectedScreenshot={selectedScreenshot}
           screenshots={screenshots}
           onUpdateOverlap={onUpdateOverlap}
         />

@@ -3,11 +3,13 @@ import { Slider } from "@/components/ui/slider";
 import type { ScreenshotFile } from "./MultiScreenshotUpload";
 
 interface OverlapAdjustmentProps {
+  selectedScreenshot?: ScreenshotFile | undefined;
   screenshots: ScreenshotFile[];
   onUpdateOverlap: (id: string, overlap: number) => void;
 }
 
 export const OverlapAdjustment = ({
+  selectedScreenshot,
   screenshots,
   onUpdateOverlap,
 }: OverlapAdjustmentProps) => {

@@ -10,6 +10,7 @@ import { ImageUpload } from "@/components/ImageUpload";
 import { MultiScreenshotUpload } from "@/components/multi-upload/MultiScreenshotUpload";
 import { ProcessingState } from "@/components/ProcessingState";
 import { UrlUpload } from "@/components/UrlUpload";
+import { SeeItInAction } from "@/components/landing/SeeItInAction";
 
 export const Index = () => {
   const [uploadType, setUploadType] = useState<"image" | "url" | "multi" | null>(null);
@@ -187,6 +188,9 @@ export const Index = () => {
             </Sheet>
           </div>
         </div>
+
+        {/* Add the See It In Action section */}
+        <SeeItInAction />
 
         <HowItWorks />
       </div>

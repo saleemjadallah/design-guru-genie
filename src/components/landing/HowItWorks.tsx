@@ -102,8 +102,8 @@ export const HowItWorks = () => {
         ))}
       </div>
 
-      {/* Add custom animation keyframes for the moving dots */}
-      <style jsx>{`
+      {/* Add custom animation keyframes for the moving dots - fix the style tag */}
+      <style>{`
         @keyframes moveRight {
           0% { left: 0%; }
           100% { left: 100%; }

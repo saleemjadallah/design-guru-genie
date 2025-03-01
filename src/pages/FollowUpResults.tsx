@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Navigation } from "@/components/layout/Navigation";
 import { Button } from "@/components/ui/button";
@@ -15,7 +14,7 @@ import { ResultsHeader } from "@/components/follow-up/ResultsHeader";
 import { LoadingScreen } from "@/components/follow-up/LoadingScreen";
 import { HistoricalImprovementSection } from "@/components/follow-up/HistoricalImprovementSection";
 import { Overview } from "@/components/analysis/Overview";
-import { FeedbackPanel } from "@/components/FeedbackPanel";
+import { FeedbackPanel } from "@/components/feedback/FeedbackPanel";
 
 const FollowUpResults = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -61,7 +60,6 @@ const FollowUpResults = () => {
     overallFeedback: "Excellent improvement! Your design now follows most best practices and shows significant progress in all key areas. The visual hierarchy is much clearer, spacing is more consistent, and the accessibility has been greatly improved. Just a few minor issues remain that could be addressed in future iterations."
   });
   
-  // Historical data for comparison charts
   const [historicalData, setHistoricalData] = useState({
     overallScoreHistory: [
       { date: "Jan 10", score: 45, label: "Initial Design" },
@@ -151,39 +149,31 @@ const FollowUpResults = () => {
                 <div id="results-content" className="bg-white rounded-xl shadow-sm p-8 mb-2">
                   <ResultsHeader />
                   
-                  {/* Design Scores Section */}
                   <ScoreSection 
                     originalScore={results.originalScore}
                     newScore={results.newScore}
                     improvement={results.improvement}
                   />
                   
-                  {/* Improvement Categories */}
                   <ImprovementSection improvementAreas={results.improvementAreas} />
                   
-                  {/* Historical Improvement Section */}
                   <HistoricalImprovementSection 
                     overallScoreHistory={historicalData.overallScoreHistory}
                     categoryComparisons={historicalData.categoryComparisons}
                     analysisCount={historicalData.analysisCount}
                   />
                   
-                  {/* Positive Aspects */}
                   <DesignStrengthsSection positiveAspects={results.positiveAspects} />
                   
-                  {/* Design Issues Section */}
                   <DesignIssuesSection issues={results.issues} />
                   
-                  {/* Annotated Screenshot Section */}
                   <ScreenshotSection 
                     screenshot={results.screenshot}
                     isScreenshotAnalysis={results.isScreenshotAnalysis}
                   />
                   
-                  {/* Overall Feedback */}
                   <OverallFeedbackSection feedback={results.overallFeedback} />
                   
-                  {/* Premium Feature */}
                   <PremiumFeatureSection />
                 </div>
               </div>

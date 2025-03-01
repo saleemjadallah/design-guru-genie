@@ -1,5 +1,5 @@
 
-import { useState, useRef } from "react";
+import { useState, useEffect } from "react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "react-beautiful-dnd";
 import { ChevronLeft, ChevronRight, X, MoveVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -26,11 +26,19 @@ export const ScreenshotArrangement = ({
   const [activeScreenshot, setActiveScreenshot] = useState<string | null>(
     screenshots.length > 0 ? screenshots[0].id : null
   );
+  
+  // Local state to ensure drag and drop works properly
+  const [orderedScreenshots, setOrderedScreenshots] = useState<ScreenshotFile[]>(screenshots);
+  
+  // Update local state when screenshots prop changes
+  useEffect(() => {
+    setOrderedScreenshots(screenshots);
+  }, [screenshots]);
 
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
     
-    const items = Array.from(screenshots);
+    const items = Array.from(orderedScreenshots);
     const [reorderedItem] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, reorderedItem);
     
@@ -40,6 +48,7 @@ export const ScreenshotArrangement = ({
       order: index
     }));
     
+    setOrderedScreenshots(updatedItems);
     onUpdateOrder(updatedItems);
   };
 
@@ -70,7 +79,7 @@ export const ScreenshotArrangement = ({
                   ref={provided.innerRef}
                   className="flex items-center space-x-4 overflow-x-auto pb-4"
                 >
-                  {screenshots.map((screenshot, index) => (
+                  {orderedScreenshots.map((screenshot, index) => (
                     <Draggable key={screenshot.id} draggableId={screenshot.id} index={index}>
                       {(provided) => (
                         <div
@@ -124,8 +133,8 @@ export const ScreenshotArrangement = ({
           </p>
           
           <div className="space-y-6">
-            {screenshots.slice(0, -1).map((screenshot, index) => {
-              const nextScreenshot = screenshots[index + 1];
+            {orderedScreenshots.slice(0, -1).map((screenshot, index) => {
+              const nextScreenshot = orderedScreenshots[index + 1];
               if (!nextScreenshot) return null;
               
               return (

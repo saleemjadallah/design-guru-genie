@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Navigation } from "@/components/layout/Navigation";
 import { Button } from "@/components/ui/button";
@@ -20,7 +19,6 @@ const FollowUpResults = () => {
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   
-  // Simulated analysis results
   const [results, setResults] = useState({
     originalScore: 62,
     newScore: 89,
@@ -61,7 +59,6 @@ const FollowUpResults = () => {
     overallFeedback: "Excellent improvement! Your design now follows most best practices and shows significant progress in all key areas. The visual hierarchy is much clearer, spacing is more consistent, and the accessibility has been greatly improved. Just a few minor issues remain that could be addressed in future iterations."
   });
 
-  // Transform positive aspects to the format expected by Overview component
   const positiveFeatures = results.positiveAspects.map((aspect, index) => ({
     type: "positive" as const,
     title: aspect.title,
@@ -69,7 +66,6 @@ const FollowUpResults = () => {
     id: index
   }));
 
-  // Transform issues to the format expected by FeedbackPanel
   const issuesList = [
     ...results.issues.high.map((issue, index) => ({
       type: "improvement" as const,
@@ -108,7 +104,6 @@ const FollowUpResults = () => {
   };
   
   useEffect(() => {
-    // Simulate loading time for analysis data
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 1500);
@@ -135,7 +130,7 @@ const FollowUpResults = () => {
               <LoadingScreen />
             ) : (
               <div className="space-y-6">
-                <div className="bg-white rounded-xl shadow-sm p-8 mb-2">
+                <div id="results-content" className="bg-white rounded-xl shadow-sm p-8 mb-2">
                   <ResultsHeader />
                   
                   {/* Design Scores Section */}

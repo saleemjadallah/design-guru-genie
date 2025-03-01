@@ -93,54 +93,68 @@ export const FollowUpSubmission = ({ initialAnalysisId, onSubmissionComplete }: 
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-      <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
-        <span className="bg-blue-100 text-blue-800 w-8 h-8 rounded-full flex items-center justify-center mr-2">2</span>
-        Submit Your Improved Design
-      </h2>
+    <div className="bg-white rounded-xl shadow-lg p-6 mb-6 overflow-hidden relative">
+      {/* Background gradient effect */}
+      <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl opacity-50"></div>
       
-      <p className="text-gray-700 mb-4">
-        Upload your updated design after implementing our recommendations. We'll analyze it and show you exactly how much you've improved.
-      </p>
-      
-      <div 
-        className={`border-2 border-dashed rounded-lg p-8 text-center mb-4 ${
-          isDragging 
-            ? "border-accent bg-accent/5" 
-            : "border-gray-300 hover:border-accent/50 hover:bg-gray-50"
-        }`}
-        onDragEnter={handleDrag}
-        onDragOver={handleDrag}
-        onDragLeave={handleDrag}
-        onDrop={handleDrop}
-      >
-        <div className="mb-3">
-          <Upload className="mx-auto h-12 w-12 text-gray-400" />
-        </div>
-        <p className="text-gray-700 mb-2">Drag and drop your updated design here</p>
-        <p className="text-gray-500 text-sm mb-4">or</p>
-        <Button 
-          disabled={isUploading}
-          className="relative bg-accent hover:bg-accent/90"
+      <div className="relative">
+        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+          <span className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white w-8 h-8 rounded-full flex items-center justify-center mr-2 shadow-md">2</span>
+          Submit Your Improved Design
+        </h2>
+        
+        <p className="text-gray-700 mb-4">
+          Upload your updated design after implementing our recommendations. We'll analyze it and show you exactly how much you've improved.
+        </p>
+        
+        <div 
+          className={`border-2 border-dashed rounded-xl p-8 text-center mb-4 transition-all duration-300 ease-in-out ${
+            isDragging 
+              ? "border-indigo-400 bg-indigo-50 scale-[1.02]" 
+              : "border-gray-300 hover:border-indigo-300 hover:bg-gray-50"
+          }`}
+          onDragEnter={handleDrag}
+          onDragOver={handleDrag}
+          onDragLeave={handleDrag}
+          onDrop={handleDrop}
+          style={{
+            background: isDragging 
+              ? "linear-gradient(135deg, rgba(79, 70, 229, 0.05) 0%, rgba(129, 140, 248, 0.05) 100%)" 
+              : "linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(249, 250, 251, 1) 100%)",
+            boxShadow: isDragging ? "0 4px 20px rgba(79, 70, 229, 0.1)" : "none"
+          }}
         >
-          Choose File
-          <input
-            type="file"
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-            onChange={handleFileInput}
-            accept="image/*"
+          <div className="mb-3 relative w-16 h-16 mx-auto">
+            <div className="absolute inset-0 rounded-full bg-indigo-400/20 blur-md transform scale-110"></div>
+            <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mx-auto">
+              <Upload className="h-8 w-8 text-white" style={{ filter: "drop-shadow(0px 1px 1px rgba(0,0,0,0.2))" }} />
+            </div>
+          </div>
+          <p className="text-gray-700 font-medium mb-2">Drag and drop your updated design here</p>
+          <p className="text-gray-500 text-sm mb-4">or</p>
+          <Button 
             disabled={isUploading}
-          />
-        </Button>
-      </div>
-      
-      <div className="text-right">
-        <Button 
-          className="bg-accent hover:bg-accent/90"
-          disabled={isUploading}
-        >
-          {isUploading ? "Uploading..." : "Submit for Follow-Up Analysis"}
-        </Button>
+            className="relative bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg transform hover:scale-[1.02]"
+          >
+            Choose File
+            <input
+              type="file"
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              onChange={handleFileInput}
+              accept="image/*"
+              disabled={isUploading}
+            />
+          </Button>
+        </div>
+        
+        <div className="text-right">
+          <Button 
+            className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg transform hover:scale-[1.02]"
+            disabled={isUploading}
+          >
+            {isUploading ? "Uploading..." : "Submit for Follow-Up Analysis"}
+          </Button>
+        </div>
       </div>
     </div>
   );

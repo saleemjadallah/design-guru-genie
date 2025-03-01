@@ -67,7 +67,7 @@ export const Index = () => {
         <Hero />
 
         <div className="mt-16">
-          <div className="bg-white shadow-xl rounded-xl overflow-hidden">
+          <div className="bg-white shadow-xl rounded-2xl overflow-hidden">
             <Sheet open={showFeedback} onOpenChange={setShowFeedback}>
               <SheetContent
                 side="right"
@@ -80,110 +80,127 @@ export const Index = () => {
                 />
               </SheetContent>
 
-              <div className="p-8">
-                <h2 className="text-2xl font-bold text-center mb-2">
-                  Upload Your Design
-                </h2>
-                <p className="text-center text-gray-500 text-sm mb-8">
-                  Free first analysis / $18 after / cancel anytime
-                </p>
+              <div className="p-8 relative overflow-hidden">
+                {/* Background gradient effect similar to How It Works section */}
+                <div className="absolute -inset-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl opacity-50"></div>
+                
+                <div className="relative">
+                  <h2 className="text-3xl font-bold text-center mb-2 text-neutral-900">
+                    Upload Your Design
+                  </h2>
+                  <p className="text-center text-accent font-medium mb-8">
+                    Free first analysis / $18 after / cancel anytime
+                  </p>
 
-                {!uploadType && !isUploading && (
-                  <div className="space-y-4">
-                    <p className="text-center text-gray-600 mb-8">
-                      Choose how you'd like to upload your design for analysis:
-                    </p>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <Button
-                        onClick={() => setUploadType("image")}
-                        className="h-auto p-6 flex flex-col items-center gap-3 bg-white hover:bg-gray-50 text-gray-800 border border-gray-200"
-                        variant="outline"
-                      >
-                        <Image
-                          className="w-30 h-30 mb-2 text-purple-500 feature-icon"
-                          aria-label="Upload image icon"
-                        />
-                        <span className="text-lg font-medium">Upload Image</span>
-                        <span className="text-sm text-gray-500">
-                          Upload a screenshot or design file
-                        </span>
-                      </Button>
+                  {!uploadType && !isUploading && (
+                    <div className="space-y-6">
+                      <p className="text-center text-gray-600 mb-8">
+                        Choose how you'd like to upload your design for analysis:
+                      </p>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <Button
+                          onClick={() => setUploadType("image")}
+                          className="h-auto p-8 flex flex-col items-center gap-4 border-0 shadow-md hover:shadow-lg transition-all duration-300 ease-in-out transform hover:scale-[1.03]"
+                          style={{
+                            background: "linear-gradient(135deg, #4F46E5 0%, #818CF8 100%)",
+                          }}
+                        >
+                          <div className="w-20 h-20 rounded-full bg-white/30 backdrop-blur-sm flex items-center justify-center mb-2">
+                            <Image
+                              className="w-12 h-12 text-white"
+                              aria-label="Upload image icon"
+                            />
+                          </div>
+                          <span className="text-xl font-bold text-white">Upload Image</span>
+                          <span className="text-sm text-white/90">
+                            Upload a screenshot or design file
+                          </span>
+                        </Button>
 
-                      <Button
-                        onClick={() => setUploadType("multi")}
-                        className="h-auto p-6 flex flex-col items-center gap-3 bg-white hover:bg-gray-50 text-gray-800 border border-gray-200"
-                        variant="outline"
-                      >
-                        <Images
-                          className="w-30 h-30 mb-2 text-blue-500 feature-icon"
-                          aria-label="Multiple screenshots icon"
-                        />
-                        <span className="text-lg font-medium">Multiple Screenshots</span>
-                        <span className="text-sm text-gray-500">
-                          Combine multiple screenshots into one
-                        </span>
-                      </Button>
+                        <Button
+                          onClick={() => setUploadType("multi")}
+                          className="h-auto p-8 flex flex-col items-center gap-4 border-0 shadow-md hover:shadow-lg transition-all duration-300 ease-in-out transform hover:scale-[1.03]"
+                          style={{
+                            background: "linear-gradient(135deg, #7C3AED 0%, #A78BFA 100%)",
+                          }}
+                        >
+                          <div className="w-20 h-20 rounded-full bg-white/30 backdrop-blur-sm flex items-center justify-center mb-2">
+                            <Images
+                              className="w-12 h-12 text-white"
+                              aria-label="Multiple screenshots icon"
+                            />
+                          </div>
+                          <span className="text-xl font-bold text-white">Multiple Screenshots</span>
+                          <span className="text-sm text-white/90">
+                            Combine multiple screenshots into one
+                          </span>
+                        </Button>
 
-                      <Button
-                        onClick={() => setUploadType("url")}
-                        className="h-auto p-6 flex flex-col items-center gap-3 bg-white hover:bg-gray-50 text-gray-800 border border-gray-200"
-                        variant="outline"
-                      >
-                        <Link
-                          className="w-30 h-30 mb-2 text-green-500 feature-icon"
-                          aria-label="Enter URL icon"
-                        />
-                        <span className="text-lg font-medium">Enter URL</span>
-                        <span className="text-sm text-gray-500">
-                          Analyze a live website
-                        </span>
-                      </Button>
+                        <Button
+                          onClick={() => setUploadType("url")}
+                          className="h-auto p-8 flex flex-col items-center gap-4 border-0 shadow-md hover:shadow-lg transition-all duration-300 ease-in-out transform hover:scale-[1.03]"
+                          style={{
+                            background: "linear-gradient(135deg, #0D9488 0%, #5EEAD4 100%)",
+                          }}
+                        >
+                          <div className="w-20 h-20 rounded-full bg-white/30 backdrop-blur-sm flex items-center justify-center mb-2">
+                            <Link
+                              className="w-12 h-12 text-white"
+                              aria-label="Enter URL icon"
+                            />
+                          </div>
+                          <span className="text-xl font-bold text-white">Enter URL</span>
+                          <span className="text-sm text-white/90">
+                            Analyze a live website
+                          </span>
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {uploadType === "image" && !isUploading && (
-                  <div>
-                    <Button
-                      variant="outline"
-                      className="mb-6"
-                      onClick={() => setUploadType(null)}
-                    >
-                      ← Back to options
-                    </Button>
-                    <ImageUpload onImageUpload={handleImageUpload} />
-                  </div>
-                )}
+                  {uploadType === "image" && !isUploading && (
+                    <div>
+                      <Button
+                        variant="outline"
+                        className="mb-6"
+                        onClick={() => setUploadType(null)}
+                      >
+                        ← Back to options
+                      </Button>
+                      <ImageUpload onImageUpload={handleImageUpload} />
+                    </div>
+                  )}
 
-                {uploadType === "multi" && !isUploading && (
-                  <div>
-                    <Button
-                      variant="outline"
-                      className="mb-6"
-                      onClick={() => setUploadType(null)}
-                    >
-                      ← Back to options
-                    </Button>
-                    <MultiScreenshotUpload onImageUpload={handleImageUpload} />
-                  </div>
-                )}
+                  {uploadType === "multi" && !isUploading && (
+                    <div>
+                      <Button
+                        variant="outline"
+                        className="mb-6"
+                        onClick={() => setUploadType(null)}
+                      >
+                        ← Back to options
+                      </Button>
+                      <MultiScreenshotUpload onImageUpload={handleImageUpload} />
+                    </div>
+                  )}
 
-                {uploadType === "url" && !isUploading && (
-                  <div>
-                    <Button
-                      variant="outline"
-                      className="mb-6"
-                      onClick={() => setUploadType(null)}
-                    >
-                      ← Back to options
-                    </Button>
-                    <UrlUpload onUrlAnalyze={handleUrlUpload} />
-                  </div>
-                )}
+                  {uploadType === "url" && !isUploading && (
+                    <div>
+                      <Button
+                        variant="outline"
+                        className="mb-6"
+                        onClick={() => setUploadType(null)}
+                      >
+                        ← Back to options
+                      </Button>
+                      <UrlUpload onUrlAnalyze={handleUrlUpload} />
+                    </div>
+                  )}
 
-                {isUploading && (
-                  <ProcessingState currentStage={currentStage} />
-                )}
+                  {isUploading && (
+                    <ProcessingState currentStage={currentStage} />
+                  )}
+                </div>
               </div>
             </Sheet>
           </div>

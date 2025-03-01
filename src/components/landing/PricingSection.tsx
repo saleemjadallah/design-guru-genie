@@ -8,9 +8,9 @@ export const PricingSection = () => {
   return (
     <>
       {/* Wave divider before section */}
-      <WaveDivider fillColor="#ffffff" height={60} className="my-2" />
+      <WaveDivider fillColor="#ffffff" height={40} className="my-0" />
       
-      <section className="py-16 bg-gradient-to-br from-purple-50 via-white to-indigo-50 rounded-2xl relative mt-8 overflow-hidden">
+      <section className="py-12 bg-gradient-to-br from-purple-50 via-white to-indigo-50 rounded-2xl relative mt-4 overflow-hidden">
         <div className="absolute inset-0 topographic-pattern rounded-2xl opacity-20"></div>
         
         <div className="container relative z-10">

@@ -40,7 +40,7 @@ export const ScreenshotArrangement = ({
         onRemoveScreenshot={onRemoveScreenshot}
       />
       
-      {activeScreenshot && (
+      {activeScreenshot && selectedScreenshot && (
         <OverlapAdjustment
           selectedScreenshot={selectedScreenshot}
           screenshots={screenshots}

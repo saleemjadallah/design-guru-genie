@@ -108,12 +108,13 @@ export const MultiScreenshotUpload = ({ onImageUpload }: MultiScreenshotUploadPr
       return;
     }
 
-    const items = Array.from(screenshots);
-    const [reorderedItem] = items.splice(sourceIndex, 1);
-    items.splice(destinationIndex, 0, reorderedItem);
+    // Sort by order first to ensure we're working with the right sequence
+    const orderedItems = [...screenshots].sort((a, b) => a.order - b.order);
+    const [reorderedItem] = orderedItems.splice(sourceIndex, 1);
+    orderedItems.splice(destinationIndex, 0, reorderedItem);
 
     // Update the order properties
-    const updatedItems = items.map((item, index) => ({
+    const updatedItems = orderedItems.map((item, index) => ({
       ...item,
       order: index
     }));

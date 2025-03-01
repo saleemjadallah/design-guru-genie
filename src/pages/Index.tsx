@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { GeometricAccents } from "@/components/patterns/GeometricAccents";
 import { Hero } from "@/components/landing/Hero";
@@ -11,6 +10,7 @@ import { MultiScreenshotUpload } from "@/components/multi-upload/MultiScreenshot
 import { ProcessingState } from "@/components/ProcessingState";
 import { UrlUpload } from "@/components/UrlUpload";
 import { SeeItInAction } from "@/components/landing/SeeItInAction";
+import { Image, Images, Link } from "lucide-react";
 
 export const Index = () => {
   const [uploadType, setUploadType] = useState<"image" | "url" | "multi" | null>(null);
@@ -34,7 +34,6 @@ export const Index = () => {
   };
 
   const simulateProcessing = () => {
-    // Simulate the processing stages
     setCurrentStage(0);
     const timer1 = setTimeout(() => setCurrentStage(1), 1500);
     const timer2 = setTimeout(() => setCurrentStage(2), 3000);
@@ -96,10 +95,9 @@ export const Index = () => {
                         className="h-auto p-6 flex flex-col items-center gap-3 bg-white hover:bg-gray-50 text-gray-800 border border-gray-200"
                         variant="outline"
                       >
-                        <img
-                          src="/placeholder.svg"
-                          alt="Upload file"
-                          className="w-16 h-16 mb-2"
+                        <Image
+                          className="w-16 h-16 mb-2 text-purple-500 feature-icon"
+                          aria-label="Upload image icon"
                         />
                         <span className="text-lg font-medium">Upload Image</span>
                         <span className="text-sm text-gray-500">
@@ -112,10 +110,9 @@ export const Index = () => {
                         className="h-auto p-6 flex flex-col items-center gap-3 bg-white hover:bg-gray-50 text-gray-800 border border-gray-200"
                         variant="outline"
                       >
-                        <img
-                          src="/placeholder.svg"
-                          alt="Upload multiple files"
-                          className="w-16 h-16 mb-2"
+                        <Images
+                          className="w-16 h-16 mb-2 text-blue-500 feature-icon"
+                          aria-label="Multiple screenshots icon"
                         />
                         <span className="text-lg font-medium">Multiple Screenshots</span>
                         <span className="text-sm text-gray-500">
@@ -128,10 +125,9 @@ export const Index = () => {
                         className="h-auto p-6 flex flex-col items-center gap-3 bg-white hover:bg-gray-50 text-gray-800 border border-gray-200"
                         variant="outline"
                       >
-                        <img
-                          src="/placeholder.svg"
-                          alt="Enter URL"
-                          className="w-16 h-16 mb-2"
+                        <Link
+                          className="w-16 h-16 mb-2 text-green-500 feature-icon"
+                          aria-label="Enter URL icon"
                         />
                         <span className="text-lg font-medium">Enter URL</span>
                         <span className="text-sm text-gray-500">
@@ -189,7 +185,6 @@ export const Index = () => {
           </div>
         </div>
 
-        {/* Changed order: HowItWorks comes before SeeItInAction */}
         <HowItWorks />
         
         <SeeItInAction />
@@ -198,5 +193,4 @@ export const Index = () => {
   );
 };
 
-// Add default export
 export default Index;

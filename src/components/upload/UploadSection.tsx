@@ -55,7 +55,7 @@ export const UploadSection = ({ setShowFeedback }: UploadSectionProps) => {
       <div className="absolute -inset-2 bg-gradient-to-r from-blue-50/70 to-indigo-50/70 rounded-xl opacity-80"></div>
       
       <div className="relative">
-        <h2 className="text-3xl font-bold text-center mb-2 text-neutral-900">
+        <h2 className="text-3xl font-bold text-center mb-2 bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-500">
           Upload Your Design
         </h2>
         <p className="text-center text-accent font-medium mb-8">

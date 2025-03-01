@@ -38,7 +38,7 @@ export const HowItWorks = () => {
 
   return (
     <section className="mt-24 bg-white rounded-2xl p-12 shadow-sm">
-      <h2 className="text-3xl font-bold text-center mb-12 text-neutral-900">
+      <h2 className="text-3xl font-bold text-center mb-12 bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-500">
         How It Works
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-8">

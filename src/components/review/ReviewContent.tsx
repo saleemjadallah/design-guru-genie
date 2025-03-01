@@ -38,6 +38,7 @@ export const ReviewContent = ({
   const [isImplementationGuideOpen, setIsImplementationGuideOpen] = useState(false);
 
   const handleViewAllImplementation = () => {
+    setSelectedIssue(null);
     setIsImplementationGuideOpen(true);
   };
 
@@ -46,6 +47,7 @@ export const ReviewContent = ({
   };
 
   const handleViewSingleImplementation = (id: number) => {
+    console.log("Viewing implementation for issue:", id);
     setSelectedIssue(id);
     setIsImplementationGuideOpen(true);
   };

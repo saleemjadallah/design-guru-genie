@@ -83,7 +83,7 @@ export const FeedbackIssueCard = ({
 
   const handleImplementationClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (issue.id && onImplementationClick) {
+    if (issue.id !== undefined && onImplementationClick) {
       onImplementationClick(issue.id);
     }
   };
@@ -125,7 +125,9 @@ export const FeedbackIssueCard = ({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                onPriorityClick(issue.id || 0, "low");
+                if (issue.id !== undefined) {
+                  onPriorityClick(issue.id, "low");
+                }
               }}
               className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
                 issue.priority === "low"
@@ -141,7 +143,9 @@ export const FeedbackIssueCard = ({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                onPriorityClick(issue.id || 0, "medium");
+                if (issue.id !== undefined) {
+                  onPriorityClick(issue.id, "medium");
+                }
               }}
               className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
                 issue.priority === "medium"
@@ -157,7 +161,9 @@ export const FeedbackIssueCard = ({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                onPriorityClick(issue.id || 0, "high");
+                if (issue.id !== undefined) {
+                  onPriorityClick(issue.id, "high");
+                }
               }}
               className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
                 issue.priority === "high"

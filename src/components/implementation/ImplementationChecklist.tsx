@@ -29,6 +29,12 @@ export const ImplementationChecklist = ({
     const isCompleted = completedItems.includes(issue.id || 0);
     const isSelected = selectedIssue === issue.id;
     
+    const handleViewImplementationClick = () => {
+      if (onViewImplementation && issue.id !== undefined) {
+        onViewImplementation(issue.id);
+      }
+    };
+
     return (
       <div 
         key={issue.id} 
@@ -76,7 +82,7 @@ export const ImplementationChecklist = ({
                 variant="outline"
                 size="sm"
                 className="bg-primary/10 text-primary hover:bg-primary/20"
-                onClick={() => onViewImplementation(issue.id || 0)}
+                onClick={handleViewImplementationClick}
               >
                 <FileCode className="w-4 h-4 mr-1" />
                 View Steps
@@ -113,7 +119,7 @@ export const ImplementationChecklist = ({
               variant="ghost"
               size="sm"
               className="text-primary hover:text-primary hover:bg-primary/10"
-              onClick={() => onViewImplementation(issue.id || 0)}
+              onClick={handleViewImplementationClick}
             >
               <span>Detailed Implementation</span>
               <ArrowRight className="w-4 h-4 ml-1" />

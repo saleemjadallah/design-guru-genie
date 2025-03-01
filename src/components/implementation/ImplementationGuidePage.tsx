@@ -78,7 +78,8 @@ export const ImplementationGuidePage = ({
   // Auto-scroll to selected issue if provided
   useEffect(() => {
     if (selectedIssue) {
-      handleViewImplementation(selectedIssue);
+      setActiveIssueId(selectedIssue);
+      setCurrentView('single-issue');
     }
   }, [selectedIssue]);
 

@@ -12,7 +12,11 @@ type FeatureProps = {
 const Feature = ({ icon: Icon, title, description, color }: FeatureProps) => (
   <div className="flex flex-col items-center text-center p-4 rounded-lg hover:bg-white hover:shadow-sm transition-all relative z-10">
     <div className="mb-3">
-      <Icon className="w-8 h-8" style={{ color }} />
+      <Icon 
+        className="w-8 h-8 feature-icon" 
+        style={{ color }} 
+        aria-label={`${title} icon`}
+      />
     </div>
     <h3 className="font-semibold text-neutral-800 mb-2">{title}</h3>
     <p className="text-sm text-neutral-600">{description}</p>

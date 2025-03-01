@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
 @tailwind base;
@@ -186,4 +185,22 @@ button, a, input, textarea {
 
 .completed-item {
   animation: complete-item 0.5s ease-in-out;
+}
+
+/* Add hover and transition effects for feature icons */
+.feature-icon {
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.feature-icon:hover {
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.2));
+}
+
+/* Add responsive sizing for feature icons */
+@media (max-width: 640px) {
+  .feature-icon {
+    width: 24px;
+    height: 24px;
+  }
 }

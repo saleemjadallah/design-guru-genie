@@ -51,7 +51,7 @@ export const ImageUpload = ({ onImageUpload }: { onImageUpload: (file: File) => 
       className={`relative flex flex-col items-center justify-center w-full h-80 p-8 border-2 border-dashed rounded-xl transition-all duration-300 ease-in-out ${
         isDragging
           ? "border-accent bg-accent/5 scale-[1.02]"
-          : "border-neutral-200 hover:border-accent/50 hover:bg-neutral-50"
+          : "border-neutral-200/70 hover:border-accent/50 hover:bg-neutral-50/50"
       }`}
       onDragEnter={handleDrag}
       onDragOver={handleDrag}
@@ -59,14 +59,15 @@ export const ImageUpload = ({ onImageUpload }: { onImageUpload: (file: File) => 
       onDrop={handleDrop}
       style={{
         background: isDragging 
-          ? "linear-gradient(135deg, rgba(79, 70, 229, 0.05) 0%, rgba(129, 140, 248, 0.05) 100%)" 
-          : "linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(249, 250, 251, 1) 100%)",
-        boxShadow: isDragging ? "0 8px 30px rgba(79, 70, 229, 0.12)" : "none"
+          ? "linear-gradient(135deg, rgba(79, 70, 229, 0.04) 0%, rgba(129, 140, 248, 0.04) 100%)" 
+          : "linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(249, 250, 251, 0.7) 100%)",
+        backdropFilter: "blur(8px)",
+        boxShadow: isDragging ? "0 8px 30px rgba(79, 70, 229, 0.1)" : "0 4px 20px rgba(0, 0, 0, 0.03)"
       }}
     >
       <div className={`relative w-20 h-20 mb-6 transition-transform ${isDragging ? "scale-110" : ""}`}>
         <div className="absolute inset-0 rounded-full bg-indigo-600/10 blur-md transform scale-110"></div>
-        <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+        <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500/90 to-purple-600/90 flex items-center justify-center">
           <Upload
             className="w-10 h-10 text-white"
             style={{ filter: "drop-shadow(0px 1px 2px rgba(0,0,0,0.2))" }}
@@ -81,7 +82,7 @@ export const ImageUpload = ({ onImageUpload }: { onImageUpload: (file: File) => 
         or click to select a file from your computer
       </p>
       <button 
-        className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-medium hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg transform hover:scale-[1.02]"
+        className="px-6 py-3 bg-gradient-to-r from-indigo-600/90 to-purple-600/90 text-white rounded-lg font-medium hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg transform hover:scale-[1.02]"
       >
         Select File
       </button>

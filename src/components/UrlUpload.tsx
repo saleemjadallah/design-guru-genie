@@ -83,9 +83,15 @@ export const UrlUpload = ({ onUrlAnalyze }: { onUrlAnalyze: (imageUrl: string, a
   };
 
   return (
-    <div className="relative flex flex-col items-center justify-center w-full p-8 border-2 border-dashed rounded-xl border-neutral-200 hover:border-accent/50 hover:bg-neutral-50 transition-all">
+    <div className="relative flex flex-col items-center justify-center w-full p-8 border-2 border-dashed rounded-xl border-neutral-200/70 hover:border-accent/50 hover:bg-neutral-50/30 transition-all"
+         style={{
+           background: "linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(246, 245, 252, 0.7) 100%)",
+           backdropFilter: "blur(8px)",
+           boxShadow: "0 4px 20px rgba(0, 0, 0, 0.03)"
+         }}
+    >
       <Globe
-        className="w-16 h-16 mb-6 text-neutral-400"
+        className="w-16 h-16 mb-6 text-teal-500/80"
       />
       <h3 className="text-2xl font-semibold mb-3 text-neutral-800">
         Analyze website by URL
@@ -101,12 +107,12 @@ export const UrlUpload = ({ onUrlAnalyze }: { onUrlAnalyze: (imageUrl: string, a
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder="www.example.com"
-            className="flex-1 px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/50"
+            className="flex-1 px-4 py-3 border border-neutral-300/80 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/50 bg-white/80"
             disabled={isLoading}
           />
           <button 
             type="submit" 
-            className="px-6 py-3 bg-accent text-white rounded-lg font-medium hover:bg-accent-dark transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+            className="px-6 py-3 bg-gradient-to-r from-teal-500/90 to-emerald-500/90 text-white rounded-lg font-medium hover:from-teal-600 hover:to-emerald-600 transition-colors disabled:opacity-70 disabled:cursor-not-allowed shadow-md"
             disabled={isLoading}
           >
             {isLoading ? "Analyzing..." : "Analyze"}

@@ -17,7 +17,8 @@ export const UploadTypeSelector = ({ setUploadType }: UploadTypeSelectorProps) =
           onClick={() => setUploadType("image")}
           className="h-auto p-8 flex flex-col items-center gap-4 border-0 shadow-md hover:shadow-lg transition-all duration-300 ease-in-out transform hover:scale-[1.03]"
           style={{
-            background: "linear-gradient(135deg, #4F46E5 0%, #818CF8 100%)",
+            background: "linear-gradient(135deg, rgba(79, 70, 229, 0.9) 0%, rgba(129, 140, 248, 0.9) 100%)",
+            backdropFilter: "blur(8px)",
           }}
         >
           <div className="w-20 h-20 rounded-full bg-white/30 backdrop-blur-sm flex items-center justify-center mb-2">
@@ -36,7 +37,8 @@ export const UploadTypeSelector = ({ setUploadType }: UploadTypeSelectorProps) =
           onClick={() => setUploadType("multi")}
           className="h-auto p-8 flex flex-col items-center gap-4 border-0 shadow-md hover:shadow-lg transition-all duration-300 ease-in-out transform hover:scale-[1.03]"
           style={{
-            background: "linear-gradient(135deg, #7C3AED 0%, #A78BFA 100%)",
+            background: "linear-gradient(135deg, rgba(124, 58, 237, 0.9) 0%, rgba(167, 139, 250, 0.9) 100%)",
+            backdropFilter: "blur(8px)",
           }}
         >
           <div className="w-20 h-20 rounded-full bg-white/30 backdrop-blur-sm flex items-center justify-center mb-2">
@@ -55,7 +57,8 @@ export const UploadTypeSelector = ({ setUploadType }: UploadTypeSelectorProps) =
           onClick={() => setUploadType("url")}
           className="h-auto p-8 flex flex-col items-center gap-4 border-0 shadow-md hover:shadow-lg transition-all duration-300 ease-in-out transform hover:scale-[1.03]"
           style={{
-            background: "linear-gradient(135deg, #0D9488 0%, #5EEAD4 100%)",
+            background: "linear-gradient(135deg, rgba(13, 148, 136, 0.9) 0%, rgba(94, 234, 212, 0.9) 100%)",
+            backdropFilter: "blur(8px)",
           }}
         >
           <div className="w-20 h-20 rounded-full bg-white/30 backdrop-blur-sm flex items-center justify-center mb-2">

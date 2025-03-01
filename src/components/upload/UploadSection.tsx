@@ -50,9 +50,9 @@ export const UploadSection = ({ setShowFeedback }: UploadSectionProps) => {
   };
 
   return (
-    <div className="p-8 relative overflow-hidden">
-      {/* Background gradient effect similar to How It Works section */}
-      <div className="absolute -inset-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl opacity-50"></div>
+    <div className="p-8 relative overflow-hidden rounded-xl">
+      {/* Background gradient effect with more transparency */}
+      <div className="absolute -inset-2 bg-gradient-to-r from-blue-50/70 to-indigo-50/70 rounded-xl opacity-80"></div>
       
       <div className="relative">
         <h2 className="text-3xl font-bold text-center mb-2 text-neutral-900">

@@ -49,7 +49,7 @@ const FollowUpResults = () => {
               onClick={() => navigate("/follow-up-analysis")}
             >
               <ChevronLeft className="h-4 w-4" />
-              Back to Follow-Up Analysis
+              Back to Analysis Results
             </Button>
             
             {isLoading ? (
@@ -133,17 +133,6 @@ const FollowUpResults = () => {
                       ))}
                     </ul>
                   </div>
-                </div>
-                
-                <div className="bg-blue-50 border border-blue-100 rounded-lg p-6">
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Ready for the next step?</h3>
-                  <p className="text-gray-700 mb-4">
-                    You've made great progress! Consider subscribing to our premium plan for more advanced features 
-                    and unlimited design analyses.
-                  </p>
-                  <Button className="bg-accent hover:bg-accent/90">
-                    Explore Premium Features
-                  </Button>
                 </div>
               </div>
             )}

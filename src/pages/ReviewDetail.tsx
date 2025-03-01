@@ -30,6 +30,47 @@ type SavedReview = {
   user_id?: string;
 };
 
+// Demo review data for when id is "demo-analysis"
+const demoReview: SavedReview = {
+  id: "demo-analysis",
+  title: "Demo Design Review",
+  image_url: "/lovable-uploads/d8111ffc-aa28-4e49-a13a-246b7ce4b6b9.png",
+  feedback: JSON.stringify([
+    {
+      type: "positive",
+      title: "Clean Layout",
+      description: "The design has a clean and organized layout with good use of whitespace."
+    },
+    {
+      type: "positive",
+      title: "Consistent Color Scheme",
+      description: "Colors are used consistently throughout the interface."
+    },
+    {
+      type: "improvement",
+      title: "Low Contrast Text",
+      description: "Some text elements have insufficient contrast with the background.",
+      priority: "high",
+      location: { x: 250, y: 120 }
+    },
+    {
+      type: "improvement",
+      title: "Inconsistent Button Styles",
+      description: "Button styles vary across the interface, causing visual inconsistency.",
+      priority: "medium",
+      location: { x: 400, y: 300 }
+    },
+    {
+      type: "improvement",
+      title: "Mobile Responsiveness",
+      description: "Layout breaks on smaller screens and needs responsive adjustments.",
+      priority: "high"
+    }
+  ]),
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString()
+};
+
 const ReviewDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -41,11 +82,30 @@ const ReviewDetail = () => {
   useEffect(() => {
     const fetchReviewDetails = async () => {
       try {
+        // If the ID is "demo-analysis", use the demo data
+        if (id === "demo-analysis") {
+          setReview(demoReview);
+          
+          try {
+            const parsedFeedback = typeof demoReview.feedback === 'string' 
+              ? JSON.parse(demoReview.feedback) 
+              : demoReview.feedback;
+            
+            setFeedbackItems(parsedFeedback);
+          } catch (parseError) {
+            console.error("Error parsing demo feedback:", parseError);
+          }
+          
+          setLoading(false);
+          return;
+        }
+        
+        // For actual database reviews, fetch from Supabase
         const { data, error } = await supabase
           .from('saved_reviews')
           .select('*')
           .eq('id', id)
-          .single();
+          .maybeSingle(); // Using maybeSingle instead of single to avoid errors if no record found
 
         if (error) throw error;
         

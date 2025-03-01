@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ImageUpload } from "@/components/ImageUpload";
 import { MultiScreenshotUpload } from "@/components/multi-upload/MultiScreenshotUpload";
@@ -7,11 +8,8 @@ import { UrlUpload } from "@/components/UrlUpload";
 import { ProcessingState } from "@/components/ProcessingState";
 import { UploadTypeSelector } from "./UploadTypeSelector";
 
-interface UploadSectionProps {
-  setShowFeedback: (show: boolean) => void;
-}
-
-export const UploadSection = ({ setShowFeedback }: UploadSectionProps) => {
+export const UploadSection = () => {
+  const navigate = useNavigate();
   const [uploadType, setUploadType] = useState<"image" | "url" | "multi" | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [currentStage, setCurrentStage] = useState(0);
@@ -38,7 +36,8 @@ export const UploadSection = ({ setShowFeedback }: UploadSectionProps) => {
       setCurrentStage(3);
       setTimeout(() => {
         setIsUploading(false);
-        setShowFeedback(true);
+        // Navigate to analysis page instead of showing feedback drawer
+        navigate("/analysis/demo-analysis");
       }, 1000);
     }, 4500);
 

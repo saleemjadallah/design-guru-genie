@@ -1,5 +1,5 @@
 
-import type { ScreenshotFile } from "@/components/multi-upload/MultiScreenshotUpload";
+import type { ScreenshotFile } from "@/components/multi-upload/types";
 
 /**
  * Stitches multiple screenshots together based on specified overlap

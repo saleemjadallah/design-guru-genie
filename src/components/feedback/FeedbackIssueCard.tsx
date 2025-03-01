@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Check, FileCode } from "lucide-react";
+import { Check, FileCode, Clock } from "lucide-react";
 
 interface FeedbackIssue {
   id?: number;
@@ -12,6 +12,9 @@ interface FeedbackIssue {
   principle?: string;
   location?: { x: number; y: number };
   technical_details?: string;
+  impact?: "low" | "medium" | "high";
+  effort?: "low" | "medium" | "high";
+  time_estimate?: string;
 }
 
 interface FeedbackIssueCardProps {
@@ -40,6 +43,42 @@ export const FeedbackIssueCard = ({
     }
   };
 
+  const getImpactEffortBadge = () => {
+    if (!issue.impact && !issue.effort) return null;
+    
+    const impact = issue.impact || "medium";
+    const effort = issue.effort || "medium";
+    
+    return (
+      <div className="flex items-center text-xs text-neutral-600 mt-1 mb-2">
+        {issue.impact && (
+          <span className={`mr-2 px-1.5 py-0.5 rounded ${
+            impact === "high" ? "bg-red-50 text-red-700" : 
+            impact === "medium" ? "bg-yellow-50 text-yellow-700" : 
+            "bg-blue-50 text-blue-700"
+          }`}>
+            {impact} impact
+          </span>
+        )}
+        {issue.effort && (
+          <span className={`px-1.5 py-0.5 rounded ${
+            effort === "high" ? "bg-red-50 text-red-700" : 
+            effort === "medium" ? "bg-yellow-50 text-yellow-700" : 
+            "bg-blue-50 text-blue-700"
+          }`}>
+            {effort} effort
+          </span>
+        )}
+        {issue.time_estimate && (
+          <span className="ml-2 flex items-center text-neutral-500">
+            <Clock className="w-3 h-3 mr-1" />
+            {issue.time_estimate}
+          </span>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div
       className={`border rounded-lg p-4 transition-all ${
@@ -59,6 +98,8 @@ export const FeedbackIssueCard = ({
           {issue.priority || "unset"} priority
         </div>
       </div>
+
+      {getImpactEffortBadge()}
 
       <p className="text-neutral-600 text-sm mb-3">{issue.description}</p>
 
@@ -124,7 +165,7 @@ export const FeedbackIssueCard = ({
         )}
         
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
           className="ml-auto text-xs"
           onClick={(e) => {

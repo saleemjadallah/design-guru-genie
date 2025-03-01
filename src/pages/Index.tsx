@@ -189,10 +189,10 @@ export const Index = () => {
           </div>
         </div>
 
-        {/* Add the See It In Action section */}
-        <SeeItInAction />
-
+        {/* Changed order: HowItWorks comes before SeeItInAction */}
         <HowItWorks />
+        
+        <SeeItInAction />
       </div>
     </div>
   );

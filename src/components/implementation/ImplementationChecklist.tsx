@@ -29,9 +29,17 @@ export const ImplementationChecklist = ({
     const isCompleted = completedItems.includes(issue.id || 0);
     const isSelected = selectedIssue === issue.id;
     
-    const handleViewImplementationClick = () => {
+    const handleViewImplementationClick = (e: React.MouseEvent) => {
+      e.stopPropagation();
       if (onViewImplementation && issue.id !== undefined) {
         onViewImplementation(issue.id);
+      }
+    };
+
+    const handleToggleCompleted = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (issue.id !== undefined) {
+        toggleCompleted(issue.id);
       }
     };
 
@@ -66,7 +74,7 @@ export const ImplementationChecklist = ({
               variant={isCompleted ? "outline" : "default"}
               size="sm"
               className={`mr-2 ${isCompleted ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100 hover:text-green-800" : ""}`}
-              onClick={() => toggleCompleted(issue.id || 0)}
+              onClick={handleToggleCompleted}
             >
               {isCompleted ? (
                 <>

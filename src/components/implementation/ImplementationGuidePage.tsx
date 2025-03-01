@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { ImplementationFeedback, TimeInvestmentSummary } from "./types";
@@ -32,11 +31,13 @@ export const ImplementationGuidePage = ({
 
   // Toggle completion status
   const toggleCompleted = (id: number) => {
-    if (completedItems.includes(id)) {
-      setCompletedItems(completedItems.filter(itemId => itemId !== id));
-    } else {
-      setCompletedItems([...completedItems, id]);
-    }
+    setCompletedItems(prev => {
+      if (prev.includes(id)) {
+        return prev.filter(itemId => itemId !== id);
+      } else {
+        return [...prev, id];
+      }
+    });
   };
 
   // Calculate time investment summary

@@ -81,20 +81,26 @@ export const ScreenshotArrangement = ({
                 >
                   {orderedScreenshots.map((screenshot, index) => (
                     <Draggable key={screenshot.id} draggableId={screenshot.id} index={index}>
-                      {(provided) => (
+                      {(provided, snapshot) => (
                         <div
                           ref={provided.innerRef}
                           {...provided.draggableProps}
-                          {...provided.dragHandleProps}
                           className={`relative flex-shrink-0 border-2 rounded-md ${
                             activeScreenshot === screenshot.id
                               ? "border-accent"
-                              : "border-gray-200"
-                          }`}
+                              : snapshot.isDragging ? "border-blue-400" : "border-gray-200"
+                          } ${snapshot.isDragging ? "shadow-lg" : ""} cursor-pointer`}
                           onClick={() => setActiveScreenshot(screenshot.id)}
                         >
                           <div className="absolute top-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded-full">
                             {index + 1}
+                          </div>
+                          {/* Use a separate element for the drag handle */}
+                          <div
+                            {...provided.dragHandleProps}
+                            className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-blue-500 text-white rounded-full p-1 cursor-grab"
+                          >
+                            <MoveVertical className="h-3 w-3" />
                           </div>
                           <button
                             type="button"
@@ -102,13 +108,10 @@ export const ScreenshotArrangement = ({
                               e.stopPropagation();
                               onRemoveScreenshot(screenshot.id);
                             }}
-                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1"
+                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 z-10"
                           >
                             <X className="h-3 w-3" />
                           </button>
-                          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-blue-500 text-white rounded-full p-1">
-                            <MoveVertical className="h-3 w-3" />
-                          </div>
                           <img
                             src={screenshot.preview}
                             alt={`Screenshot ${index + 1}`}

@@ -1,15 +1,13 @@
 
 import React, { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, Download } from "lucide-react";
-import { exportResultsAsPdf } from "@/utils/pdf-export";
 import { toast } from "@/hooks/use-toast";
 import { ImplementationFeedback, TimeInvestmentSummary } from "./types";
-import { ImpactEffortMatrix } from "./ImpactEffortMatrix";
-import { ImplementationChecklist } from "./ImplementationChecklist";
-import { TimeInvestmentSummary as TimeInvestmentSummaryComponent } from "./TimeInvestmentSummary";
 import { SingleIssueImplementation } from "./SingleIssueImplementation";
 import { calculateTotalTime, processIssues, sortIssuesByPriority } from "./utils";
+import { ImplementationGuideHeader } from "./ImplementationGuideHeader";
+import { ImplementationTabs, ImplementationTab } from "./ImplementationTabs";
+import { ImplementationContent } from "./ImplementationContent";
+import { exportResultsAsPdf } from "@/utils/pdf-export";
 
 interface ImplementationGuidePageProps {
   issues: ImplementationFeedback[];
@@ -24,7 +22,7 @@ export const ImplementationGuidePage = ({
 }: ImplementationGuidePageProps) => {
   // State for tracking completed items
   const [completedItems, setCompletedItems] = useState<number[]>([]);
-  const [activeTab, setActiveTab] = useState<'matrix' | 'checklist' | 'summary'>('matrix');
+  const [activeTab, setActiveTab] = useState<ImplementationTab>('matrix');
   const [currentView, setCurrentView] = useState<'overview' | 'single-issue'>('overview');
   const [activeIssueId, setActiveIssueId] = useState<number | null>(null);
   
@@ -105,28 +103,10 @@ export const ImplementationGuidePage = ({
       <div className="container mx-auto py-8 px-4 md:px-6">
         {currentView === 'overview' ? (
           <>
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="mr-2"
-                  onClick={onClose}
-                >
-                  <ArrowLeft className="w-4 h-4 mr-1" />
-                  Back to Analysis Review
-                </Button>
-                <h2 className="text-xl font-bold">Implementation Guide</h2>
-              </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleExportPdf}
-              >
-                <Download className="w-4 h-4 mr-1" />
-                Export PDF
-              </Button>
-            </div>
+            <ImplementationGuideHeader 
+              onClose={onClose} 
+              onExportPdf={handleExportPdf} 
+            />
 
             <div className="mb-4">
               <p className="text-sm text-neutral-600">
@@ -135,58 +115,18 @@ export const ImplementationGuidePage = ({
               </p>
             </div>
 
-            <div className="flex border-b border-neutral-200 mb-6 overflow-x-auto">
-              <Button 
-                variant="ghost" 
-                className={`pb-2 rounded-none ${activeTab === 'matrix' ? 'border-b-2 border-primary' : ''}`}
-                onClick={() => setActiveTab('matrix')}
-              >
-                Impact/Effort Matrix
-              </Button>
-              <Button 
-                variant="ghost" 
-                className={`pb-2 rounded-none ${activeTab === 'checklist' ? 'border-b-2 border-primary' : ''}`}
-                onClick={() => setActiveTab('checklist')}
-              >
-                Implementation Checklist
-              </Button>
-              <Button 
-                variant="ghost" 
-                className={`pb-2 rounded-none ${activeTab === 'summary' ? 'border-b-2 border-primary' : ''}`}
-                onClick={() => setActiveTab('summary')}
-              >
-                Time Investment
-              </Button>
-            </div>
+            <ImplementationTabs activeTab={activeTab} setActiveTab={setActiveTab} />
 
-            <div id="implementation-guide-content" className="pb-16 max-w-6xl mx-auto">
-              {activeTab === 'matrix' && (
-                <ImpactEffortMatrix 
-                  issues={sortedIssues} 
-                  completedItems={completedItems}
-                  onIssueClick={handleIssueClick}
-                  onViewImplementation={handleViewImplementation}
-                />
-              )}
-
-              {activeTab === 'checklist' && (
-                <ImplementationChecklist 
-                  issues={sortedIssues}
-                  completedItems={completedItems}
-                  toggleCompleted={toggleCompleted}
-                  selectedIssue={selectedIssue || null}
-                  onViewImplementation={handleViewImplementation}
-                />
-              )}
-
-              {activeTab === 'summary' && (
-                <TimeInvestmentSummaryComponent 
-                  issues={sortedIssues}
-                  completedItems={completedItems}
-                  timeInvestmentSummary={timeInvestmentSummary}
-                />
-              )}
-            </div>
+            <ImplementationContent 
+              activeTab={activeTab}
+              issues={sortedIssues}
+              completedItems={completedItems}
+              timeInvestmentSummary={timeInvestmentSummary}
+              onIssueClick={handleIssueClick}
+              onViewImplementation={handleViewImplementation}
+              toggleCompleted={toggleCompleted}
+              selectedIssue={selectedIssue || null}
+            />
           </>
         ) : (
           activeIssue && (

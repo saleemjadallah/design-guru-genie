@@ -8,6 +8,7 @@ import { ProcessingState } from "@/components/ProcessingState";
 import { supabase } from "@/integrations/supabase/client";
 import { StepIndicator } from "./StepIndicator";
 import { UploadZone } from "./UploadZone";
+import { DragDropContext, DropResult } from "react-beautiful-dnd";
 
 export interface ScreenshotFile {
   id: string;
@@ -26,6 +27,7 @@ export const MultiScreenshotUpload = ({ onImageUpload }: MultiScreenshotUploadPr
   const [step, setStep] = useState<"upload" | "arrange" | "preview" | "processing">("upload");
   const [combinedImage, setCombinedImage] = useState<string | null>(null);
   const [processingStage, setProcessingStage] = useState(0);
+  const [activeScreenshot, setActiveScreenshot] = useState<string | null>(null);
 
   const handleFiles = (files: File[]) => {
     const imageFiles = files.filter((file) => 
@@ -71,6 +73,11 @@ export const MultiScreenshotUpload = ({ onImageUpload }: MultiScreenshotUploadPr
       URL.revokeObjectURL(screenshotToRemove.preview);
     }
     
+    // If the active screenshot is being removed, clear it
+    if (activeScreenshot === id) {
+      setActiveScreenshot(null);
+    }
+    
     const updatedScreenshots = screenshots.filter(s => s.id !== id);
     // Reorder the remaining screenshots
     const reorderedScreenshots = updatedScreenshots.map((s, index) => ({
@@ -81,8 +88,38 @@ export const MultiScreenshotUpload = ({ onImageUpload }: MultiScreenshotUploadPr
     setScreenshots(reorderedScreenshots);
   };
 
-  const updateScreenshotOrder = (reorderedScreenshots: ScreenshotFile[]) => {
-    setScreenshots(reorderedScreenshots);
+  const handleDragEnd = (result: DropResult) => {
+    console.log("DragEnd result:", result);
+    
+    // Dropped outside the list or no destination
+    if (!result.destination) {
+      console.log("Dropped outside the list or no destination");
+      return;
+    }
+
+    const sourceIndex = result.source.index;
+    const destinationIndex = result.destination.index;
+    
+    console.log(`Moving from index ${sourceIndex} to ${destinationIndex}`);
+    
+    // Don't do anything if dropped in the same place
+    if (sourceIndex === destinationIndex) {
+      console.log("Dropped in the same position, no change needed");
+      return;
+    }
+
+    const items = Array.from(screenshots);
+    const [reorderedItem] = items.splice(sourceIndex, 1);
+    items.splice(destinationIndex, 0, reorderedItem);
+
+    // Update the order properties
+    const updatedItems = items.map((item, index) => ({
+      ...item,
+      order: index
+    }));
+    
+    console.log("Updated screenshots:", updatedItems);
+    setScreenshots(updatedItems);
   };
 
   const updateOverlap = (id: string, overlap: number) => {
@@ -176,6 +213,7 @@ export const MultiScreenshotUpload = ({ onImageUpload }: MultiScreenshotUploadPr
     
     setScreenshots([]);
     setCombinedImage(null);
+    setActiveScreenshot(null);
     setStep("upload");
   };
 
@@ -195,14 +233,17 @@ export const MultiScreenshotUpload = ({ onImageUpload }: MultiScreenshotUploadPr
       )}
       
       {step === "arrange" && (
-        <ScreenshotArrangement 
-          screenshots={screenshots}
-          onUpdateOrder={updateScreenshotOrder}
-          onUpdateOverlap={updateOverlap}
-          onRemoveScreenshot={removeScreenshot}
-          onGeneratePreview={handleGeneratePreview}
-          onReset={resetToUpload}
-        />
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <ScreenshotArrangement 
+            screenshots={screenshots}
+            activeScreenshot={activeScreenshot}
+            setActiveScreenshot={setActiveScreenshot}
+            onRemoveScreenshot={removeScreenshot}
+            onUpdateOverlap={updateOverlap}
+            onGeneratePreview={handleGeneratePreview}
+            onReset={resetToUpload}
+          />
+        </DragDropContext>
       )}
       
       {step === "preview" && (

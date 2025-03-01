@@ -81,9 +81,12 @@ export const Index = () => {
               </SheetContent>
 
               <div className="p-8">
-                <h2 className="text-2xl font-bold text-center mb-8">
+                <h2 className="text-2xl font-bold text-center mb-2">
                   Upload Your Design
                 </h2>
+                <p className="text-center text-gray-500 text-sm mb-8">
+                  Free first analysis / $18 after / cancel anytime
+                </p>
 
                 {!uploadType && !isUploading && (
                   <div className="space-y-4">

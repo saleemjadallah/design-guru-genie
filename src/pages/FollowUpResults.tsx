@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Navigation } from "@/components/layout/Navigation";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ import { OverallFeedbackSection } from "@/components/follow-up/OverallFeedbackSe
 import { PremiumFeatureSection } from "@/components/follow-up/PremiumFeatureSection";
 import { ResultsHeader } from "@/components/follow-up/ResultsHeader";
 import { LoadingScreen } from "@/components/follow-up/LoadingScreen";
+import { HistoricalImprovementSection } from "@/components/follow-up/HistoricalImprovementSection";
 import { Overview } from "@/components/analysis/Overview";
 import { FeedbackPanel } from "@/components/FeedbackPanel";
 
@@ -57,6 +59,22 @@ const FollowUpResults = () => {
       "Button hover states could be more distinct for better user feedback"
     ],
     overallFeedback: "Excellent improvement! Your design now follows most best practices and shows significant progress in all key areas. The visual hierarchy is much clearer, spacing is more consistent, and the accessibility has been greatly improved. Just a few minor issues remain that could be addressed in future iterations."
+  });
+  
+  // Historical data for comparison charts
+  const [historicalData, setHistoricalData] = useState({
+    overallScoreHistory: [
+      { date: "Jan 10", score: 45, label: "Initial Design" },
+      { date: "Feb 5", score: 62, label: "First Iteration" },
+      { date: "Mar 15", score: 89, label: "Current Design" }
+    ],
+    categoryComparisons: [
+      { category: "Accessibility", previous: 58, current: 92 },
+      { category: "Visual Hierarchy", previous: 65, current: 85 },
+      { category: "Consistency", previous: 72, current: 94 },
+      { category: "Spacing", previous: 55, current: 87 }
+    ],
+    analysisCount: 3
   });
 
   const positiveFeatures = results.positiveAspects.map((aspect, index) => ({
@@ -142,6 +160,13 @@ const FollowUpResults = () => {
                   
                   {/* Improvement Categories */}
                   <ImprovementSection improvementAreas={results.improvementAreas} />
+                  
+                  {/* Historical Improvement Section */}
+                  <HistoricalImprovementSection 
+                    overallScoreHistory={historicalData.overallScoreHistory}
+                    categoryComparisons={historicalData.categoryComparisons}
+                    analysisCount={historicalData.analysisCount}
+                  />
                   
                   {/* Positive Aspects */}
                   <DesignStrengthsSection positiveAspects={results.positiveAspects} />

@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Check, Clock, FileCode, Tool } from "lucide-react";
+import { ArrowLeft, Check, Clock, FileCode, Wrench } from "lucide-react";
 import { ImplementationFeedback } from "./types";
 
 interface SingleIssueImplementationProps {
@@ -95,7 +95,7 @@ export const SingleIssueImplementation: React.FC<SingleIssueImplementationProps>
             </span>
           </div>
           <div className="flex items-center">
-            <Tool className="w-4 h-4 mr-1" />
+            <Wrench className="w-4 h-4 mr-1" />
             <span>
               {issue.effort === "high" ? "High effort" : 
                issue.effort === "medium" ? "Medium effort" : "Low effort"}

@@ -7,7 +7,7 @@ import { toast } from "@/hooks/use-toast";
 import { ImplementationFeedback, TimeInvestmentSummary } from "./types";
 import { ImpactEffortMatrix } from "./ImpactEffortMatrix";
 import { ImplementationChecklist } from "./ImplementationChecklist";
-import { TimeInvestmentSummaryComponent } from "./TimeInvestmentSummary";
+import { TimeInvestmentSummary as TimeInvestmentSummaryComponent } from "./TimeInvestmentSummary";
 import { SingleIssueImplementation } from "./SingleIssueImplementation";
 import { calculateTotalTime, processIssues, sortIssuesByPriority } from "./utils";
 

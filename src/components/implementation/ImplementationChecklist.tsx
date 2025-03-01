@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Check, Clock, FileCode, ArrowRight, Tool } from "lucide-react";
+import { Check, Clock, FileCode, ArrowRight, Wrench } from "lucide-react";
 import { ImplementationFeedback } from "./types";
 
 interface ImplementationChecklistProps {
@@ -91,7 +91,7 @@ export const ImplementationChecklist = ({
             {issue.time_estimate || "30-60 minutes"}
           </div>
           <div className="flex items-center">
-            <Tool className="w-4 h-4 mr-1" />
+            <Wrench className="w-4 h-4 mr-1" />
             {issue.tools_needed?.join(", ") || "Code editor"}
           </div>
           <div className={`px-2 py-0.5 rounded-md text-xs ${

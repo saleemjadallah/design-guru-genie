@@ -13,6 +13,7 @@ import SavedReviews from "@/pages/SavedReviews";
 import { supabase } from "@/integrations/supabase/client";
 import FollowUpAnalysis from "@/pages/FollowUpAnalysis";
 import FollowUpResults from "@/pages/FollowUpResults";
+import { Navigation } from "@/components/layout/Navigation";
 
 // Simple layout components to replace the missing ones
 const Layout = ({ children }: { children: React.ReactNode }) => {
@@ -31,11 +32,7 @@ const SiteHeader = () => {
               className="h-24"
             />
           </div>
-          <nav className="hidden md:flex gap-6">
-            <a href="/" className="text-gray-700 hover:text-accent">Home</a>
-            <a href="/saved-reviews" className="text-gray-700 hover:text-accent">Saved Reviews</a>
-            <a href="/follow-up-analysis" className="text-gray-700 hover:text-accent">Follow-Up Analysis</a>
-          </nav>
+          {/* Navigation links removed as requested */}
         </div>
       </div>
     </header>
@@ -78,7 +75,7 @@ const App = () => {
 
   return (
     <Layout>
-      <SiteHeader />
+      <Navigation />
       <ScrollToTop />
       {/* Main Content Routes - No Auth Required for Demo */}
       <Routes>

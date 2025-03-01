@@ -75,7 +75,7 @@ export const Navigation = () => {
           />
         </Link>
 
-        {/* Desktop Menu */}
+        {/* Desktop Menu - Modified as requested */}
         <div className="hidden md:flex items-center space-x-1">
           <nav className="mr-4">
             <ul className="flex space-x-4">
@@ -140,7 +140,7 @@ export const Navigation = () => {
         </button>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu - Update to match desktop menu */}
       {isMenuOpen && (
         <div className="md:hidden bg-white shadow-lg">
           <div className="container py-4">

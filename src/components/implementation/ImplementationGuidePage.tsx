@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { ImplementationFeedback, TimeInvestmentSummary } from "./types";
@@ -31,6 +32,7 @@ export const ImplementationGuidePage = ({
 
   // Toggle completion status
   const toggleCompleted = (id: number) => {
+    console.log("Toggling completion for issue:", id);
     setCompletedItems(prev => {
       if (prev.includes(id)) {
         return prev.filter(itemId => itemId !== id);

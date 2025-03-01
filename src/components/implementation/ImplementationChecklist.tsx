@@ -37,7 +37,8 @@ export const ImplementationChecklist = ({
     };
 
     const handleToggleCompleted = (e: React.MouseEvent) => {
-      e.stopPropagation();
+      // We only need to stopPropagation if this is nested in a clickable container
+      // that would conflict with this click
       if (issue.id !== undefined) {
         toggleCompleted(issue.id);
       }

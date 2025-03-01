@@ -1,7 +1,6 @@
 
 import React, { useEffect, useState } from "react";
 import {
-  BrowserRouter,
   Routes,
   Route,
   useLocation,
@@ -55,6 +54,15 @@ const SiteFooter = () => {
   );
 };
 
+// Separate the ScrollToTop component to avoid nested router issues
+export const ScrollToTop = () => {
+  const location = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location]);
+  return null;
+};
+
 const App = () => {
   const [session, setSession] = useState(null);
 
@@ -69,32 +77,21 @@ const App = () => {
   }, []);
 
   return (
-    <BrowserRouter>
+    <Layout>
+      <SiteHeader />
       <ScrollToTop />
-      <Layout>
-        <SiteHeader />
-        {/* Main Content Routes - No Auth Required for Demo */}
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/analysis/:id" element={<ReviewDetail />} />
-          <Route path="/saved-reviews" element={<SavedReviews />} />
-          <Route path="/follow-up-analysis" element={<FollowUpAnalysis />} />
-          <Route path="/follow-up-results" element={<FollowUpResults />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        <SiteFooter />
-      </Layout>
-    </BrowserRouter>
+      {/* Main Content Routes - No Auth Required for Demo */}
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/analysis/:id" element={<ReviewDetail />} />
+        <Route path="/saved-reviews" element={<SavedReviews />} />
+        <Route path="/follow-up-analysis" element={<FollowUpAnalysis />} />
+        <Route path="/follow-up-results" element={<FollowUpResults />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+      <SiteFooter />
+    </Layout>
   );
-};
-
-// Helper component to scroll to top on route change
-const ScrollToTop = () => {
-  const location = useLocation();
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [location]);
-  return null;
 };
 
 export default App;

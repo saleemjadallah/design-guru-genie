@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "react-beautiful-dnd";
 import { ChevronLeft, ChevronRight, X, MoveVertical } from "lucide-react";
@@ -36,6 +35,7 @@ export const ScreenshotArrangement = ({
   }, [screenshots]);
 
   const handleDragEnd = (result: DropResult) => {
+    console.log('Drag ended:', result);
     if (!result.destination) return;
     
     const items = Array.from(orderedScreenshots);
@@ -48,8 +48,15 @@ export const ScreenshotArrangement = ({
       order: index
     }));
     
+    console.log('Reordered items:', updatedItems);
     setOrderedScreenshots(updatedItems);
-    onUpdateOrder(updatedItems);
+    
+    // Check if this function exists and is being called
+    if (typeof onUpdateOrder === 'function') {
+      onUpdateOrder(updatedItems);
+    } else {
+      console.error('onUpdateOrder is not a function or not provided');
+    }
   };
 
   const handleOverlapChange = (value: number[], id: string) => {

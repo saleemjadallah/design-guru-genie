@@ -29,6 +29,11 @@ const FollowUpAnalysis = () => {
     }, 3000);
   };
   
+  const handleViewResults = () => {
+    // Navigate to the results page
+    navigate("/follow-up-results");
+  };
+  
   return (
     <>
       <Navigation />
@@ -84,7 +89,10 @@ const FollowUpAnalysis = () => {
                         Your follow-up analysis is now ready. You can view the detailed results and improvement metrics.
                       </p>
                       <div className="pt-4">
-                        <Button className="bg-accent hover:bg-accent/90">
+                        <Button 
+                          className="bg-accent hover:bg-accent/90"
+                          onClick={handleViewResults}
+                        >
                           View Analysis Results
                         </Button>
                       </div>

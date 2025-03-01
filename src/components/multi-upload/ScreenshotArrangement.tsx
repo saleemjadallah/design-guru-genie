@@ -1,0 +1,192 @@
+
+import { useState, useRef } from "react";
+import { DragDropContext, Droppable, Draggable, DropResult } from "react-beautiful-dnd";
+import { ChevronLeft, ChevronRight, X, MoveVertical } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import type { ScreenshotFile } from "./MultiScreenshotUpload";
+
+interface ScreenshotArrangementProps {
+  screenshots: ScreenshotFile[];
+  onUpdateOrder: (screenshots: ScreenshotFile[]) => void;
+  onUpdateOverlap: (id: string, overlap: number) => void;
+  onRemoveScreenshot: (id: string) => void;
+  onGeneratePreview: () => void;
+  onReset: () => void;
+}
+
+export const ScreenshotArrangement = ({
+  screenshots,
+  onUpdateOrder,
+  onUpdateOverlap,
+  onRemoveScreenshot,
+  onGeneratePreview,
+  onReset,
+}: ScreenshotArrangementProps) => {
+  const [activeScreenshot, setActiveScreenshot] = useState<string | null>(
+    screenshots.length > 0 ? screenshots[0].id : null
+  );
+
+  const handleDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
+    
+    const items = Array.from(screenshots);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+    
+    // Update order values
+    const updatedItems = items.map((item, index) => ({
+      ...item,
+      order: index
+    }));
+    
+    onUpdateOrder(updatedItems);
+  };
+
+  const handleOverlapChange = (value: number[], id: string) => {
+    onUpdateOverlap(id, value[0]);
+  };
+
+  return (
+    <div className="w-full">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h3 className="text-xl font-semibold mb-4">Arrange Screenshots</h3>
+        <p className="text-gray-600 mb-6">
+          Drag to reorder your screenshots and adjust the overlap between adjacent images.
+        </p>
+        
+        {/* Screenshot ordering */}
+        <div className="mb-8">
+          <h4 className="text-lg font-medium mb-3">Step 1: Order Your Screenshots</h4>
+          <p className="text-gray-600 mb-4">
+            Drag the thumbnails to arrange them from top to bottom of your page.
+          </p>
+          
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <Droppable droppableId="screenshots" direction="horizontal">
+              {(provided) => (
+                <div
+                  {...provided.droppableProps}
+                  ref={provided.innerRef}
+                  className="flex items-center space-x-4 overflow-x-auto pb-4"
+                >
+                  {[...screenshots].sort((a, b) => a.order - b.order).map((screenshot, index) => (
+                    <Draggable key={screenshot.id} draggableId={screenshot.id} index={index}>
+                      {(provided) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                          className={`relative flex-shrink-0 border-2 rounded-md ${
+                            activeScreenshot === screenshot.id
+                              ? "border-accent"
+                              : "border-gray-200"
+                          }`}
+                          onClick={() => setActiveScreenshot(screenshot.id)}
+                        >
+                          <div className="absolute top-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded-full">
+                            {index + 1}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onRemoveScreenshot(screenshot.id);
+                            }}
+                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-blue-500 text-white rounded-full p-1">
+                            <MoveVertical className="h-3 w-3" />
+                          </div>
+                          <img
+                            src={screenshot.preview}
+                            alt={`Screenshot ${index + 1}`}
+                            className="h-36 object-cover rounded-sm"
+                          />
+                        </div>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
+        </div>
+        
+        {/* Overlap adjustment */}
+        <div className="mb-8">
+          <h4 className="text-lg font-medium mb-3">Step 2: Adjust Overlap</h4>
+          <p className="text-gray-600 mb-4">
+            Set how much each screenshot should overlap with the next one.
+          </p>
+          
+          <div className="space-y-6">
+            {screenshots.filter(s => s.order < screenshots.length - 1).map((screenshot) => {
+              const nextScreenshot = screenshots.find(s => s.order === screenshot.order + 1);
+              if (!nextScreenshot) return null;
+              
+              return (
+                <div key={screenshot.id} className="bg-gray-50 p-4 rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium">
+                      Screenshot {screenshot.order + 1} & {screenshot.order + 2}
+                    </span>
+                    <span className="text-sm text-accent font-medium">
+                      {screenshot.overlap}% overlap
+                    </span>
+                  </div>
+                  <div className="flex gap-4">
+                    <div className="w-1/3 relative overflow-hidden rounded border border-gray-200">
+                      <img
+                        src={screenshot.preview}
+                        alt={`Screenshot ${screenshot.order + 1}`}
+                        className="w-full object-cover"
+                      />
+                      <div 
+                        className="absolute bottom-0 right-0 h-[calc(var(--overlap-percent)*1%)] w-full bg-gradient-to-t from-accent/30 to-transparent"
+                        style={{ "--overlap-percent": screenshot.overlap } as React.CSSProperties}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <Slider
+                        defaultValue={[screenshot.overlap]}
+                        min={5}
+                        max={40}
+                        step={1}
+                        onValueChange={(value) => handleOverlapChange(value, screenshot.id)}
+                      />
+                      <div className="flex justify-between text-xs text-gray-500 mt-1">
+                        <span>Less overlap (5%)</span>
+                        <span>More overlap (40%)</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        
+        <div className="flex justify-between">
+          <Button
+            variant="outline"
+            onClick={onReset}
+          >
+            <ChevronLeft className="h-4 w-4 mr-1" />
+            Back to Upload
+          </Button>
+          <Button 
+            onClick={onGeneratePreview}
+            className="bg-accent hover:bg-accent/90"
+          >
+            Preview Combined Result
+            <ChevronRight className="h-4 w-4 ml-1" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};

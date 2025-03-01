@@ -28,7 +28,8 @@ export const ScreenshotOrdering = ({
           <div
             {...provided.droppableProps}
             ref={provided.innerRef}
-            className="flex items-center space-x-4 overflow-x-auto pb-4"
+            className="flex items-center space-x-4 min-h-[150px] w-full"
+            style={{ overflowX: 'auto' }} // Using style for more control over overflow
           >
             {screenshots.map((screenshot, index) => (
               <Draggable key={screenshot.id} draggableId={screenshot.id} index={index}>

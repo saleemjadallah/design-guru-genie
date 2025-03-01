@@ -97,7 +97,7 @@ export const Index = () => {
                         variant="outline"
                       >
                         <Image
-                          className="w-20 h-20 mb-2 text-purple-500 feature-icon"
+                          className="w-30 h-30 mb-2 text-purple-500 feature-icon"
                           aria-label="Upload image icon"
                         />
                         <span className="text-lg font-medium">Upload Image</span>
@@ -112,7 +112,7 @@ export const Index = () => {
                         variant="outline"
                       >
                         <Images
-                          className="w-20 h-20 mb-2 text-blue-500 feature-icon"
+                          className="w-30 h-30 mb-2 text-blue-500 feature-icon"
                           aria-label="Multiple screenshots icon"
                         />
                         <span className="text-lg font-medium">Multiple Screenshots</span>
@@ -127,7 +127,7 @@ export const Index = () => {
                         variant="outline"
                       >
                         <Link
-                          className="w-20 h-20 mb-2 text-green-500 feature-icon"
+                          className="w-30 h-30 mb-2 text-green-500 feature-icon"
                           aria-label="Enter URL icon"
                         />
                         <span className="text-lg font-medium">Enter URL</span>

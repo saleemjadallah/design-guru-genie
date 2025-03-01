@@ -1,7 +1,6 @@
 
 import React from "react";
-
-type UploadStep = "upload" | "arrange" | "preview" | "processing";
+import { UploadStep } from "./types";
 
 interface StepIndicatorProps {
   currentStep: UploadStep;

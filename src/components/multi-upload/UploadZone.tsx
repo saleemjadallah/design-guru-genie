@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Upload, X, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import { ScreenshotFile } from "./MultiScreenshotUpload";
+import { ScreenshotFile } from "./types";
 
 interface UploadZoneProps {
   screenshots: ScreenshotFile[];

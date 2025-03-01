@@ -1,7 +1,7 @@
 
 import { Droppable, Draggable } from "react-beautiful-dnd";
 import { MoveVertical, X } from "lucide-react";
-import type { ScreenshotFile } from "./MultiScreenshotUpload";
+import { ScreenshotFile } from "./types";
 
 interface ScreenshotOrderingProps {
   screenshots: ScreenshotFile[];

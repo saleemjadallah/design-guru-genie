@@ -1,6 +1,6 @@
 
 import { Slider } from "@/components/ui/slider";
-import type { ScreenshotFile } from "./MultiScreenshotUpload";
+import { ScreenshotFile } from "./types";
 
 interface OverlapAdjustmentProps {
   selectedScreenshot?: ScreenshotFile | undefined;

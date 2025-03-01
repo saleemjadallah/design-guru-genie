@@ -3,7 +3,7 @@ import { useState } from "react";
 import { ScreenshotOrdering } from "./ScreenshotOrdering";
 import { OverlapAdjustment } from "./OverlapAdjustment";
 import { Button } from "@/components/ui/button";
-import type { ScreenshotFile } from "./MultiScreenshotUpload";
+import { ScreenshotFile } from "./types";
 
 interface ScreenshotArrangementProps {
   screenshots: ScreenshotFile[];

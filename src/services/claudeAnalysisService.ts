@@ -1,3 +1,4 @@
+
 import { toast } from "@/hooks/use-toast";
 import { handleAnalysisError } from "@/utils/upload/errorHandler";
 import { compressImageForAPI, CompressionOptions } from "@/utils/upload/imageCompressionService";
@@ -38,22 +39,27 @@ export async function processWithClaudeAI(imageUrl: string, compressionOptions: 
       const compressedImageUrl = await compressImageForAPI(imageUrl, mergedOptions);
       console.log("Image compressed successfully");
       
-      // Verify compressed image size
-      try {
-        const response = await fetch(compressedImageUrl);
-        const blob = await response.blob();
-        const sizeMB = blob.size / (1024 * 1024);
-        console.log(`Final compressed image size: ${sizeMB.toFixed(2)}MB`);
-        
-        // Final size check with clear error message
-        if (sizeMB > 5) {
-          throw new Error(`Image is still too large (${sizeMB.toFixed(2)}MB) after compression. Maximum size allowed is 5MB.`);
+      // If result is a data URL, no need to fetch it again for size check
+      if (!compressedImageUrl.startsWith('data:')) {
+        // Verify compressed image size for non-data URLs
+        try {
+          const response = await fetch(compressedImageUrl);
+          const blob = await response.blob();
+          const sizeMB = blob.size / (1024 * 1024);
+          console.log(`Final compressed image size: ${sizeMB.toFixed(2)}MB`);
+          
+          // Final size check with clear error message
+          if (sizeMB > 5) {
+            throw new Error(`Image is still too large (${sizeMB.toFixed(2)}MB) after compression. Maximum size allowed is 5MB.`);
+          }
+        } catch (sizeCheckError) {
+          if (sizeCheckError.message.includes("too large")) {
+            throw sizeCheckError; // Rethrow size-specific errors
+          }
+          console.warn("Size check failed, continuing anyway:", sizeCheckError);
         }
-      } catch (sizeCheckError) {
-        if (sizeCheckError.message.includes("too large")) {
-          throw sizeCheckError; // Rethrow size-specific errors
-        }
-        console.warn("Size check failed, continuing anyway:", sizeCheckError);
+      } else {
+        console.log("Using base64 data URL for Claude API");
       }
       
       imageUrl = compressedImageUrl;
@@ -73,23 +79,26 @@ export async function processWithClaudeAI(imageUrl: string, compressionOptions: 
     }
     
     // Add a final explicit size check before calling the Claude API
-    try {
-      const finalResponse = await fetch(imageUrl);
-      const finalBlob = await finalResponse.blob();
-      if (finalBlob.size > 5 * 1024 * 1024) {
-        throw new Error(`Failed to compress image below 5MB limit. Final size: ${(finalBlob.size / (1024 * 1024)).toFixed(2)}MB`);
+    // but only for non-data URLs (we've already checked data URLs in the compression function)
+    if (!imageUrl.startsWith('data:')) {
+      try {
+        const finalResponse = await fetch(imageUrl);
+        const finalBlob = await finalResponse.blob();
+        if (finalBlob.size > 5 * 1024 * 1024) {
+          throw new Error(`Failed to compress image below 5MB limit. Final size: ${(finalBlob.size / (1024 * 1024)).toFixed(2)}MB`);
+        }
+      } catch (finalCheckError) {
+        console.error("Final size check error:", finalCheckError);
+        if (finalCheckError.message.includes("5MB limit")) {
+          toast({
+            title: "Image too large",
+            description: finalCheckError.message,
+            variant: "destructive",
+          });
+          throw finalCheckError;
+        }
+        // If it's just a fetch error but not a size error, continue
       }
-    } catch (finalCheckError) {
-      console.error("Final size check error:", finalCheckError);
-      if (finalCheckError.message.includes("5MB limit")) {
-        toast({
-          title: "Image too large",
-          description: finalCheckError.message,
-          variant: "destructive",
-        });
-        throw finalCheckError;
-      }
-      // If it's just a fetch error but not a size error, continue
     }
     
     // Call the Claude AI analysis API

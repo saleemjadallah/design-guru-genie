@@ -114,24 +114,27 @@ export async function compressImageForAPI(
                 }
               }
               
-              const blobUrl = URL.createObjectURL(blob);
-              console.log(`Final compressed size: ${Math.round(blob.size/1024)}KB after ${attempt} attempts`);
-              
-              // Add a final explicit size check before returning
-              try {
-                const finalResponse = await fetch(blobUrl);
-                const finalBlob = await finalResponse.blob();
-                if (finalBlob.size > 5 * 1024 * 1024) {
-                  URL.revokeObjectURL(blobUrl);
-                  reject(new Error(`Failed to compress image below 5MB limit. Final size: ${(finalBlob.size / (1024 * 1024)).toFixed(2)}MB`));
-                  return;
+              // Convert blob to base64 data URL instead of blob URL
+              const reader = new FileReader();
+              reader.onloadend = () => {
+                const dataUrl = reader.result as string;
+                console.log(`Final compressed size: ${Math.round(blob.size/1024)}KB after ${attempt} attempts`);
+                
+                // Final size check
+                try {
+                  if (blob.size > 5 * 1024 * 1024) {
+                    reject(new Error(`Failed to compress image below 5MB limit. Final size: ${(blob.size / (1024 * 1024)).toFixed(2)}MB`));
+                    return;
+                  }
+                } catch (finalCheckError) {
+                  console.warn("Final size check error:", finalCheckError);
+                  // Continue despite the check error - we'll log but not fail
                 }
-              } catch (finalCheckError) {
-                console.warn("Final size check error:", finalCheckError);
-                // Continue despite the check error - we'll log but not fail
-              }
-              
-              resolve(blobUrl);
+                
+                resolve(dataUrl);
+              };
+              reader.onerror = () => reject(new Error('Failed to convert image to data URL'));
+              reader.readAsDataURL(blob);
             }
           }, 'image/jpeg', currentQuality);
         };

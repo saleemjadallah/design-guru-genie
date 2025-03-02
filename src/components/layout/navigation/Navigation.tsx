@@ -22,8 +22,13 @@ export const Navigation = () => {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <Link to="/" className="text-xl font-bold">
-            Design Guru
+          <Link to="/" className="flex items-center">
+            <img 
+              src="/lovable-uploads/7a4a7d46-2665-4c5b-9666-801339014a81.png" 
+              alt="Evolvely.ai Logo" 
+              className="h-8 w-auto mr-2" 
+            />
+            <span className="text-xl font-bold">Design Guru</span>
           </Link>
 
           <DesktopMenu 

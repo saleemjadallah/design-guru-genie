@@ -75,7 +75,7 @@ const App = () => {
     <Layout>
       <Navigation />
       <ScrollToTop />
-      {/* Main Content Routes - No Auth Required for Demo */}
+      {/* Main Content Routes */}
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/analysis/:id" element={<ReviewDetail />} />

@@ -20,16 +20,6 @@ const SavedReviews = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Demo review
-  const demoReview: SavedReview = {
-    id: "demo-analysis",
-    title: "Demo Design Review",
-    image_url: "/lovable-uploads/d8111ffc-aa28-4e49-a13a-246b7ce4b6b9.png",
-    feedback: "[]", // Simple placeholder since we don't need the actual feedback here
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  };
-
   useEffect(() => {
     const fetchReviews = async () => {
       try {
@@ -40,9 +30,7 @@ const SavedReviews = () => {
 
         if (error) throw error;
         
-        // Add the demo review to the beginning of the list
-        const allReviews = [demoReview, ...(data || [])];
-        setReviews(allReviews);
+        setReviews(data || []);
       } catch (error) {
         console.error("Error fetching reviews:", error);
         toast({
@@ -51,8 +39,7 @@ const SavedReviews = () => {
           variant: "destructive",
         });
         
-        // Still show the demo review even if there's an error fetching other reviews
-        setReviews([demoReview]);
+        setReviews([]);
       } finally {
         setLoading(false);
       }
@@ -62,16 +49,6 @@ const SavedReviews = () => {
   }, [navigate]);
 
   const handleDeleteReview = async (id: string) => {
-    // Prevent deleting the demo review
-    if (id === "demo-analysis") {
-      toast({
-        title: "Cannot delete demo review",
-        description: "The demo review cannot be deleted",
-        variant: "destructive",
-      });
-      return;
-    }
-    
     try {
       const { error } = await supabase
         .from('saved_reviews')
@@ -149,11 +126,6 @@ const SavedReviews = () => {
                       No image available
                     </div>
                   )}
-                  {review.id === "demo-analysis" && (
-                    <div className="absolute top-2 right-2 bg-indigo-600 text-white text-xs px-2 py-1 rounded">
-                      Demo
-                    </div>
-                  )}
                 </div>
                 <div className="p-4 flex-1">
                   <h3 className="font-semibold text-lg text-neutral-900 mb-2">{review.title}</h3>
@@ -163,20 +135,18 @@ const SavedReviews = () => {
                   <div className="flex justify-between">
                     <button
                       className="flex items-center text-indigo-600 hover:text-indigo-800 text-sm font-medium"
-                      onClick={() => navigate(`/review/${review.id}`)}
+                      onClick={() => navigate(`/analysis/${review.id}`)}
                     >
                       <Eye size={16} className="mr-1" />
                       View Details
                     </button>
-                    {review.id !== "demo-analysis" && (
-                      <button
-                        className="flex items-center text-red-600 hover:text-red-800 text-sm font-medium"
-                        onClick={() => handleDeleteReview(review.id)}
-                      >
-                        <Trash2 size={16} className="mr-1" />
-                        Delete
-                      </button>
-                    )}
+                    <button
+                      className="flex items-center text-red-600 hover:text-red-800 text-sm font-medium"
+                      onClick={() => handleDeleteReview(review.id)}
+                    >
+                      <Trash2 size={16} className="mr-1" />
+                      Delete
+                    </button>
                   </div>
                 </div>
               </div>

@@ -60,6 +60,29 @@ export const Navigation = () => {
     });
   };
 
+  const handleSignIn = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: 'user@example.com',
+        password: 'password123',
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Signed in successfully",
+        description: "You have been signed into your account.",
+      });
+    } catch (error) {
+      console.error("Error signing in:", error);
+      toast({
+        title: "Failed to sign in",
+        description: "Please check your credentials and try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
@@ -75,7 +98,7 @@ export const Navigation = () => {
           />
         </Link>
 
-        {/* Desktop Menu - Modified as requested */}
+        {/* Desktop Menu */}
         <div className="hidden md:flex items-center space-x-1">
           <nav className="mr-4">
             <ul className="flex space-x-4">
@@ -117,14 +140,7 @@ export const Navigation = () => {
             </div>
           ) : (
             <div>
-              <Button
-                onClick={() => {
-                  toast({
-                    title: "Test Mode",
-                    description: "Authentication is simulated in this demo.",
-                  });
-                }}
-              >
+              <Button onClick={handleSignIn}>
                 Sign In
               </Button>
             </div>
@@ -140,7 +156,7 @@ export const Navigation = () => {
         </button>
       </div>
 
-      {/* Mobile Menu - Update to match desktop menu */}
+      {/* Mobile Menu */}
       {isMenuOpen && (
         <div className="md:hidden bg-white shadow-lg">
           <div className="container py-4">
@@ -203,10 +219,7 @@ export const Navigation = () => {
               <Button
                 className="w-full"
                 onClick={() => {
-                  toast({
-                    title: "Test Mode",
-                    description: "Authentication is simulated in this demo.",
-                  });
+                  handleSignIn();
                   setIsMenuOpen(false);
                 }}
               >

@@ -22,11 +22,19 @@ serve(async (req) => {
       throw new Error("No image URL provided")
     }
     
+    // Check if the image is an SVG or other non-processable format
+    if (typeof imageUrl === 'string' && 
+        (imageUrl.startsWith('data:image/svg') || 
+         imageUrl.includes('<svg'))) {
+      throw new Error("Cannot analyze SVG placeholder. Please provide a proper screenshot.")
+    }
+    
     // If the image is a Supabase URL, we need to fetch it first
     let imageBase64;
-    if (imageUrl.startsWith('http')) {
-      console.log('Fetching image from URL:', imageUrl)
-      try {
+    try {
+      if (imageUrl.startsWith('http')) {
+        console.log('Fetching image from URL:', imageUrl)
+        
         const imageResponse = await fetch(imageUrl)
         if (!imageResponse.ok) {
           throw new Error(`Failed to fetch image: ${imageResponse.status}`)
@@ -37,16 +45,35 @@ serve(async (req) => {
         const buffer = new Uint8Array(arrayBuffer)
         imageBase64 = btoa(String.fromCharCode(...buffer))
         console.log('Image fetched and converted to base64')
-      } catch (fetchError) {
-        console.error('Error fetching image:', fetchError)
-        throw new Error(`Failed to fetch image: ${fetchError.message}`)
+      } else if (imageUrl.startsWith('data:image/')) {
+        // If it's already a data URL, extract the base64 part
+        // Make sure it's not an SVG
+        if (imageUrl.startsWith('data:image/svg')) {
+          throw new Error("SVG images are not supported for analysis")
+        }
+        
+        imageBase64 = imageUrl.split(',')[1]
+        console.log('Using provided base64 image data')
+      } else {
+        throw new Error("Invalid image URL format")
       }
-    } else if (imageUrl.startsWith('data:image/')) {
-      // If it's already a data URL, extract the base64 part
-      imageBase64 = imageUrl.split(',')[1]
-      console.log('Using provided base64 image data')
-    } else {
-      throw new Error("Invalid image URL format")
+    } catch (fetchError) {
+      console.error('Error processing image:', fetchError)
+      return new Response(
+        JSON.stringify({ 
+          error: `Failed to process image: ${fetchError.message}. Please provide a JPEG or PNG image.` 
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      )
+    }
+    
+    // Validate the base64 data
+    if (!imageBase64 || typeof imageBase64 !== 'string') {
+      console.error('Invalid base64 data')
+      return new Response(
+        JSON.stringify({ error: "Invalid image data" }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      )
     }
     
     // Call Claude API

@@ -28,6 +28,16 @@ export async function processCombinedImage(
   let processedBlob = blob;
   const maxSizeBytes = 4 * 1024 * 1024; // 4MB target (safely under 5MB limit)
   
+  // Check size early and warn user
+  if (blob.size > 5 * 1024 * 1024) {
+    console.warn(`Image size is ${Math.round(blob.size/(1024*1024))}MB before compression (5MB limit)`);
+    toast({
+      title: "Large Image Detected",
+      description: "Your image exceeds 5MB. Attempting to compress...",
+      variant: "default",
+    });
+  }
+  
   if (blob.size > maxSizeBytes) {
     try {
       processedBlob = await compressImage(blob, {
@@ -51,7 +61,20 @@ export async function processCombinedImage(
         console.log(`Second compression attempt: ${Math.round(blob.size/1024)}KB to ${Math.round(processedBlob.size/1024)}KB`);
       } catch (secondErr) {
         console.error("Both compression attempts failed:", secondErr);
-        // Continue with original if compression fails
+        
+        // Third extremely aggressive attempt
+        try {
+          processedBlob = await compressImage(blob, {
+            maxWidth: 600,
+            maxHeight: 800,
+            quality: 0.5,
+            maxSizeBytes
+          });
+          console.log(`Emergency compression attempt: ${Math.round(blob.size/1024)}KB to ${Math.round(processedBlob.size/1024)}KB`);
+        } catch (thirdErr) {
+          console.error("All compression attempts failed:", thirdErr);
+          // Continue with original if compression fails
+        }
       }
     }
   }
@@ -59,10 +82,11 @@ export async function processCombinedImage(
   // Check final image size after compression
   if (processedBlob.size > 5 * 1024 * 1024) {
     toast({
-      title: "Warning: Large Image",
-      description: "The combined image exceeds 5MB even after compression. Analysis may fail.",
+      title: "Warning: Image Too Large",
+      description: "The image exceeds 5MB even after compression. Please reduce image size or try fewer screenshots.",
       variant: "destructive",
     });
+    throw new Error(`Image size (${Math.round(processedBlob.size/(1024*1024))}MB) exceeds the 5MB limit even after compression. Please reduce image size or try fewer screenshots.`);
   }
   
   const file = new File([processedBlob], "combined-screenshot.png", { type: "image/png" });
@@ -120,7 +144,15 @@ async function compressImage(
       let currentWidth = img.width;
       let currentHeight = img.height;
       let attempt = 0;
-      const maxAttempts = 3;
+      const maxAttempts = 4; // Increased max attempts
+      
+      // For very large images, apply more aggressive initial reduction
+      if (img.width * img.height > 2000000) { // > 2 megapixels
+        const scaleFactor = Math.sqrt(2000000 / (img.width * img.height));
+        currentWidth = Math.floor(img.width * scaleFactor);
+        currentHeight = Math.floor(img.height * scaleFactor);
+        console.log(`Initial aggressive resize to ${currentWidth}x${currentHeight}`);
+      }
       
       const compressWithSettings = () => {
         attempt++;
@@ -156,15 +188,25 @@ async function compressImage(
             
             // Check if the blob is still too large and we haven't reached max attempts
             if (resultBlob.size > maxSizeBytes && attempt < maxAttempts) {
-              // Reduce dimensions and quality for next attempt
-              const scaleFactor = Math.sqrt(maxSizeBytes / resultBlob.size) * 0.9; // Be slightly more aggressive
+              // Reduce dimensions and quality more aggressively with each attempt
+              const scaleFactor = Math.min(0.8, Math.sqrt(maxSizeBytes / resultBlob.size) * 0.9);
               
               currentWidth = Math.floor(currentWidth * scaleFactor);
               currentHeight = Math.floor(currentHeight * scaleFactor);
-              currentQuality = Math.max(0.5, currentQuality - 0.1); // Don't go below 0.5 quality
+              currentQuality = Math.max(0.4, currentQuality - 0.15); // More aggressive quality reduction
               
               compressWithSettings();
             } else {
+              // Final size check with emergency compression
+              if (resultBlob.size > 5 * 1024 * 1024 && attempt < maxAttempts) {
+                // Emergency compression - very low quality
+                currentWidth = Math.floor(currentWidth * 0.7);
+                currentHeight = Math.floor(currentHeight * 0.7);
+                currentQuality = 0.3;
+                compressWithSettings();
+                return;
+              }
+              
               if (resultBlob.size > maxSizeBytes) {
                 console.warn(`Could not compress image below ${Math.round(maxSizeBytes/1024)}KB after ${attempt} attempts. Final size: ${Math.round(resultBlob.size/1024)}KB`);
               } else {
@@ -191,4 +233,3 @@ async function compressImage(
     img.src = url;
   });
 }
-

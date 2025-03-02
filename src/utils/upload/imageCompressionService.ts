@@ -21,9 +21,9 @@ export async function compressImageForAPI(
   options: CompressionOptions = {}
 ): Promise<string> {
   const {
-    maxWidth = 800,    // Default width target
+    maxWidth = 800,    // Reduced default max width
     maxHeight = 1000,  // Default height target
-    quality = 0.7,     // Default quality
+    quality = 0.65,    // Lower quality default
     maxSizeBytes = 4 * 1024 * 1024 // 4MB target (to stay safely under 5MB limit)
   } = options;
 
@@ -44,10 +44,18 @@ export async function compressImageForAPI(
       const img = new Image();
       img.onload = () => {
         let currentQuality = quality;
-        let currentWidth = img.width;
-        let currentHeight = img.height;
+        let currentWidth = Math.min(img.width, maxWidth);
+        let currentHeight = Math.min(img.height, maxHeight);
         let attempt = 0;
-        const maxAttempts = 3;
+        const maxAttempts = 4; // Increased max attempts
+        
+        // For very large images, apply more aggressive initial reduction
+        if (img.width * img.height > 2000000) { // > 2 megapixels
+          const scaleFactor = Math.sqrt(2000000 / (img.width * img.height));
+          currentWidth = Math.floor(img.width * scaleFactor);
+          currentHeight = Math.floor(img.height * scaleFactor);
+          console.log(`Initial aggressive resize to ${currentWidth}x${currentHeight}`);
+        }
         
         const compressWithSettings = () => {
           attempt++;
@@ -73,26 +81,34 @@ export async function compressImageForAPI(
               return;
             }
             
-            console.log(`Compressed to ${Math.round(blob.size/1024)}KB (${Math.round((blob.size/blob.size)*100)}% of original)`);
+            console.log(`Compressed to ${Math.round(blob.size/1024)}KB (${Math.round((blob.size/img.size)*100)}% of original)`);
             
             // Check if the blob is still too large and we haven't reached max attempts
             if (blob.size > maxSizeBytes && attempt < maxAttempts) {
-              // Reduce dimensions and quality for next attempt
-              const scaleFactor = Math.sqrt(maxSizeBytes / blob.size);
+              // Reduce dimensions and quality more aggressively with each attempt
+              const scaleFactor = Math.min(0.8, Math.sqrt(maxSizeBytes / blob.size));
               
-              // Be more aggressive with each attempt
-              currentWidth = Math.floor(currentWidth * (scaleFactor * 0.9));
-              currentHeight = Math.floor(currentHeight * (scaleFactor * 0.9));
-              currentQuality = Math.max(0.5, currentQuality - 0.1); // Don't go below 0.5 quality
+              currentWidth = Math.floor(currentWidth * scaleFactor);
+              currentHeight = Math.floor(currentHeight * scaleFactor);
+              currentQuality = Math.max(0.4, currentQuality - 0.15); // More aggressive quality reduction
               
               compressWithSettings();
             } else {
-              if (blob.size > maxSizeBytes) {
-                console.warn(`Could not compress image below ${Math.round(maxSizeBytes/1024)}KB after ${attempt} attempts. Final size: ${Math.round(blob.size/1024)}KB`);
-              } else {
-                console.log(`Successfully compressed image to ${Math.round(blob.size/1024)}KB after ${attempt} attempts`);
+              // Final size check
+              if (blob.size > 5 * 1024 * 1024) {
+                console.warn(`CRITICAL: Image still over 5MB limit after ${attempt} compression attempts`);
+                
+                // Emergency compression - final desperate attempt with very low quality
+                if (attempt < maxAttempts) {
+                  currentWidth = Math.floor(currentWidth * 0.7);
+                  currentHeight = Math.floor(currentHeight * 0.7);
+                  currentQuality = 0.3;
+                  compressWithSettings();
+                  return;
+                }
               }
               
+              console.log(`Final compressed size: ${Math.round(blob.size/1024)}KB after ${attempt} attempts`);
               resolve(URL.createObjectURL(blob));
             }
           }, 'image/jpeg', currentQuality);

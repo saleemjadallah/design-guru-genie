@@ -36,11 +36,27 @@ export const processAndUploadImage = async (file: File): Promise<{ filePath: str
   
   // Compress image if it's large
   let fileToUpload = file;
-  if (file.size > 5 * 1024 * 1024 || (file.type.startsWith('image/') && file.type !== 'image/svg+xml')) {
+  if (file.size > 4 * 1024 * 1024 || (file.type.startsWith('image/') && file.type !== 'image/svg+xml')) {
     try {
       console.log("Compressing image before upload...");
       fileToUpload = await compressImage(file, 1600, 1600, 0.75);
       console.log("Image compressed successfully");
+      
+      // Double-check size after compression
+      if (fileToUpload.size > 5 * 1024 * 1024) {
+        console.warn("Image still too large after compression, trying again with more aggressive settings");
+        fileToUpload = await compressImage(file, 1000, 1000, 0.6);
+        
+        // Final check
+        if (fileToUpload.size > 5 * 1024 * 1024) {
+          console.warn("Image still exceeds 5MB after aggressive compression");
+          toast({
+            title: "Warning: Large Image",
+            description: "Your image may be too large for optimal analysis. Consider using a smaller image.",
+            variant: "destructive",
+          });
+        }
+      }
     } catch (compressionError) {
       console.warn("Image compression failed, proceeding with original:", compressionError);
       // Continue with the original file

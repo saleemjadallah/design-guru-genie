@@ -11,6 +11,16 @@ import { handleUrlAnalysisError, handleUrlAnalysisSuccess } from "@/utils/upload
  * @returns Analysis results in the required format
  */
 export const processUrlAnalysisData = async (imageUrl: string, data?: any) => {
+  // Check image URL before proceeding
+  if (!imageUrl) {
+    toast({
+      title: "Error",
+      description: "No image URL provided for analysis",
+      variant: "destructive",
+    });
+    throw new Error("No image URL provided for analysis");
+  }
+  
   // If data is provided, try to use it
   if (data) {
     console.log("Processing provided analysis data");
@@ -38,7 +48,15 @@ export const processUrlAnalysisData = async (imageUrl: string, data?: any) => {
   // If no usable data provided or parsing failed, use Claude API
   console.log(data ? "Falling back to Claude AI" : "Using Claude AI directly");
   try {
-    const results = await processWithClaudeAI(imageUrl);
+    // Use more aggressive compression options
+    const compressionOptions = {
+      maxWidth: 800,
+      maxHeight: 1000,
+      quality: 0.65,
+      maxSizeBytes: 4 * 1024 * 1024 // 4MB target (safely under 5MB)
+    };
+    
+    const results = await processWithClaudeAI(imageUrl, compressionOptions);
     if (results && Array.isArray(results) && results.length > 0) {
       handleUrlAnalysisSuccess(results.length);
     }

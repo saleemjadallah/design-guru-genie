@@ -21,9 +21,12 @@ export const useUrlScreenshot = () => {
       const { data: screenshotData, error: screenshotError } = await supabase.functions.invoke("screenshot-url", {
         body: { url: normalizedUrl },
         method: 'POST',
-        options: {
-          timeout: 30000 // 30 seconds timeout for screenshot generation
-        }
+        responseType: 'json',  // Correctly specify response type
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        // 30 seconds timeout for screenshot generation - Timeout must be set in a different way
+        abortSignal: AbortSignal.timeout(30000)
       });
 
       if (screenshotError) {

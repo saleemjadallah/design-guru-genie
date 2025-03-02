@@ -75,10 +75,13 @@ export async function processWithClaudeAI(imageUrl: string) {
     const { data: analyzeData, error: analyzeError } = await supabase.functions
       .invoke('analyze-design', {
         body: { imageUrl },
-        // Add a longer timeout for large images
-        options: {
-          timeout: 60000 // 60 seconds
-        }
+        method: 'POST',
+        responseType: 'json',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        // Add a longer timeout for large images - use AbortSignal for timeout
+        abortSignal: AbortSignal.timeout(60000) // 60 seconds
       });
       
     if (analyzeError) {

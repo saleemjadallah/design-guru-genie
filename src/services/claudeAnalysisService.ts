@@ -1,7 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { generateDummyFeedback } from "@/utils/upload/dummyData";
 import { handleAnalysisError } from "@/utils/upload/errorHandler";
 
 export async function processWithClaudeAI(publicUrl: string) {
@@ -40,7 +39,8 @@ export async function processWithClaudeAI(publicUrl: string) {
                 id: index + 1,
                 type: "positive",
                 title: strength.title,
-                description: strength.description
+                description: strength.description,
+                location: strength.location || null
               });
             });
           }
@@ -54,7 +54,7 @@ export async function processWithClaudeAI(publicUrl: string) {
                 title: issue.issue,
                 priority: issue.priority,
                 description: issue.recommendation,
-                location: issue.location,
+                location: issue.location || null,
                 principle: issue.principle,
                 technical_details: issue.technical_details
               });
@@ -69,31 +69,14 @@ export async function processWithClaudeAI(publicUrl: string) {
           return formattedFeedback;
         } catch (parseError) {
           console.error("Error parsing JSON from Claude:", parseError);
-          toast({
-            title: "Data format error",
-            description: "There was an error processing the AI response. Using alternative analysis.",
-            variant: "destructive"
-          });
-          // Fallback to dummy data if parsing fails
-          return generateDummyFeedback();
+          throw new Error("Failed to parse Claude AI response. Please try again.");
         }
       }
     }
     
-    toast({
-      title: "Limited analysis",
-      description: "We couldn't get a complete analysis. Using alternative feedback.",
-      variant: "destructive"
-    });
-    return generateDummyFeedback();
-  } catch (analyzeError) {
+    throw new Error("Invalid response from Claude AI service");
+  } catch (analyzeError: any) {
     console.error("Error calling analyze-design function:", analyzeError);
-    toast({
-      title: "AI service unavailable",
-      description: "Our AI analysis service is currently unavailable. Using alternative feedback.",
-      variant: "destructive"
-    });
-    // Fallback to dummy data if analysis fails
-    return generateDummyFeedback();
+    throw new Error(`AI analysis failed: ${analyzeError.message || "Unknown error"}`);
   }
 }

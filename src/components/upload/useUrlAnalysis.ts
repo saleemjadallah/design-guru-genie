@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { handleUploadError, handleDatabaseError } from "@/utils/upload/errorHandler";
-import { generateDummyFeedback } from "@/utils/upload/dummyData";
+import { processWithClaudeAI } from "@/services/claudeAnalysisService";
 
 // Helper to type check Claude AI response structure
 interface ClaudeResponse {
@@ -45,7 +45,7 @@ export const useUrlAnalysis = () => {
         description: "We're preparing to analyze your website URL...",
       });
       
-      // Creating a sample feedback analysis or use provided data
+      // Process the data from Claude API or get new analysis
       let analysisResults;
       
       if (data) {
@@ -89,22 +89,28 @@ export const useUrlAnalysis = () => {
             }
           } catch (parseError) {
             console.error("Error parsing Claude response:", parseError);
-            analysisResults = generateDummyFeedback();
+            // Try to process the URL directly with Claude
+            toast({
+              title: "Retrying analysis",
+              description: "Processing your URL with our design analysis AI...",
+            });
+            analysisResults = await processWithClaudeAI(imageUrl);
           }
         } else {
           // If data is already in our required format
           analysisResults = data;
         }
       } else {
-        // If no data provided, use dummy feedback
-        analysisResults = generateDummyFeedback();
+        // If no data provided, use Claude API to analyze the URL
+        setCurrentStage(1);
+        toast({
+          title: "Processing URL",
+          description: "Retrieving and analyzing website design elements...",
+        });
+        
+        // Call Claude AI service directly
+        analysisResults = await processWithClaudeAI(imageUrl);
       }
-      
-      setCurrentStage(1);
-      toast({
-        title: "Processing URL",
-        description: "Retrieving and analyzing website design elements...",
-      });
       
       setCurrentStage(2);
       toast({

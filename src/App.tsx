@@ -12,7 +12,7 @@ import ReviewDetail from "@/pages/ReviewDetail";
 import SavedReviews from "@/pages/SavedReviews";
 import { supabase } from "@/integrations/supabase/client";
 import FollowUpResults from "@/pages/FollowUpResults";
-import { Navigation } from "@/components/layout/Navigation";
+import { Navigation } from "@/components/layout/navigation";
 
 // Simple layout components to replace the missing ones
 const Layout = ({ children }: { children: React.ReactNode }) => {

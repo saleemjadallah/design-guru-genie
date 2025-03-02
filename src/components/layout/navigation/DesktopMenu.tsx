@@ -32,7 +32,7 @@ export const DesktopMenu = ({ user, handleSignOut, isLoading }: DesktopMenuProps
           <Button variant="ghost" size="icon" className="rounded-full h-12 w-12 p-0">
             <Avatar className="h-12 w-12">
               <AvatarFallback className="bg-neutral-100">
-                <UserRound size={28} className="text-purple-500 fill-purple-100" />
+                <UserRound size={36} className="text-purple-500 fill-purple-100" />
               </AvatarFallback>
             </Avatar>
           </Button>

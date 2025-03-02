@@ -1,5 +1,5 @@
 
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { Index } from "./pages/Index";
 import ReviewDetail from "./pages/ReviewDetail";
@@ -10,7 +10,7 @@ import NotFound from "./pages/NotFound";
 
 function App() {
   return (
-    <Router>
+    <>
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/analysis/:id" element={<ReviewDetail />} />
@@ -20,7 +20,7 @@ function App() {
         <Route path="*" element={<NotFound />} />
       </Routes>
       <Toaster />
-    </Router>
+    </>
   );
 }
 

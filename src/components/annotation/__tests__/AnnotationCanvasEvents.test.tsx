@@ -6,6 +6,7 @@ import { AnnotationCanvas } from "../../AnnotationCanvas";
 import * as canvasUtils from "../canvasUtils";
 import * as useCanvasManagerModule from "../useCanvasManager";
 import { Annotation } from "../types";
+import { setupMockCanvasManager, getMockAnnotations, resetMocks } from "./testUtils";
 
 // Mock the canvasUtils
 jest.mock("../canvasUtils", () => ({
@@ -24,36 +25,13 @@ jest.mock("../useCanvasManager", () => {
 
 describe("AnnotationCanvas Interactions", () => {
   const mockImage = "test-image.jpg";
-  const mockAnnotations: Annotation[] = [
-    { id: 1, x: 100, y: 100, priority: "high" },
-    { id: 2, x: 200, y: 200, priority: "medium" }
-  ];
+  const mockAnnotations: Annotation[] = getMockAnnotations();
   const mockOnSave = jest.fn();
   const mockOnIssueSelect = jest.fn();
   
   beforeEach(() => {
-    jest.clearAllMocks();
-    
-    // Mock useCanvasManager implementation
-    const mockCanvasRef = { current: document.createElement("canvas") };
-    const mockContainerRef = { current: document.createElement("div") };
-    const mockImageRef = { current: new Image() };
-    
-    (useCanvasManagerModule.useCanvasManager as jest.Mock).mockReturnValue({
-      canvasRef: mockCanvasRef,
-      containerRef: mockContainerRef,
-      imageRef: mockImageRef,
-      scale: 1,
-      imgLoaded: true,
-      imgError: false,
-      initialRender: false,
-      canvasWidth: 800,
-      canvasHeight: 600,
-      loadImage: jest.fn(),
-      updateScale: jest.fn().mockReturnValue(1),
-      redrawCanvas: jest.fn(),
-      setInitialRender: jest.fn()
-    });
+    resetMocks();
+    setupMockCanvasManager();
   });
 
   it("calls handleCanvasClick when clicking on canvas", () => {

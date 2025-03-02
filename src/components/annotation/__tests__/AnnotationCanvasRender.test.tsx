@@ -5,6 +5,7 @@ import "@testing-library/jest-dom";
 import { AnnotationCanvas } from "../../AnnotationCanvas";
 import * as useCanvasManagerModule from "../useCanvasManager";
 import { Annotation } from "../types";
+import { setupMockCanvasManager, getMockAnnotations, resetMocks } from "./testUtils";
 
 // Mock the useCanvasManager hook
 jest.mock("../useCanvasManager", () => {
@@ -17,37 +18,16 @@ jest.mock("../useCanvasManager", () => {
 
 describe("AnnotationCanvas Rendering States", () => {
   const mockImage = "test-image.jpg";
-  const mockAnnotations: Annotation[] = [
-    { id: 1, x: 100, y: 100, priority: "high" },
-    { id: 2, x: 200, y: 200, priority: "medium" }
-  ];
+  const mockAnnotations: Annotation[] = getMockAnnotations();
   const mockOnSave = jest.fn();
   
   beforeEach(() => {
-    jest.clearAllMocks();
+    resetMocks();
   });
 
   it("renders the canvas when image is loaded", () => {
     // Mock useCanvasManager implementation with image loaded
-    const mockCanvasRef = { current: document.createElement("canvas") };
-    const mockContainerRef = { current: document.createElement("div") };
-    const mockImageRef = { current: new Image() };
-    
-    (useCanvasManagerModule.useCanvasManager as jest.Mock).mockReturnValue({
-      canvasRef: mockCanvasRef,
-      containerRef: mockContainerRef,
-      imageRef: mockImageRef,
-      scale: 1,
-      imgLoaded: true,
-      imgError: false,
-      initialRender: false,
-      canvasWidth: 800,
-      canvasHeight: 600,
-      loadImage: jest.fn(),
-      updateScale: jest.fn().mockReturnValue(1),
-      redrawCanvas: jest.fn(),
-      setInitialRender: jest.fn()
-    });
+    setupMockCanvasManager({ imgLoaded: true });
     
     render(
       <AnnotationCanvas
@@ -65,21 +45,7 @@ describe("AnnotationCanvas Rendering States", () => {
 
   it("shows loading state when image is not loaded", () => {
     // Update the mock to return imgLoaded as false
-    (useCanvasManagerModule.useCanvasManager as jest.Mock).mockReturnValue({
-      canvasRef: { current: document.createElement("canvas") },
-      containerRef: { current: document.createElement("div") },
-      imageRef: { current: new Image() },
-      scale: 1,
-      imgLoaded: false,
-      imgError: false,
-      initialRender: false,
-      canvasWidth: 800,
-      canvasHeight: 600,
-      loadImage: jest.fn(),
-      updateScale: jest.fn(),
-      redrawCanvas: jest.fn(),
-      setInitialRender: jest.fn()
-    });
+    setupMockCanvasManager({ imgLoaded: false });
     
     render(
       <AnnotationCanvas
@@ -99,21 +65,7 @@ describe("AnnotationCanvas Rendering States", () => {
 
   it("shows fallback component when there's an image error", () => {
     // Update the mock to return imgError as true
-    (useCanvasManagerModule.useCanvasManager as jest.Mock).mockReturnValue({
-      canvasRef: { current: document.createElement("canvas") },
-      containerRef: { current: document.createElement("div") },
-      imageRef: { current: new Image() },
-      scale: 1,
-      imgLoaded: false,
-      imgError: true,
-      initialRender: false,
-      canvasWidth: 800,
-      canvasHeight: 600,
-      loadImage: jest.fn(),
-      updateScale: jest.fn(),
-      redrawCanvas: jest.fn(),
-      setInitialRender: jest.fn()
-    });
+    setupMockCanvasManager({ imgLoaded: false, imgError: true });
     
     render(
       <AnnotationCanvas

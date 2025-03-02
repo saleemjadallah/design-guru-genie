@@ -5,6 +5,7 @@ import "@testing-library/jest-dom";
 import { AnnotationCanvas } from "../../AnnotationCanvas";
 import * as useCanvasManagerModule from "../useCanvasManager";
 import { Annotation } from "../types";
+import { setupMockCanvasManager, getMockAnnotations, resetMocks } from "./testUtils";
 
 // Mock the useCanvasManager hook
 jest.mock("../useCanvasManager", () => {
@@ -17,33 +18,15 @@ jest.mock("../useCanvasManager", () => {
 
 describe("AnnotationCanvas Lifecycle", () => {
   const mockImage = "test-image.jpg";
-  const mockAnnotations: Annotation[] = [
-    { id: 1, x: 100, y: 100, priority: "high" },
-    { id: 2, x: 200, y: 200, priority: "medium" }
-  ];
+  const mockAnnotations: Annotation[] = getMockAnnotations();
   const mockOnSave = jest.fn();
   
   beforeEach(() => {
-    jest.clearAllMocks();
+    resetMocks();
   });
 
   it("calls loadImage on mount", () => {
-    const mockLoadImage = jest.fn();
-    (useCanvasManagerModule.useCanvasManager as jest.Mock).mockReturnValue({
-      canvasRef: { current: document.createElement("canvas") },
-      containerRef: { current: document.createElement("div") },
-      imageRef: { current: new Image() },
-      scale: 1,
-      imgLoaded: true,
-      imgError: false,
-      initialRender: false,
-      canvasWidth: 800,
-      canvasHeight: 600,
-      loadImage: mockLoadImage,
-      updateScale: jest.fn(),
-      redrawCanvas: jest.fn(),
-      setInitialRender: jest.fn()
-    });
+    const { mockLoadImage } = setupMockCanvasManager();
     
     render(
       <AnnotationCanvas
@@ -58,22 +41,7 @@ describe("AnnotationCanvas Lifecycle", () => {
   });
 
   it("calls drawCanvas when annotations or selectedIssue changes", async () => {
-    const mockRedrawCanvas = jest.fn();
-    (useCanvasManagerModule.useCanvasManager as jest.Mock).mockReturnValue({
-      canvasRef: { current: document.createElement("canvas") },
-      containerRef: { current: document.createElement("div") },
-      imageRef: { current: new Image() },
-      scale: 1,
-      imgLoaded: true,
-      imgError: false,
-      initialRender: false,
-      canvasWidth: 800,
-      canvasHeight: 600,
-      loadImage: jest.fn(),
-      updateScale: jest.fn(),
-      redrawCanvas: mockRedrawCanvas,
-      setInitialRender: jest.fn()
-    });
+    const { mockRedrawCanvas } = setupMockCanvasManager({ imgLoaded: true });
     
     const { rerender } = render(
       <AnnotationCanvas

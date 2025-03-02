@@ -1,4 +1,3 @@
-
 /**
  * Image compression service for Claude AI
  * Handles aggressive compression to ensure images are under API limits
@@ -10,6 +9,7 @@ export interface CompressionOptions {
   maxHeight?: number;
   quality?: number;
   maxSizeBytes?: number;
+  forceJpeg?: boolean;
 }
 
 /**
@@ -184,7 +184,8 @@ async function performMultiStepCompression(
     maxWidth = 800,
     maxHeight = 1000,
     quality = 0.65,
-    maxSizeBytes = 4 * 1024 * 1024 
+    maxSizeBytes = 4 * 1024 * 1024,
+    forceJpeg = true
   } = options;
   
   const { currentWidth, currentHeight } = calculateInitialDimensions(img, maxWidth, maxHeight);
@@ -268,6 +269,7 @@ export async function compressImageForAPI(
     console.log(`Original image: format=${blob.type}, size=${Math.round(blob.size/1024)}KB`);
     
     // Check if the image is SVG or has transparency - Claude might have issues with these
+    // We explicitly log warning now for SVG, WebP, and PNG formats
     if (blob.type.includes('svg') || blob.type.includes('webp') || blob.type.includes('png')) {
       console.warn(`${blob.type} format detected - converting to JPEG for better Claude compatibility`);
     }
@@ -277,7 +279,10 @@ export async function compressImageForAPI(
       
       img.onload = async () => {
         try {
-          const dataUrl = await performMultiStepCompression(img, options);
+          const dataUrl = await performMultiStepCompression(img, {
+            ...options,
+            forceJpeg: true
+          });
           resolve(dataUrl);
         } catch (error) {
           reject(error);

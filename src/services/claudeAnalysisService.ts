@@ -1,3 +1,4 @@
+
 import { toast } from "@/hooks/use-toast";
 import { handleAnalysisError } from "@/utils/upload/errorHandler";
 import { compressImageForAPI, CompressionOptions } from "@/utils/upload/imageCompressionService";
@@ -10,11 +11,10 @@ import { callClaudeAnalysisAPI, processClaudeResponse } from "@/services/claudeA
  * @returns Promise resolving to processed blob
  */
 async function convertImageFormat(originalBlob: Blob): Promise<Blob> {
-  if (originalBlob.type === 'image/jpeg' || originalBlob.type === 'image/png') {
-    return originalBlob;
-  }
+  // Always convert all images to JPEG to avoid Claude issues with transparency
+  // This ensures transparency is properly handled by filling with white background
+  console.log(`Converting ${originalBlob.type} image to JPEG for Claude compatibility`);
   
-  console.log(`Converting ${originalBlob.type} to JPEG for better compatibility`);
   return new Promise<Blob>((resolve, reject) => {
     const img = new Image();
     img.onload = () => {
@@ -28,10 +28,12 @@ async function convertImageFormat(originalBlob: Blob): Promise<Blob> {
         return;
       }
       
-      // Use white background
+      // CRITICAL: Use white background for all images
+      // This eliminates transparency issues with Claude
       ctx.fillStyle = '#FFFFFF';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       
+      // Draw the image on top of white background
       ctx.drawImage(img, 0, 0);
       URL.revokeObjectURL(img.src); // Clean up
       
@@ -162,7 +164,8 @@ async function prepareImageForAnalysis(imageUrl: string, compressionOptions: Com
       maxWidth: compressionOptions.maxWidth || 800,     // Reduced default
       maxHeight: compressionOptions.maxHeight || 1000,  // Same default
       quality: compressionOptions.quality || 0.65,      // Lower quality default
-      maxSizeBytes: 4 * 1024 * 1024 // Ensure 4MB limit (safely under 5MB)
+      maxSizeBytes: 4 * 1024 * 1024, // Ensure 4MB limit (safely under 5MB)
+      forceJpeg: true // CRITICAL: Always force JPEG conversion
     };
     
     const compressedImageUrl = await compressImageForAPI(imageUrl, mergedOptions);

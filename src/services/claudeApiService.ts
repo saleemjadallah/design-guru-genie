@@ -50,7 +50,8 @@ export async function callClaudeAnalysisAPI(imageUrl: string) {
               compressImage: true,  // Tell Edge function to compress image as well
               format: "json",      // Explicitly request JSON format
               timeout: 60000,      // 60 second timeout
-              forceJpeg: true      // Tell edge function to force JPEG conversion
+              forceJpeg: true,     // Tell edge function to force JPEG conversion
+              removeTransparency: true // Ensure transparency is handled properly
             }
           },
           method: 'POST',

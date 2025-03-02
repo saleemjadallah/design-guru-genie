@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Navigation } from "@/components/layout/Navigation";
+import { Navigation } from "@/components/layout/navigation";
 import { ArrowLeft, Trash2, Eye } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";

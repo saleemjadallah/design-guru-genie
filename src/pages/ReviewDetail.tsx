@@ -1,6 +1,6 @@
 
 import { useParams } from "react-router-dom";
-import { Navigation } from "@/components/layout/Navigation";
+import { Navigation } from "@/components/layout/navigation";
 import { ReviewHeader } from "@/components/review/ReviewHeader";
 import { ReviewContent } from "@/components/review/ReviewContent";
 import { ReviewLoader } from "@/components/review/ReviewLoader";

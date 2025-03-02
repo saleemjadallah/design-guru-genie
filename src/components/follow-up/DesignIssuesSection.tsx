@@ -6,6 +6,8 @@ import { AlertCircle, AlertTriangle, Check } from "lucide-react";
 interface Issue {
   title: string;
   description: string;
+  id?: number;
+  location?: { x: number; y: number };
 }
 
 interface DesignIssues {
@@ -38,6 +40,8 @@ export const DesignIssuesSection = ({
               title={issue.title}
               description={issue.description}
               priority="high"
+              id={issue.id}
+              hasLocation={!!issue.location}
             />
           ))}
         </div>
@@ -56,6 +60,8 @@ export const DesignIssuesSection = ({
               title={issue.title}
               description={issue.description}
               priority="medium"
+              id={issue.id}
+              hasLocation={!!issue.location}
             />
           ))}
         </div>
@@ -74,6 +80,8 @@ export const DesignIssuesSection = ({
               title={issue.title}
               description={issue.description}
               priority="low"
+              id={issue.id}
+              hasLocation={!!issue.location}
             />
           ))}
         </div>

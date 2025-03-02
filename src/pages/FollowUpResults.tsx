@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Navigation } from "@/components/layout/navigation";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { ScoreSection } from "@/components/follow-up/ScoreSection";
 import { ImprovementSection } from "@/components/follow-up/ImprovementSection";
 import { DesignStrengthsSection } from "@/components/follow-up/DesignStrengthsSection";
@@ -16,10 +16,13 @@ import { LoadingScreen } from "@/components/follow-up/LoadingScreen";
 import { HistoricalImprovementSection } from "@/components/follow-up/HistoricalImprovementSection";
 import { Overview } from "@/components/analysis/Overview";
 import { FeedbackPanel } from "@/components/feedback/FeedbackPanel";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 const FollowUpResults = () => {
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+  const { reviewId } = useParams();
   
   const [results, setResults] = useState({
     originalScore: 62,
@@ -76,6 +79,95 @@ const FollowUpResults = () => {
     analysisCount: 3
   });
 
+  // Fetch review data if reviewId is provided
+  useEffect(() => {
+    const fetchReviewData = async () => {
+      if (reviewId) {
+        try {
+          const { data, error } = await supabase
+            .from('saved_reviews')
+            .select('*')
+            .eq('id', reviewId)
+            .single();
+
+          if (error) {
+            console.error("Error fetching review:", error);
+            toast({
+              title: "Error",
+              description: "Failed to load review data",
+              variant: "destructive"
+            });
+            return;
+          }
+
+          if (data) {
+            // Try to parse feedback if it's in Claude's format
+            let parsedFeedback;
+            if (data.feedback && data.feedback.content && data.feedback.content[0] && data.feedback.content[0].text) {
+              try {
+                const claudeContent = JSON.parse(data.feedback.content[0].text);
+                
+                // Update issues with data from Claude
+                const highIssues = [];
+                const mediumIssues = [];
+                const lowIssues = [];
+                
+                if (claudeContent.issues) {
+                  for (const issue of claudeContent.issues) {
+                    const formattedIssue = {
+                      title: issue.issue,
+                      description: issue.recommendation,
+                      id: issue.id,
+                      location: issue.location
+                    };
+                    
+                    if (issue.priority === 'high') {
+                      highIssues.push(formattedIssue);
+                    } else if (issue.priority === 'medium') {
+                      mediumIssues.push(formattedIssue);
+                    } else {
+                      lowIssues.push(formattedIssue);
+                    }
+                  }
+                }
+                
+                // Update positive aspects from Claude
+                const positiveAspects = claudeContent.strengths?.map(item => ({
+                  title: item.title,
+                  description: item.description
+                })) || results.positiveAspects;
+
+                setResults(prev => ({
+                  ...prev,
+                  positiveAspects,
+                  issues: {
+                    high: highIssues.length > 0 ? highIssues : prev.issues.high,
+                    medium: mediumIssues.length > 0 ? mediumIssues : prev.issues.medium,
+                    low: lowIssues.length > 0 ? lowIssues : prev.issues.low
+                  },
+                  screenshot: data.image_url,
+                  isScreenshotAnalysis: data.image_url?.startsWith('data:image/svg+xml') || false,
+                  overallFeedback: claudeContent.overview || prev.overallFeedback
+                }));
+              } catch (e) {
+                console.error("Error parsing Claude response:", e);
+              }
+            }
+          }
+        } catch (err) {
+          console.error("Error in fetchReviewData:", err);
+        }
+      }
+      
+      // Set loading to false regardless of whether we have a reviewId
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 1000);
+    };
+
+    fetchReviewData();
+  }, [reviewId]);
+
   const positiveFeatures = results.positiveAspects.map((aspect, index) => ({
     type: "positive" as const,
     title: aspect.title,
@@ -89,21 +181,24 @@ const FollowUpResults = () => {
       title: issue.title,
       description: issue.description,
       priority: "high" as const,
-      id: index
+      id: issue.id || index,
+      location: issue.location
     })),
     ...results.issues.medium.map((issue, index) => ({
       type: "improvement" as const,
       title: issue.title,
       description: issue.description,
       priority: "medium" as const,
-      id: index + results.issues.high.length
+      id: issue.id || index + results.issues.high.length,
+      location: issue.location
     })),
     ...results.issues.low.map((issue, index) => ({
       type: "improvement" as const,
       title: issue.title,
       description: issue.description,
       priority: "low" as const,
-      id: index + results.issues.high.length + results.issues.medium.length
+      id: issue.id || index + results.issues.high.length + results.issues.medium.length,
+      location: issue.location
     }))
   ];
 
@@ -119,14 +214,6 @@ const FollowUpResults = () => {
         return 0;
     }
   };
-  
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1500);
-    
-    return () => clearTimeout(timer);
-  }, []);
   
   return (
     <>

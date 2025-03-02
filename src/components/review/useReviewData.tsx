@@ -68,11 +68,55 @@ export const useReviewData = (reviewId: string | undefined) => {
           setReview(data);
           
           try {
-            const parsedFeedback = typeof data.feedback === 'string' 
-              ? JSON.parse(data.feedback) 
-              : data.feedback;
+            let parsed;
+            // Check if feedback is a string that needs parsing
+            if (typeof data.feedback === 'string') {
+              parsed = JSON.parse(data.feedback);
+            } 
+            // Check if feedback is Claude's response format
+            else if (data.feedback && data.feedback.content && data.feedback.content[0] && data.feedback.content[0].text) {
+              const claudeContent = JSON.parse(data.feedback.content[0].text);
+              parsed = [];
+              
+              // Process strengths
+              if (claudeContent.strengths) {
+                claudeContent.strengths.forEach((strength: any, index: number) => {
+                  parsed.push({
+                    id: index + 1,
+                    type: "positive",
+                    title: strength.title,
+                    description: strength.description
+                  });
+                });
+              }
+              
+              // Process issues
+              if (claudeContent.issues) {
+                claudeContent.issues.forEach((issue: any, index: number) => {
+                  parsed.push({
+                    id: parsed.length + 1,
+                    type: "improvement",
+                    title: issue.issue,
+                    priority: issue.priority,
+                    description: issue.recommendation,
+                    location: issue.location,
+                    principle: issue.principle,
+                    technical_details: issue.technical_details
+                  });
+                });
+              }
+            } 
+            // Already in the correct format
+            else {
+              parsed = data.feedback;
+            }
             
-            setFeedbackItems(parsedFeedback);
+            if (Array.isArray(parsed)) {
+              setFeedbackItems(parsed);
+            } else {
+              console.error("Feedback is not an array:", parsed);
+              setError("Invalid feedback format");
+            }
           } catch (parseError) {
             console.error("Error parsing feedback:", parseError);
             setError("Error parsing feedback data");

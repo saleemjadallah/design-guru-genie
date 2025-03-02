@@ -23,8 +23,58 @@ export const useUrlAnalysis = () => {
         description: "We're preparing to analyze your website URL...",
       });
       
-      // Creating a sample feedback analysis
-      const analysisResults = data || generateDummyFeedback();
+      // Creating a sample feedback analysis or use provided data
+      let analysisResults;
+      
+      if (data) {
+        // If data is provided and contains Claude's response format
+        if (data.content && data.content[0] && data.content[0].text) {
+          try {
+            // Try to parse the JSON from Claude's response
+            const parsedData = JSON.parse(data.content[0].text);
+            
+            // Format the data for our feedback system
+            analysisResults = [];
+            
+            // Add strengths as positive feedback
+            if (parsedData.strengths) {
+              parsedData.strengths.forEach((strength: any, index: number) => {
+                analysisResults.push({
+                  id: index + 1,
+                  type: "positive",
+                  title: strength.title,
+                  description: strength.description
+                });
+              });
+            }
+            
+            // Add issues as improvement feedback
+            if (parsedData.issues) {
+              parsedData.issues.forEach((issue: any, index: number) => {
+                analysisResults.push({
+                  id: analysisResults.length + 1,
+                  type: "improvement",
+                  title: issue.issue,
+                  priority: issue.priority,
+                  description: issue.recommendation,
+                  location: issue.location,
+                  principle: issue.principle,
+                  technical_details: issue.technical_details
+                });
+              });
+            }
+          } catch (parseError) {
+            console.error("Error parsing Claude response:", parseError);
+            analysisResults = generateDummyFeedback();
+          }
+        } else {
+          // If data is already in our required format
+          analysisResults = data;
+        }
+      } else {
+        // If no data provided, use dummy feedback
+        analysisResults = generateDummyFeedback();
+      }
       
       setCurrentStage(1);
       toast({

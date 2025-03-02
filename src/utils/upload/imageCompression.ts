@@ -2,7 +2,29 @@
 /**
  * Utility functions for compressing and processing images before upload
  */
-import { createCanvas } from '@/utils/upload/imageCompressionService';
+
+/**
+ * Creates a canvas for image processing
+ * @param img The source image
+ * @param width Target width
+ * @param height Target height
+ * @returns Canvas context and canvas element
+ */
+function createCanvas(img: HTMLImageElement, width: number, height: number): { 
+  ctx: CanvasRenderingContext2D; 
+  canvas: HTMLCanvasElement 
+} {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    throw new Error('Failed to get canvas context');
+  }
+  
+  return { ctx, canvas };
+}
 
 /**
  * Creates a blob from canvas with specified quality

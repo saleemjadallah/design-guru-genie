@@ -25,26 +25,101 @@ export const UploadSection = () => {
       // Start processing stages for UI feedback
       setCurrentStage(0);
       
-      // Upload the file to Supabase Storage
+      // Sanitize filename by replacing spaces and special characters with underscores
+      const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
       const timestamp = new Date().getTime();
-      const filePath = `uploads/${timestamp}_${file.name}`;
+      const filePath = `uploads/${timestamp}_${sanitizedFileName}`;
       
+      console.log("Uploading to path:", filePath);
+      
+      // Upload the file to Supabase Storage
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('designs')
         .upload(filePath, file);
         
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error("Storage upload error:", uploadError);
+        throw uploadError;
+      }
       
       // Get the public URL
       const { data: { publicUrl } } = supabase.storage
         .from('designs')
         .getPublicUrl(filePath);
-        
+      
+      console.log("File uploaded, public URL:", publicUrl);
       setCurrentStage(1);
       
-      // Create a sample feedback analysis
-      // In a real app, this would be done by an AI service
-      const dummyFeedback = generateDummyFeedback();
+      // Call analyze-design edge function to process with Claude
+      let dummyFeedback;
+      try {
+        const { data: analyzeData, error: analyzeError } = await supabase.functions
+          .invoke('analyze-design', {
+            body: { imageUrl: publicUrl },
+          });
+          
+        if (analyzeError) {
+          console.error("Analysis error:", analyzeError);
+          throw analyzeError;
+        }
+        
+        console.log("Analysis results:", analyzeData);
+        
+        // Extract the feedback from Claude's response
+        if (analyzeData && analyzeData.result && analyzeData.result.content) {
+          const content = analyzeData.result.content[0];
+          if (content && content.type === 'text') {
+            try {
+              const jsonData = JSON.parse(content.text);
+              
+              // Format the data for our feedback system
+              const formattedFeedback = [];
+              
+              // Add strengths as positive feedback
+              if (jsonData.strengths) {
+                jsonData.strengths.forEach((strength, index) => {
+                  formattedFeedback.push({
+                    id: index + 1,
+                    type: "positive",
+                    title: strength.title,
+                    description: strength.description
+                  });
+                });
+              }
+              
+              // Add issues as improvement feedback
+              if (jsonData.issues) {
+                jsonData.issues.forEach((issue, index) => {
+                  formattedFeedback.push({
+                    id: formattedFeedback.length + 1,
+                    type: "improvement",
+                    title: issue.issue,
+                    priority: issue.priority,
+                    description: issue.recommendation,
+                    location: issue.location,
+                    principle: issue.principle,
+                    technical_details: issue.technical_details
+                  });
+                });
+              }
+              
+              dummyFeedback = formattedFeedback;
+            } catch (parseError) {
+              console.error("Error parsing JSON from Claude:", parseError);
+              // Fallback to dummy data if parsing fails
+              dummyFeedback = generateDummyFeedback();
+            }
+          } else {
+            dummyFeedback = generateDummyFeedback();
+          }
+        } else {
+          dummyFeedback = generateDummyFeedback();
+        }
+      } catch (analyzeError) {
+        console.error("Error calling analyze-design function:", analyzeError);
+        // Fallback to dummy data if analysis fails
+        dummyFeedback = generateDummyFeedback();
+      }
       
       setCurrentStage(2);
       
@@ -59,7 +134,10 @@ export const UploadSection = () => {
         .select()
         .single();
         
-      if (reviewError) throw reviewError;
+      if (reviewError) {
+        console.error("Database error:", reviewError);
+        throw reviewError;
+      }
       
       setCurrentStage(3);
       

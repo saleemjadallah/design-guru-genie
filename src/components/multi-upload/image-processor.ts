@@ -30,13 +30,17 @@ export async function processCombinedImage(
   
   // Upload to storage if needed
   const timestamp = new Date().getTime();
-  const filePath = `combined_screenshots/${timestamp}_${file.name}`;
+  const sanitizedFileName = "combined_screenshot.png"; // Safe filename
+  const filePath = `combined_screenshots/${timestamp}_${sanitizedFileName}`;
+  
+  console.log("Uploading combined image to path:", filePath);
   
   const { error: uploadError } = await supabase.storage
     .from('designs')
     .upload(filePath, file);
     
   if (uploadError) {
+    console.error("Combined image upload error:", uploadError);
     throw uploadError;
   }
   

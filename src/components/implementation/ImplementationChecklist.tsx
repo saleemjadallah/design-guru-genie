@@ -29,6 +29,20 @@ export const ImplementationChecklist = ({
     const isCompleted = issue.id !== undefined && completedItems.includes(issue.id);
     const isSelected = selectedIssue === issue.id;
     
+    const handleToggleCompleted = () => {
+      if (issue.id !== undefined) {
+        console.log("Toggling completion from checklist for issue:", issue.id);
+        toggleCompleted(issue.id);
+      }
+    };
+    
+    const handleViewImplementation = () => {
+      if (onViewImplementation && issue.id !== undefined) {
+        console.log("Viewing implementation from checklist for issue:", issue.id);
+        onViewImplementation(issue.id);
+      }
+    };
+    
     return (
       <div 
         key={issue.id} 
@@ -60,11 +74,7 @@ export const ImplementationChecklist = ({
               variant={isCompleted ? "outline" : "default"}
               size="sm"
               className={`mr-2 ${isCompleted ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100 hover:text-green-800" : ""}`}
-              onClick={() => {
-                if (issue.id !== undefined) {
-                  toggleCompleted(issue.id);
-                }
-              }}
+              onClick={handleToggleCompleted}
             >
               {isCompleted ? (
                 <>
@@ -80,7 +90,7 @@ export const ImplementationChecklist = ({
                 variant="outline"
                 size="sm"
                 className="bg-primary/10 text-primary hover:bg-primary/20"
-                onClick={() => onViewImplementation(issue.id as number)}
+                onClick={handleViewImplementation}
               >
                 <FileCode className="w-4 h-4 mr-1" />
                 View Steps
@@ -117,7 +127,7 @@ export const ImplementationChecklist = ({
               variant="ghost"
               size="sm"
               className="text-primary hover:text-primary hover:bg-primary/10"
-              onClick={() => onViewImplementation(issue.id as number)}
+              onClick={handleViewImplementation}
             >
               <span>Detailed Implementation</span>
               <ArrowRight className="w-4 h-4 ml-1" />

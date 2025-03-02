@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { ImplementationFeedback, TimeInvestmentSummary } from "./types";
@@ -33,12 +32,13 @@ export const ImplementationGuidePage = ({
   // Toggle completion status
   const toggleCompleted = (id: number) => {
     console.log("Toggling completion for issue:", id);
-    setCompletedItems(prev => {
-      if (prev.includes(id)) {
-        return prev.filter(itemId => itemId !== id);
-      } else {
-        return [...prev, id];
+    setCompletedItems(prevItems => {
+      if (prevItems.includes(id)) {
+        console.log("Removing item:", id);
+        return prevItems.filter(itemId => itemId !== id);
       }
+      console.log("Adding item:", id);
+      return [...prevItems, id];
     });
   };
 
@@ -84,6 +84,11 @@ export const ImplementationGuidePage = ({
       setCurrentView('single-issue');
     }
   }, [selectedIssue]);
+
+  // For debugging
+  useEffect(() => {
+    console.log("Current completedItems:", completedItems);
+  }, [completedItems]);
 
   // Handle PDF export
   const handleExportPdf = () => {

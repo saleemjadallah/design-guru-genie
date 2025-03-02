@@ -13,7 +13,7 @@ export const useImageUpload = () => {
   const [currentStage, setCurrentStage] = useState(0);
   
   const analyzeImage = async (file: File) => {
-    console.log("Handling image upload:", file.name);
+    console.log("Handling image upload:", file.name, file.type, file.size);
     setIsUploading(true);
     
     try {
@@ -103,7 +103,7 @@ export const useImageUpload = () => {
         }, 1000);
       } catch (analysisError: any) {
         console.error("Analysis error:", analysisError);
-        // If Claude analysis fails, try to provide a helpful error message
+        // If Claude analysis fails, provide a helpful error message
         // but still proceed with dummy data
         toast({
           title: "AI Analysis Limited",

@@ -13,6 +13,47 @@ export async function processWithClaudeAI(imageUrl: string) {
     
     console.log("Sending to analyze-design with URL:", imageUrl);
     
+    // Check if the image is a local blob URL
+    if (imageUrl.startsWith('blob:')) {
+      console.log("Converting blob URL to file for upload");
+      try {
+        // Fetch the blob and upload it to get a public URL
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+        const file = new File([blob], "screenshot.png", { type: blob.type });
+        
+        // Upload the file to Supabase Storage
+        const timestamp = new Date().getTime();
+        const filePath = `analysis_uploads/${timestamp}_screenshot.png`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('designs')
+          .upload(filePath, file);
+          
+        if (uploadError) {
+          console.error("Error uploading blob to storage:", uploadError);
+          throw new Error("Failed to upload image for analysis");
+        }
+        
+        // Get the public URL
+        const { data: urlData } = supabase.storage
+          .from('designs')
+          .getPublicUrl(filePath);
+          
+        // Update the imageUrl to use the public URL
+        imageUrl = urlData.publicUrl;
+        console.log("Converted blob to public URL:", imageUrl);
+      } catch (blobError) {
+        console.error("Error processing blob URL:", blobError);
+        toast({
+          title: "Processing Error",
+          description: "Failed to process the image. Using simulated analysis instead.",
+          variant: "destructive",
+        });
+        return generateDummyFeedback();
+      }
+    }
+    
     // Check if the image is an SVG placeholder or data URL
     const isSvgPlaceholder = typeof imageUrl === 'string' && 
       (imageUrl.startsWith('data:image/svg') || imageUrl.includes('<svg'));

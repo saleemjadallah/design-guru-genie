@@ -89,7 +89,11 @@ export function useMultiUpload(onImageUpload: (file: File) => void) {
     setStep("processing");
     
     try {
+      // Process the combined image and get a File object
       const file = await processCombinedImage(combinedImage, setProcessingStage);
+      
+      // Log the file details for debugging
+      console.log("Processed combined image:", file.name, file.type, file.size);
       
       // Call the onImageUpload callback with the combined file
       onImageUpload(file);

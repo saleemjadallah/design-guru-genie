@@ -28,14 +28,14 @@ export async function processCombinedImage(
   // Update processing stages
   updateProcessingStage(1);
   
-  // Upload to storage if needed
+  // Upload to storage
   const timestamp = new Date().getTime();
   const sanitizedFileName = "combined_screenshot.png"; // Safe filename
   const filePath = `combined_screenshots/${timestamp}_${sanitizedFileName}`;
   
   console.log("Uploading combined image to path:", filePath);
   
-  const { error: uploadError } = await supabase.storage
+  const { data, error: uploadError } = await supabase.storage
     .from('designs')
     .upload(filePath, file);
     
@@ -47,9 +47,11 @@ export async function processCombinedImage(
   updateProcessingStage(2);
   
   // Get the public URL
-  supabase.storage
+  const { data: urlData } = supabase.storage
     .from('designs')
     .getPublicUrl(filePath);
+    
+  console.log("Combined image public URL:", urlData.publicUrl);
     
   // Use the uploaded file for analysis
   updateProcessingStage(3);

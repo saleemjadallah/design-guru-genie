@@ -21,6 +21,7 @@ export const useUrlScreenshot = () => {
       // First step: Generate a screenshot using the screenshot-url edge function
       const { data: screenshotData, error: screenshotError } = await supabase.functions.invoke("screenshot-url", {
         body: { url: normalizedUrl },
+        method: 'POST'
       });
 
       if (screenshotError) {

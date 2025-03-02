@@ -3,7 +3,6 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { processWithClaudeAI } from "@/services/claudeAnalysisService";
-import { generateDummyFeedback } from "@/utils/upload/dummyData";
 import { createPlaceholderSvg } from "./UrlValidation";
 
 export const useUrlScreenshot = () => {
@@ -35,55 +34,33 @@ export const useUrlScreenshot = () => {
 
       console.log("Screenshot generated:", screenshotData.imageUrl);
       
-      let analysisResults;
-      let usedFallback = false;
-      
       // Check if screenshot is an SVG placeholder (which means the screenshot failed)
       const isSvgPlaceholder = typeof screenshotData.imageUrl === 'string' && 
         (screenshotData.imageUrl.startsWith('data:image/svg') || 
          screenshotData.imageUrl.includes('<svg'));
         
-      // If we have analysis directly from the screenshot-url function, use it
-      if (screenshotData.analysis && !isSvgPlaceholder) {
-        console.log("Using analysis from screenshot-url function");
-        analysisResults = screenshotData.analysis;
-      } else {
-        try {
-          // Try to generate fresh analysis with Claude
-          analysisResults = await processWithClaudeAI(screenshotData.imageUrl);
-        } catch (analysisError: any) {
-          console.error("Claude analysis error:", analysisError);
-          usedFallback = true;
-          
-          // Show the error message
-          toast({
-            title: "AI Analysis Limited",
-            description: "We're using simulated results because our AI service is currently limited. The screenshot was still captured successfully.",
-            variant: "destructive",
-          });
-          
-          // If Claude analysis fails but we have an SVG placeholder,
-          // use a fallback dummy analysis so user gets something
-          if (isSvgPlaceholder) {
-            console.log("Using dummy feedback for placeholder image");
-            analysisResults = generateDummyFeedback();
-          } else {
-            analysisResults = generateDummyFeedback();
-          }
-        }
+      if (isSvgPlaceholder) {
+        console.error("Screenshot failed - received SVG placeholder");
+        throw new Error("Failed to capture website screenshot. The website may be blocking our capture service or have security measures in place.");
       }
       
-      if (!usedFallback) {
+      // Try to generate analysis with Claude
+      let analysisResults;
+      try {
+        analysisResults = await processWithClaudeAI(screenshotData.imageUrl);
+        
         toast({
           title: "Analysis complete",
           description: "Website design has been analyzed successfully.",
         });
+      } catch (analysisError: any) {
+        console.error("Claude analysis error:", analysisError);
+        throw new Error(`Claude analysis failed: ${analysisError.message}`);
       }
       
       return { 
         imageUrl: screenshotData.imageUrl, 
-        analysisResults,
-        usedFallback
+        analysisResults
       };
     } catch (error: any) {
       console.error("URL processing error:", error);
@@ -118,15 +95,7 @@ export const useUrlScreenshot = () => {
         });
       }
       
-      // For any error, return placeholder and dummy data
-      const placeholderSvg = createPlaceholderSvg(normalizedUrl);
-      const dummyData = generateDummyFeedback();
-      
-      return { 
-        imageUrl: placeholderSvg, 
-        analysisResults: dummyData,
-        usedFallback: true
-      };
+      throw error; // Re-throw the error so the caller knows it failed
     } finally {
       setIsLoading(false);
     }

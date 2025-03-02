@@ -2,7 +2,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { handleAnalysisError } from "@/utils/upload/errorHandler";
-import { generateDummyFeedback } from "@/utils/upload/dummyData";
 
 export async function processWithClaudeAI(imageUrl: string) {
   try {
@@ -68,6 +67,8 @@ export async function processWithClaudeAI(imageUrl: string) {
     if (analyzeError) {
       console.error("Claude analysis error:", analyzeError);
       const errorMsg = handleAnalysisError(analyzeError);
+      // Additional detailed logging for Claude errors
+      console.error("Claude error details:", JSON.stringify(analyzeError, null, 2));
       throw new Error(errorMsg);
     }
     
@@ -88,6 +89,9 @@ export async function processWithClaudeAI(imageUrl: string) {
           if (content && content.type === 'text') {
             const jsonData = JSON.parse(content.text);
             return formatFeedbackFromJsonData(jsonData);
+          } else {
+            console.error("Unexpected content type or format:", content);
+            throw new Error("Unexpected response format from Claude API");
           }
         } catch (parseError) {
           console.error("Error parsing JSON from Claude:", parseError);

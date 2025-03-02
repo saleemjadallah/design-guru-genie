@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { handleStorageError, handleDatabaseError, handleUploadError } from "@/utils/upload/errorHandler";
-import { generateDummyFeedback } from "@/utils/upload/dummyData";
 import { processWithClaudeAI } from "@/services/claudeAnalysisService";
 
 export const useImageUpload = () => {
@@ -58,38 +57,35 @@ export const useImageUpload = () => {
       
       // Call analyze-design edge function to process with Claude
       let analysisResults;
-      let usedFallback = false;
       
       try {
+        console.log("Starting Claude analysis for:", publicUrl);
         analysisResults = await processWithClaudeAI(publicUrl);
+        console.log("Claude analysis complete:", analysisResults);
       } catch (analysisError: any) {
         console.error("Analysis error:", analysisError);
-        // If Claude analysis fails, provide a helpful error message
-        // but still proceed with dummy data
+        // Provide a specific error message without falling back to dummy data
         toast({
-          title: "AI Analysis Limited",
-          description: "We're using simulated results because our AI service is currently limited. Your design was still uploaded successfully.",
+          title: "AI Analysis Failed",
+          description: `Claude analysis error: ${analysisError.message}. Please try again later.`,
           variant: "destructive",
         });
         
-        analysisResults = generateDummyFeedback();
-        usedFallback = true;
+        setIsUploading(false);
+        return;
       }
       
       setCurrentStage(2);
-      
-      if (!usedFallback) {
-        toast({
-          title: "Analysis complete",
-          description: "Your design has been analyzed. Saving results...",
-        });
-      }
+      toast({
+        title: "Analysis complete",
+        description: "Your design has been analyzed. Saving results...",
+      });
       
       // Save the analysis to the database
       const { data: reviewData, error: reviewError } = await supabase
         .from('saved_reviews')
         .insert({
-          title: `Review - ${file.name}${usedFallback ? ' (Limited Analysis)' : ''}`,
+          title: `Review - ${file.name}`,
           image_url: publicUrl,
           feedback: analysisResults
         })

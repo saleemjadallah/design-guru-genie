@@ -7,8 +7,6 @@ type UploadType = 'image' | 'multi' | 'url' | null;
 
 interface UploadContextType {
   uploadData: any | null;
-  handleUpload: (image: File) => Promise<void>;
-  handleAnalysis: (url: string, data?: any) => Promise<void>;
   uploadType: UploadType;
   setUploadType: React.Dispatch<React.SetStateAction<UploadType>>;
   isUploading: boolean;
@@ -25,20 +23,9 @@ export const UploadProvider = ({ children }: { children: React.ReactNode }) => {
   const { isUploading, currentStage, analyzeImage } = useImageUpload();
   const { analyzeUrl } = useUrlAnalysis();
 
-  const handleUpload = async (image: File) => {
-    const data = await analyzeImage(image);
-    setUploadData(data);
-  };
-
-  const handleAnalysis = async (url: string, data?: any) => {
-    await analyzeUrl(url, data);
-  };
-
   return (
     <UploadContext.Provider value={{ 
       uploadData, 
-      handleUpload, 
-      handleAnalysis,
       uploadType,
       setUploadType,
       isUploading,

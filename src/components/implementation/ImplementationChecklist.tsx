@@ -26,47 +26,53 @@ export const ImplementationChecklist = ({
   };
 
   const renderIssue = (issue: ImplementationFeedback) => {
-    const isCompleted = issue.id !== undefined && completedItems.includes(issue.id);
-    const isSelected = selectedIssue === issue.id;
+    // Convert issue.id to number to ensure type consistency
+    const issueId = typeof issue.id === 'string' ? parseInt(issue.id) : (issue.id || 0);
     
-    console.log(`Issue #${issue.id}:`, {
-      id: issue.id,
+    // Now use the converted ID for the comparison
+    const isCompleted = issueId !== 0 && completedItems.includes(issueId);
+    
+    console.log(`Issue #${issueId}:`, {
+      originalId: issue.id,
+      convertedId: issueId,
       completedItems,
       isCompleted,
-      includes: issue.id !== undefined && completedItems.includes(issue.id)
+      includes: issueId !== 0 && completedItems.includes(issueId)
     });
     
     const handleToggleCompleted = () => {
-      if (issue.id !== undefined) {
-        console.log("Button clicked for issue:", issue.id);
-        console.log("Before toggle, completedItems:", completedItems);
-        toggleCompleted(issue.id);
-        console.log("Toggling completion from checklist for issue:", issue.id);
-        // Check if toggleCompleted is synchronous or asynchronous
-        console.log("After toggle (if synchronous), completedItems:", completedItems);
+      console.log("Button clicked for issue:", issueId);
+      console.log("Before toggle, completedItems:", completedItems);
+      
+      // Only toggle if we have a valid ID
+      if (issueId !== 0) {
+        toggleCompleted(issueId);
+        console.log("Toggling completion from checklist for issue:", issueId);
+      } else {
+        console.warn("Cannot toggle completion for issue with invalid ID:", issue.id);
       }
     };
     
     const handleViewImplementation = () => {
-      if (onViewImplementation && issue.id !== undefined) {
-        console.log("Viewing implementation from checklist for issue:", issue.id);
-        onViewImplementation(issue.id);
+      if (onViewImplementation && issueId !== 0) {
+        console.log("Viewing implementation from checklist for issue:", issueId);
+        onViewImplementation(issueId);
       }
     };
     
     return (
       <div 
-        key={issue.id} 
-        id={`implementation-${issue.id}`}
+        key={issueId} 
+        id={`implementation-${issueId}`}
         className={`border rounded-lg p-5 mb-4 transition ${isCompleted ? 'bg-neutral-50' : 'bg-white'} ${
-          isSelected ? 'ring-2 ring-primary border-primary' : 'border-neutral-200'
+          selectedIssue === issueId ? 'ring-2 ring-primary border-primary' : 'border-neutral-200'
         }`}
       >
         <div className="flex justify-between items-start mb-3">
           <div>
             <div className="flex items-center mb-1">
               <span className="bg-primary/10 text-primary text-xs font-medium px-2 py-0.5 rounded mr-2">
-                Issue #{issue.id}
+                Issue #{issueId}
               </span>
               <span className={`text-xs px-2 py-0.5 rounded-full ${
                 issue.priority === "high" ? "bg-red-100 text-red-800" :
@@ -96,7 +102,7 @@ export const ImplementationChecklist = ({
                 "Mark Done"
               )}
             </Button>
-            {onViewImplementation && issue.id !== undefined && (
+            {onViewImplementation && issueId !== 0 && (
               <Button
                 variant="outline"
                 size="sm"

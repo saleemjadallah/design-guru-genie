@@ -39,55 +39,11 @@ export const useReviewData = (reviewId: string | undefined) => {
           throw new Error("Review ID is required");
         }
 
-        let query = supabase
-          .from('saved_reviews')
-          .select('*');
-        
-        // Check if reviewId is a valid UUID format or a special case like "demo-analysis"
+        // Check if reviewId is a valid UUID format
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
         
-        if (reviewId === "demo-analysis") {
-          // Handle demo analysis with mock data
-          const demoReview: SavedReview = {
-            id: "demo-analysis",
-            title: "Demo Analysis",
-            image_url: "public/placeholder.svg",
-            feedback: [
-              {
-                id: 1,
-                type: "positive",
-                title: "Clean layout",
-                description: "The interface has a clean, organized layout that helps users focus on content."
-              },
-              {
-                id: 2,
-                type: "improvement",
-                title: "Contrast issues",
-                description: "Some text elements have insufficient contrast with the background.",
-                priority: "high"
-              },
-              {
-                id: 3,
-                type: "improvement",
-                title: "Button sizing",
-                description: "Action buttons could be larger to improve touch targets.",
-                priority: "medium"
-              }
-            ],
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          };
-          
-          setReview(demoReview);
-          setFeedbackItems(demoReview.feedback);
-          setLoading(false);
-          return;
-        } 
-        else if (uuidRegex.test(reviewId)) {
-          // If it's a valid UUID, proceed with normal query
-          query = query.eq('id', reviewId);
-        } else {
-          // For non-UUID IDs that aren't demo-analysis, navigate back
+        if (!uuidRegex.test(reviewId)) {
+          // For non-UUID IDs, navigate back
           navigate("/saved-reviews");
           toast({
             title: "Invalid review ID",
@@ -97,7 +53,11 @@ export const useReviewData = (reviewId: string | undefined) => {
           return;
         }
 
-        const { data, error } = await query.maybeSingle();
+        const { data, error } = await supabase
+          .from('saved_reviews')
+          .select('*')
+          .eq('id', reviewId)
+          .maybeSingle();
 
         if (error) throw error;
         

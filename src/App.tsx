@@ -7,10 +7,12 @@ import FollowUpResults from "./pages/FollowUpResults";
 import SavedReviews from "./pages/SavedReviews";
 import { AuthPage } from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
+import { Navigation } from "./components/layout/navigation";
 
 function App() {
   return (
     <>
+      <Navigation />
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/analysis/:id" element={<ReviewDetail />} />

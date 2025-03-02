@@ -3,12 +3,36 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { handleAnalysisError } from "@/utils/upload/errorHandler";
 
-// Add image compression utility
-async function compressImage(imageUrl: string, maxWidth = 1600, maxHeight = 1600, quality = 0.8): Promise<string> {
+// Define compression options interface
+interface CompressionOptions {
+  maxWidth?: number;
+  maxHeight?: number;
+  quality?: number;
+}
+
+// Add image compression utility with more aggressive defaults
+async function compressImage(
+  imageUrl: string, 
+  options: CompressionOptions = {}
+): Promise<string> {
+  const {
+    maxWidth = 1000,   // Reduced from 1600 to 1000
+    maxHeight = 1000,  // Reduced from 1600 to 1000
+    quality = 0.7      // Reduced from 0.8 to 0.7
+  } = options;
+
   try {
     // For blob URLs or remote URLs
     const response = await fetch(imageUrl);
     const blob = await response.blob();
+    
+    // If the image is already small, return it as is
+    if (blob.size < 1 * 1024 * 1024) { // If less than 1MB
+      console.log("Image already small enough, skipping compression");
+      return imageUrl;
+    }
+    
+    console.log(`Original image size: ${Math.round(blob.size/1024)}KB, compressing...`);
     
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -20,16 +44,15 @@ async function compressImage(imageUrl: string, maxWidth = 1600, maxHeight = 1600
         let width = img.width;
         let height = img.height;
         
-        if (width > height) {
-          if (width > maxWidth) {
-            height = Math.round(height * maxWidth / width);
-            width = maxWidth;
-          }
+        // More aggressive scaling for larger images
+        const scaleFactor = Math.max(width / maxWidth, height / maxHeight);
+        
+        if (scaleFactor > 1) {
+          width = Math.round(width / scaleFactor);
+          height = Math.round(height / scaleFactor);
+          console.log(`Resizing from ${img.width}x${img.height} to ${width}x${height}`);
         } else {
-          if (height > maxHeight) {
-            width = Math.round(width * maxHeight / height);
-            height = maxHeight;
-          }
+          console.log("Image dimensions already within limits");
         }
         
         // Set canvas dimensions and draw resized image
@@ -49,6 +72,8 @@ async function compressImage(imageUrl: string, maxWidth = 1600, maxHeight = 1600
             reject(new Error('Failed to create image blob'));
             return;
           }
+          
+          console.log(`Compressed to ${Math.round(blob.size/1024)}KB (${Math.round(blob.size/blob.size*100)}% of original)`);
           resolve(URL.createObjectURL(blob));
         }, 'image/jpeg', quality);
       };
@@ -65,7 +90,7 @@ async function compressImage(imageUrl: string, maxWidth = 1600, maxHeight = 1600
   }
 }
 
-export async function processWithClaudeAI(imageUrl: string) {
+export async function processWithClaudeAI(imageUrl: string, compressionOptions: CompressionOptions = {}) {
   try {
     toast({
       title: "AI Analysis",
@@ -132,10 +157,14 @@ export async function processWithClaudeAI(imageUrl: string) {
       console.log("Proceeding with original URL format");
     }
     
-    // Compress image before sending to Claude
+    // Compress image before sending to Claude with more aggressive compression
     try {
       console.log("Compressing image before analysis...");
-      const compressedImageUrl = await compressImage(imageUrl, 1200, 1200, 0.75);
+      const compressedImageUrl = await compressImage(imageUrl, {
+        maxWidth: compressionOptions.maxWidth || 800,     // Even smaller dimensions
+        maxHeight: compressionOptions.maxHeight || 1000,  // Even smaller dimensions
+        quality: compressionOptions.quality || 0.7        // Lower quality
+      });
       console.log("Image compressed successfully");
       imageUrl = compressedImageUrl;
     } catch (compressionError) {
@@ -147,7 +176,14 @@ export async function processWithClaudeAI(imageUrl: string) {
     console.log("Calling analyze-design function with URL:", imageUrl);
     const { data: analyzeData, error: analyzeError } = await supabase.functions
       .invoke('analyze-design', {
-        body: { imageUrl },
+        body: { 
+          imageUrl,
+          options: {
+            maxTokens: 1500,     // Limit token usage
+            temperature: 0.2,    // Lower temperature for more predictable results
+            compressImage: true   // Tell Edge function to compress image as well
+          }
+        },
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

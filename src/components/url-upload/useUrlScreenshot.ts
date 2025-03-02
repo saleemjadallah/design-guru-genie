@@ -63,7 +63,12 @@ export const useUrlScreenshot = () => {
       // Try to generate analysis with Claude - no fallbacks
       let analysisResults;
       try {
-        analysisResults = await processWithClaudeAI(screenshotData.imageUrl);
+        // Use a smaller size for Claude analysis
+        analysisResults = await processWithClaudeAI(screenshotData.imageUrl, {
+          maxWidth: 800,  // Reduce max width for Claude analysis
+          maxHeight: 1000, // Reduce max height for Claude analysis
+          quality: 0.7     // Lower quality for smaller file size
+        });
         
         toast({
           title: "Analysis complete",

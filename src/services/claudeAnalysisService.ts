@@ -5,6 +5,196 @@ import { uploadBlobToSupabase, validateImageUrl } from "@/utils/upload/imageUplo
 import { callClaudeAnalysisAPI, processClaudeResponse } from "@/services/claudeApiService";
 
 /**
+ * Handles format conversion for non-JPEG/PNG images
+ * @param originalBlob Original image blob
+ * @returns Promise resolving to processed blob
+ */
+async function convertImageFormat(originalBlob: Blob): Promise<Blob> {
+  if (originalBlob.type === 'image/jpeg' || originalBlob.type === 'image/png') {
+    return originalBlob;
+  }
+  
+  console.log(`Converting ${originalBlob.type} to JPEG for better compatibility`);
+  return new Promise<Blob>((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) {
+        reject(new Error('Failed to get canvas context'));
+        return;
+      }
+      
+      // Use white background
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      ctx.drawImage(img, 0, 0);
+      URL.revokeObjectURL(img.src); // Clean up
+      
+      canvas.toBlob(
+        newBlob => {
+          if (!newBlob) {
+            reject(new Error('Failed to convert image format'));
+            return;
+          }
+          
+          console.log(`Converted to JPEG: ${Math.round(newBlob.size/1024)}KB`);
+          resolve(newBlob);
+        },
+        'image/jpeg',
+        0.85
+      );
+    };
+    
+    img.onerror = () => {
+      URL.revokeObjectURL(img.src);
+      reject(new Error('Failed to load image for format conversion'));
+    };
+    
+    img.src = URL.createObjectURL(originalBlob);
+  });
+}
+
+/**
+ * Processes a blob URL to get a Supabase storage URL
+ * @param blobUrl Blob URL to process
+ * @returns Promise resolving to Supabase storage URL
+ */
+async function processBlobUrl(blobUrl: string): Promise<string> {
+  try {
+    const response = await fetch(blobUrl);
+    const originalBlob = await response.blob();
+    
+    console.log(`Original blob type: ${originalBlob.type}, size: ${Math.round(originalBlob.size/1024)}KB`);
+    
+    // Process the blob if needed
+    const processedBlob = await convertImageFormat(originalBlob);
+    
+    // Upload to Supabase
+    const supabaseUrl = await uploadBlobToSupabase(processedBlob);
+    console.log("Uploaded blob to Supabase:", supabaseUrl);
+    
+    return supabaseUrl;
+  } catch (error) {
+    console.error("Failed to fetch or process blob URL:", error);
+    throw new Error("Could not process local image data");
+  }
+}
+
+/**
+ * Performs final size verification before API call
+ * @param imageUrl URL to verify
+ * @returns Promise that resolves if validation passes, rejects if too large
+ */
+async function verifyFinalImageSize(imageUrl: string): Promise<void> {
+  // Skip check for data URLs (they were already checked during compression)
+  if (imageUrl.startsWith('data:')) {
+    return;
+  }
+  
+  try {
+    const finalResponse = await fetch(imageUrl);
+    const finalBlob = await finalResponse.blob();
+    if (finalBlob.size > 5 * 1024 * 1024) {
+      throw new Error(`Failed to compress image below 5MB limit. Final size: ${(finalBlob.size / (1024 * 1024)).toFixed(2)}MB`);
+    }
+  } catch (finalCheckError: any) {
+    console.error("Final size check error:", finalCheckError);
+    if (finalCheckError.message && finalCheckError.message.includes("5MB limit")) {
+      toast({
+        title: "Image too large",
+        description: finalCheckError.message,
+        variant: "destructive",
+      });
+      throw finalCheckError;
+    }
+    // If it's just a fetch error but not a size error, continue
+  }
+}
+
+/**
+ * Estimates data URL size and validates against 5MB limit
+ * @param dataUrl Data URL to check
+ */
+function validateDataUrlSize(dataUrl: string): void {
+  const base64Part = dataUrl.split(',')[1] || '';
+  const estimatedSizeBytes = base64Part.length * 0.75;
+  const estimatedSizeMB = estimatedSizeBytes / (1024 * 1024);
+  
+  console.log(`Estimated data URL size: ${estimatedSizeMB.toFixed(2)}MB`);
+  
+  if (estimatedSizeMB > 5) {
+    throw new Error(`Image data is still too large (${estimatedSizeMB.toFixed(2)}MB) after compression. Maximum size allowed is 5MB.`);
+  }
+}
+
+/**
+ * Cleans up URL object references to prevent memory leaks
+ * @param originalUrl Original URL that might need cleanup
+ * @param processedUrl Processed URL that might need cleanup
+ */
+function cleanupUrls(originalUrl: string, processedUrl: string): void {
+  if (originalUrl.startsWith('blob:')) {
+    console.log("Revoking blob URL to prevent memory leaks");
+    URL.revokeObjectURL(originalUrl);
+  }
+  
+  if (processedUrl !== originalUrl && processedUrl.startsWith('blob:')) {
+    console.log("Revoking intermediate blob URL");
+    URL.revokeObjectURL(processedUrl);
+  }
+}
+
+/**
+ * Compresses an image URL for Claude AI processing
+ * @param imageUrl URL to compress
+ * @param compressionOptions Options for compression
+ * @returns Promise resolving to compressed image URL
+ */
+async function prepareImageForAnalysis(imageUrl: string, compressionOptions: CompressionOptions = {}): Promise<string> {
+  try {
+    console.log("Compressing image before analysis...");
+    const mergedOptions = {
+      maxWidth: compressionOptions.maxWidth || 800,     // Reduced default
+      maxHeight: compressionOptions.maxHeight || 1000,  // Same default
+      quality: compressionOptions.quality || 0.65,      // Lower quality default
+      maxSizeBytes: 4 * 1024 * 1024 // Ensure 4MB limit (safely under 5MB)
+    };
+    
+    const compressedImageUrl = await compressImageForAPI(imageUrl, mergedOptions);
+    console.log("Image compressed successfully to data URL");
+    
+    // Validate size
+    if (compressedImageUrl.startsWith('data:')) {
+      validateDataUrlSize(compressedImageUrl);
+    } else {
+      await verifyFinalImageSize(compressedImageUrl);
+    }
+    
+    return compressedImageUrl;
+  } catch (compressionError: any) {
+    console.warn("Image compression failed, proceeding with original:", compressionError);
+    
+    // If compression failed due to size, we must stop here
+    if (compressionError.message && compressionError.message.includes("too large")) {
+      toast({
+        title: "Image too large",
+        description: compressionError.message,
+        variant: "destructive",
+      });
+      throw compressionError;
+    }
+    
+    // Otherwise continue with the original URL - compression is optional
+    return imageUrl;
+  }
+}
+
+/**
  * Main function to process an image with Claude AI analysis
  * Handles preprocessing, API calls, and error handling
  */
@@ -13,159 +203,19 @@ export async function processWithClaudeAI(imageUrl: string, compressionOptions: 
   const originalUrl = imageUrl;
   
   try {
-    // Check if the image is a local blob URL that needs to be uploaded to Supabase
+    // Process blob URLs
     if (imageUrl.startsWith('blob:')) {
-      try {
-        const response = await fetch(imageUrl);
-        const originalBlob = await response.blob();
-        
-        console.log(`Original blob type: ${originalBlob.type}, size: ${Math.round(originalBlob.size/1024)}KB`);
-        
-        // If original is not a JPEG and not a PNG, convert to JPEG first
-        let processedBlob = originalBlob;
-        if (originalBlob.type !== 'image/jpeg' && originalBlob.type !== 'image/png') {
-          console.log(`Converting ${originalBlob.type} to JPEG for better compatibility`);
-          const img = new Image();
-          await new Promise<void>((resolve, reject) => {
-            img.onload = () => {
-              const canvas = document.createElement('canvas');
-              canvas.width = img.width;
-              canvas.height = img.height;
-              const ctx = canvas.getContext('2d');
-              
-              if (!ctx) {
-                reject(new Error('Failed to get canvas context'));
-                return;
-              }
-              
-              // Use white background
-              ctx.fillStyle = '#FFFFFF';
-              ctx.fillRect(0, 0, canvas.width, canvas.height);
-              
-              ctx.drawImage(img, 0, 0);
-              URL.revokeObjectURL(img.src); // Clean up
-              
-              canvas.toBlob(
-                newBlob => {
-                  if (!newBlob) {
-                    reject(new Error('Failed to convert image format'));
-                    return;
-                  }
-                  
-                  console.log(`Converted to JPEG: ${Math.round(newBlob.size/1024)}KB`);
-                  
-                  // Set the processed blob
-                  processedBlob = newBlob;
-                  resolve();
-                },
-                'image/jpeg',
-                0.85
-              );
-            };
-            
-            img.onerror = () => {
-              URL.revokeObjectURL(img.src);
-              reject(new Error('Failed to load image for format conversion'));
-            };
-            
-            img.src = URL.createObjectURL(originalBlob);
-          });
-        }
-        
-        imageUrl = await uploadBlobToSupabase(processedBlob); // Upload processed blob
-        console.log("Uploaded blob to Supabase:", imageUrl);
-      } catch (error) {
-        console.error("Failed to fetch or process blob URL:", error);
-        throw new Error("Could not process local image data");
-      }
+      imageUrl = await processBlobUrl(imageUrl);
     }
     
     // Validate the image URL
     validateImageUrl(imageUrl);
     
-    // Compress image before sending to Claude with more aggressive compression
-    try {
-      console.log("Compressing image before analysis...");
-      const mergedOptions = {
-        maxWidth: compressionOptions.maxWidth || 800,     // Reduced default
-        maxHeight: compressionOptions.maxHeight || 1000,  // Same default
-        quality: compressionOptions.quality || 0.65,      // Lower quality default
-        maxSizeBytes: 4 * 1024 * 1024 // Ensure 4MB limit (safely under 5MB)
-      };
-      
-      const compressedImageUrl = await compressImageForAPI(imageUrl, mergedOptions);
-      console.log("Image compressed successfully to data URL");
-      
-      // For data URLs, check size estimation
-      if (compressedImageUrl.startsWith('data:')) {
-        // Estimate data URL size: 1 base64 char ~= 0.75 bytes
-        const base64Part = compressedImageUrl.split(',')[1] || '';
-        const estimatedSizeBytes = base64Part.length * 0.75;
-        const estimatedSizeMB = estimatedSizeBytes / (1024 * 1024);
-        
-        console.log(`Estimated data URL size: ${estimatedSizeMB.toFixed(2)}MB`);
-        
-        if (estimatedSizeMB > 5) {
-          throw new Error(`Image data is still too large (${estimatedSizeMB.toFixed(2)}MB) after compression. Maximum size allowed is 5MB.`);
-        }
-      } else if (!compressedImageUrl.startsWith('data:')) {
-        // For non-data URLs, fetch to check size
-        try {
-          const response = await fetch(compressedImageUrl);
-          const blob = await response.blob();
-          const sizeMB = blob.size / (1024 * 1024);
-          console.log(`Final compressed image size: ${sizeMB.toFixed(2)}MB`);
-          
-          // Final size check with clear error message
-          if (sizeMB > 5) {
-            throw new Error(`Image is still too large (${sizeMB.toFixed(2)}MB) after compression. Maximum size allowed is 5MB.`);
-          }
-        } catch (sizeCheckError) {
-          if (sizeCheckError.message.includes("too large")) {
-            throw sizeCheckError; // Rethrow size-specific errors
-          }
-          console.warn("Size check failed, continuing anyway:", sizeCheckError);
-        }
-      }
-      
-      imageUrl = compressedImageUrl;
-    } catch (compressionError) {
-      console.warn("Image compression failed, proceeding with original:", compressionError);
-      
-      // If compression failed due to size, we must stop here
-      if (compressionError.message.includes("too large")) {
-        toast({
-          title: "Image too large",
-          description: compressionError.message,
-          variant: "destructive",
-        });
-        throw compressionError;
-      }
-      // Otherwise continue with the original URL - compression is optional
-    }
+    // Prepare image (compress, validate size)
+    imageUrl = await prepareImageForAnalysis(imageUrl, compressionOptions);
     
-    // Add a final explicit size check before calling the Claude API
-    // but only for non-data URLs (we've already checked data URLs in the compression function)
-    if (!imageUrl.startsWith('data:')) {
-      try {
-        const finalResponse = await fetch(imageUrl);
-        const finalBlob = await finalResponse.blob();
-        if (finalBlob.size > 5 * 1024 * 1024) {
-          throw new Error(`Failed to compress image below 5MB limit. Final size: ${(finalBlob.size / (1024 * 1024)).toFixed(2)}MB`);
-        }
-      } catch (finalCheckError) {
-        console.error("Final size check error:", finalCheckError);
-        if (finalCheckError.message.includes("5MB limit")) {
-          toast({
-            title: "Image too large",
-            description: finalCheckError.message,
-            variant: "destructive",
-          });
-          throw finalCheckError;
-        }
-        // If it's just a fetch error but not a size error, continue
-      }
-    }
+    // Final size verification
+    await verifyFinalImageSize(imageUrl);
     
     // Call the Claude AI analysis API
     const analyzeData = await callClaudeAnalysisAPI(imageUrl);
@@ -173,34 +223,16 @@ export async function processWithClaudeAI(imageUrl: string, compressionOptions: 
     // Process the response from Claude
     const result = processClaudeResponse(analyzeData);
     
-    // After successfully processing with Claude, clean up blob URLs to prevent memory leaks
-    if (originalUrl.startsWith('blob:')) {
-      console.log("Revoking blob URL to prevent memory leaks");
-      URL.revokeObjectURL(originalUrl);
-    }
-    
-    // Clean up any intermediate blob URLs created during compression
-    if (imageUrl !== originalUrl && imageUrl.startsWith('blob:')) {
-      console.log("Revoking intermediate blob URL");
-      URL.revokeObjectURL(imageUrl);
-    }
+    // Clean up resources
+    cleanupUrls(originalUrl, imageUrl);
     
     return result;
     
   } catch (analyzeError: any) {
     console.error("Error in Claude AI analysis process:", analyzeError);
     
-    // Ensure blob URLs are revoked even if processing fails
-    if (originalUrl.startsWith('blob:')) {
-      console.log("Revoking blob URL after error");
-      URL.revokeObjectURL(originalUrl);
-    }
-    
-    // Revoke any intermediate blob URLs created during processing
-    if (imageUrl !== originalUrl && imageUrl.startsWith('blob:')) {
-      console.log("Revoking intermediate blob URL after error");
-      URL.revokeObjectURL(imageUrl);
-    }
+    // Clean up resources even when there's an error
+    cleanupUrls(originalUrl, imageUrl);
     
     const errorMsg = handleAnalysisError(analyzeError);
     throw new Error(errorMsg);

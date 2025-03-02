@@ -26,9 +26,8 @@ export const Navigation = () => {
             <img 
               src="/lovable-uploads/7a4a7d46-2665-4c5b-9666-801339014a81.png" 
               alt="Evolvely.ai Logo" 
-              className="h-8 w-auto mr-2" 
+              className="h-24 w-auto" 
             />
-            <span className="text-xl font-bold">Design Guru</span>
           </Link>
 
           <DesktopMenu 

@@ -4,6 +4,7 @@ import { Globe, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { processWithClaudeAI } from "@/services/claudeAnalysisService";
 
 export const UrlUpload = ({ onUrlAnalyze }: { onUrlAnalyze: (imageUrl: string, analysisData: any) => void }) => {
   const [url, setUrl] = useState("");
@@ -54,29 +55,41 @@ export const UrlUpload = ({ onUrlAnalyze }: { onUrlAnalyze: (imageUrl: string, a
     try {
       toast({
         title: "Analyzing URL",
-        description: "Our AI is analyzing the website design...",
+        description: "Our AI is capturing and analyzing the website design...",
       });
 
       try {
-        const { data, error } = await supabase.functions.invoke("screenshot-url", {
+        // First step: Generate a screenshot using the screenshot-url edge function
+        const { data: screenshotData, error: screenshotError } = await supabase.functions.invoke("screenshot-url", {
           body: { url: normalizedUrl },
         });
 
-        if (error) {
-          console.error("URL processing error:", error);
-          throw error;
+        if (screenshotError) {
+          console.error("URL screenshot error:", screenshotError);
+          throw new Error(`Failed to capture website: ${screenshotError.message}`);
         }
 
-        if (data?.success && data?.imageUrl && data?.analysis) {
+        if (!screenshotData?.imageUrl) {
+          throw new Error("Failed to generate website screenshot");
+        }
+
+        console.log("Screenshot generated:", screenshotData.imageUrl);
+        
+        // Second step: Process the screenshot with Claude AI
+        try {
+          // Generate fresh analysis with Claude
+          const analysisResults = await processWithClaudeAI(screenshotData.imageUrl);
+          
+          // Pass both the screenshot URL and analysis to the parent component
+          onUrlAnalyze(screenshotData.imageUrl, analysisResults);
+          
           toast({
             title: "Analysis complete",
             description: "Website design has been analyzed successfully.",
           });
-
-          // Pass the analysis data to the parent component
-          onUrlAnalyze(data.imageUrl, data.analysis);
-        } else {
-          throw new Error("Failed to analyze URL");
+        } catch (analysisError: any) {
+          console.error("Claude analysis error:", analysisError);
+          throw new Error(`Analysis failed: ${analysisError.message}`);
         }
       } catch (error: any) {
         console.error("URL processing error:", error);

@@ -34,7 +34,8 @@ export const useUrlAnalysis = () => {
   }
 
   const analyzeUrl = async (imageUrl: string, data: any) => {
-    console.log("Handling URL upload:", imageUrl);
+    console.log("Handling URL analysis:", imageUrl);
+    console.log("Data provided:", data);
     setIsUploading(true);
     
     try {
@@ -49,9 +50,15 @@ export const useUrlAnalysis = () => {
       let analysisResults;
       
       if (data) {
-        // If data is provided, check if it contains Claude's response format
-        if (isClaudeResponse(data)) {
+        console.log("Using provided analysis data");
+        // If data is provided directly in our expected format
+        if (Array.isArray(data) && data.length > 0 && 'type' in data[0]) {
+          analysisResults = data;
+        }
+        // If data is a Claude response, parse it
+        else if (isClaudeResponse(data)) {
           try {
+            console.log("Parsing Claude response format");
             // Try to parse the JSON from Claude's response
             const claudeResponse = data as ClaudeResponse;
             const parsedData = JSON.parse(claudeResponse.content[0].text);
@@ -97,7 +104,8 @@ export const useUrlAnalysis = () => {
             analysisResults = await processWithClaudeAI(imageUrl);
           }
         } else {
-          // If data is already in our required format
+          console.log("Using provided direct analysis data");
+          // If data is already in our required format or can be used directly
           analysisResults = data;
         }
       } else {
@@ -108,8 +116,13 @@ export const useUrlAnalysis = () => {
           description: "Retrieving and analyzing website design elements...",
         });
         
+        console.log("No data provided - using Claude AI directly");
         // Call Claude AI service directly
         analysisResults = await processWithClaudeAI(imageUrl);
+      }
+      
+      if (!analysisResults || (Array.isArray(analysisResults) && analysisResults.length === 0)) {
+        throw new Error("Analysis produced no results. Please try again.");
       }
       
       setCurrentStage(2);
@@ -117,6 +130,8 @@ export const useUrlAnalysis = () => {
         title: "Generating feedback",
         description: "Creating detailed design recommendations...",
       });
+      
+      console.log("Saving analysis to database:", analysisResults);
       
       // Save the analysis to the database
       const { data: reviewData, error: reviewError } = await supabase
@@ -130,6 +145,7 @@ export const useUrlAnalysis = () => {
         .single();
         
       if (reviewError) {
+        console.error("Database error:", reviewError);
         const errorMsg = handleDatabaseError(reviewError);
         throw new Error(errorMsg);
       }
@@ -155,6 +171,7 @@ export const useUrlAnalysis = () => {
       }, 1000);
       
     } catch (error: any) {
+      console.error("URL analysis error:", error);
       handleUploadError(error);
       setIsUploading(false);
     }

@@ -2,16 +2,26 @@
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Uploads a blob URL to Supabase Storage and returns a public URL
+ * Uploads a blob or blob URL to Supabase Storage and returns a public URL
+ * @param blobOrUrl A Blob object or a blob URL string
+ * @returns The public URL of the uploaded file
  */
-export async function uploadBlobToSupabase(blobUrl: string): Promise<string> {
-  console.log("Converting blob URL to file for upload");
+export async function uploadBlobToSupabase(blobOrUrl: Blob | string): Promise<string> {
+  console.log("Converting blob to file for upload");
   
   try {
-    // Fetch the blob and upload it to get a public URL
-    const response = await fetch(blobUrl);
-    const blob = await response.blob();
-    const file = new File([blob], "screenshot.png", { type: blob.type });
+    let blob: Blob;
+    
+    // If it's a string URL, fetch the blob
+    if (typeof blobOrUrl === 'string') {
+      const response = await fetch(blobOrUrl);
+      blob = await response.blob();
+    } else {
+      // It's already a blob
+      blob = blobOrUrl;
+    }
+    
+    const file = new File([blob], "screenshot.png", { type: blob.type || 'image/png' });
     
     // Upload the file to Supabase Storage
     const timestamp = new Date().getTime();
@@ -37,7 +47,7 @@ export async function uploadBlobToSupabase(blobUrl: string): Promise<string> {
     
     return publicUrl;
   } catch (blobError: any) {
-    console.error("Error processing blob URL:", blobError);
+    console.error("Error processing blob:", blobError);
     throw new Error(`Failed to process the image: ${blobError.message}`);
   }
 }

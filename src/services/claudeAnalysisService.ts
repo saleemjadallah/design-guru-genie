@@ -1,3 +1,4 @@
+
 import { toast } from "@/hooks/use-toast";
 import { handleAnalysisError } from "@/utils/upload/errorHandler";
 import { compressImageForAPI, CompressionOptions } from "@/utils/upload/imageCompressionService";
@@ -12,7 +13,14 @@ export async function processWithClaudeAI(imageUrl: string, compressionOptions: 
   try {
     // Check if the image is a local blob URL that needs to be uploaded to Supabase
     if (imageUrl.startsWith('blob:')) {
-      imageUrl = await uploadBlobToSupabase(imageUrl);
+      try {
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+        imageUrl = await uploadBlobToSupabase(blob); // Pass the blob directly
+      } catch (error) {
+        console.error("Failed to fetch blob URL:", error);
+        throw new Error("Could not process local image data");
+      }
     }
     
     // Validate the image URL

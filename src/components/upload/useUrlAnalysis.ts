@@ -6,10 +6,32 @@ import { toast } from "@/hooks/use-toast";
 import { handleUploadError, handleDatabaseError } from "@/utils/upload/errorHandler";
 import { generateDummyFeedback } from "@/utils/upload/dummyData";
 
+// Helper to type check Claude AI response structure
+interface ClaudeResponse {
+  content: Array<{
+    type: string;
+    text: string;
+  }>;
+}
+
 export const useUrlAnalysis = () => {
   const navigate = useNavigate();
   const [isUploading, setIsUploading] = useState(false);
   const [currentStage, setCurrentStage] = useState(0);
+
+  // Helper function to type-check if an object is a Claude response
+  function isClaudeResponse(obj: any): obj is ClaudeResponse {
+    return (
+      obj !== null &&
+      typeof obj === 'object' &&
+      'content' in obj &&
+      Array.isArray(obj.content) &&
+      obj.content.length > 0 &&
+      typeof obj.content[0] === 'object' &&
+      'text' in obj.content[0] &&
+      typeof obj.content[0].text === 'string'
+    );
+  }
 
   const analyzeUrl = async (imageUrl: string, data: any) => {
     console.log("Handling URL upload:", imageUrl);
@@ -27,11 +49,12 @@ export const useUrlAnalysis = () => {
       let analysisResults;
       
       if (data) {
-        // If data is provided and contains Claude's response format
-        if (data.content && Array.isArray(data.content) && data.content[0] && data.content[0].text) {
+        // If data is provided, check if it contains Claude's response format
+        if (isClaudeResponse(data)) {
           try {
             // Try to parse the JSON from Claude's response
-            const parsedData = JSON.parse(data.content[0].text);
+            const claudeResponse = data as ClaudeResponse;
+            const parsedData = JSON.parse(claudeResponse.content[0].text);
             
             // Format the data for our feedback system
             analysisResults = [];

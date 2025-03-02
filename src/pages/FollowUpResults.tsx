@@ -18,6 +18,15 @@ import { Overview } from "@/components/analysis/Overview";
 import { FeedbackPanel } from "@/components/feedback/FeedbackPanel";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { Json } from "@/integrations/supabase/types";
+
+// Helper to type check Claude AI response structure
+interface ClaudeResponse {
+  content: Array<{
+    type: string;
+    text: string;
+  }>;
+}
 
 const FollowUpResults = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -79,6 +88,20 @@ const FollowUpResults = () => {
     analysisCount: 3
   });
 
+  // Helper function to type-check if an object is a Claude response
+  function isClaudeResponse(obj: any): obj is ClaudeResponse {
+    return (
+      obj !== null &&
+      typeof obj === 'object' &&
+      'content' in obj &&
+      Array.isArray(obj.content) &&
+      obj.content.length > 0 &&
+      typeof obj.content[0] === 'object' &&
+      'text' in obj.content[0] &&
+      typeof obj.content[0].text === 'string'
+    );
+  }
+
   // Fetch review data if reviewId is provided
   useEffect(() => {
     const fetchReviewData = async () => {
@@ -103,61 +126,59 @@ const FollowUpResults = () => {
           if (data) {
             // Try to parse feedback if it's in Claude's format
             let parsedFeedback;
-            if (data.feedback && 
-                typeof data.feedback === 'object' && 
-                'content' in data.feedback && 
-                Array.isArray(data.feedback.content) && 
-                data.feedback.content[0] && 
-                'text' in data.feedback.content[0]) {
-              try {
-                const claudeContent = JSON.parse(data.feedback.content[0].text);
-                
-                // Update issues with data from Claude
-                const highIssues = [];
-                const mediumIssues = [];
-                const lowIssues = [];
-                
-                if (claudeContent.issues) {
-                  for (const issue of claudeContent.issues) {
-                    const formattedIssue = {
-                      title: issue.issue,
-                      description: issue.recommendation,
-                      id: issue.id || highIssues.length + mediumIssues.length + lowIssues.length + 1,
-                      location: issue.location || null
-                    };
-                    
-                    if (issue.priority === 'high') {
-                      highIssues.push(formattedIssue);
-                    } else if (issue.priority === 'medium') {
-                      mediumIssues.push(formattedIssue);
-                    } else {
-                      lowIssues.push(formattedIssue);
+            if (data.feedback && typeof data.feedback === 'object') {
+              if (isClaudeResponse(data.feedback)) {
+                try {
+                  const claudeResponse = data.feedback as ClaudeResponse;
+                  const claudeContent = JSON.parse(claudeResponse.content[0].text);
+                  
+                  // Update issues with data from Claude
+                  const highIssues = [];
+                  const mediumIssues = [];
+                  const lowIssues = [];
+                  
+                  if (claudeContent.issues) {
+                    for (const issue of claudeContent.issues) {
+                      const formattedIssue = {
+                        title: issue.issue,
+                        description: issue.recommendation,
+                        id: issue.id || highIssues.length + mediumIssues.length + lowIssues.length + 1,
+                        location: issue.location || null
+                      };
+                      
+                      if (issue.priority === 'high') {
+                        highIssues.push(formattedIssue);
+                      } else if (issue.priority === 'medium') {
+                        mediumIssues.push(formattedIssue);
+                      } else {
+                        lowIssues.push(formattedIssue);
+                      }
                     }
                   }
-                }
-                
-                // Update positive aspects from Claude
-                const positiveAspects = claudeContent.strengths?.map((item: any, index: number) => ({
-                  title: item.title,
-                  description: item.description,
-                  id: index + 1,
-                  location: item.location || null
-                })) || results.positiveAspects;
+                  
+                  // Update positive aspects from Claude
+                  const positiveAspects = claudeContent.strengths?.map((item: any, index: number) => ({
+                    title: item.title,
+                    description: item.description,
+                    id: item.id || index + 1,
+                    location: item.location || null
+                  })) || results.positiveAspects;
 
-                setResults(prev => ({
-                  ...prev,
-                  positiveAspects,
-                  issues: {
-                    high: highIssues.length > 0 ? highIssues : prev.issues.high,
-                    medium: mediumIssues.length > 0 ? mediumIssues : prev.issues.medium,
-                    low: lowIssues.length > 0 ? lowIssues : prev.issues.low
-                  },
-                  screenshot: data.image_url,
-                  isScreenshotAnalysis: data.image_url?.startsWith('data:image/svg+xml') || false,
-                  overallFeedback: claudeContent.overview || prev.overallFeedback
-                }));
-              } catch (e) {
-                console.error("Error parsing Claude response:", e);
+                  setResults(prev => ({
+                    ...prev,
+                    positiveAspects,
+                    issues: {
+                      high: highIssues.length > 0 ? highIssues : prev.issues.high,
+                      medium: mediumIssues.length > 0 ? mediumIssues : prev.issues.medium,
+                      low: lowIssues.length > 0 ? lowIssues : prev.issues.low
+                    },
+                    screenshot: data.image_url || prev.screenshot,
+                    isScreenshotAnalysis: data.image_url?.startsWith('data:image/svg+xml') || false,
+                    overallFeedback: claudeContent.overview || prev.overallFeedback
+                  }));
+                } catch (e) {
+                  console.error("Error parsing Claude response:", e);
+                }
               }
             }
           }

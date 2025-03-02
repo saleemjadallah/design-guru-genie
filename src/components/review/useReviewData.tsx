@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { Json } from "@/integrations/supabase/types";
 
 type Feedback = {
   type: "positive" | "improvement";
@@ -24,6 +25,14 @@ type SavedReview = {
   updated_at: string;
   user_id?: string;
 };
+
+// Helper to type check Claude AI response structure
+interface ClaudeResponse {
+  content: Array<{
+    type: string;
+    text: string;
+  }>;
+}
 
 export const useReviewData = (reviewId: string | undefined) => {
   const navigate = useNavigate();
@@ -75,46 +84,52 @@ export const useReviewData = (reviewId: string | undefined) => {
             } 
             // Check if feedback is Claude's response format
             else if (data.feedback && 
-                    typeof data.feedback === 'object' && 
-                    data.feedback.content && 
-                    Array.isArray(data.feedback.content) && 
-                    data.feedback.content[0] && 
-                    data.feedback.content[0].text) {
-              const claudeContent = JSON.parse(data.feedback.content[0].text);
-              parsed = [];
+                    typeof data.feedback === 'object') {
               
-              // Process strengths
-              if (claudeContent.strengths) {
-                claudeContent.strengths.forEach((strength: any, index: number) => {
-                  parsed.push({
-                    id: index + 1,
-                    type: "positive",
-                    title: strength.title,
-                    description: strength.description
-                  });
-                });
-              }
-              
-              // Process issues
-              if (claudeContent.issues) {
-                claudeContent.issues.forEach((issue: any, index: number) => {
-                  parsed.push({
-                    id: parsed.length + 1,
-                    type: "improvement",
-                    title: issue.issue,
-                    priority: issue.priority,
-                    description: issue.recommendation,
-                    location: issue.location,
-                    principle: issue.principle,
-                    technical_details: issue.technical_details
-                  });
-                });
+              // Check if this matches Claude's response format with content array
+              if (isClaudeResponse(data.feedback)) {
+                const claudeResponse = data.feedback as ClaudeResponse;
+                // Make sure content[0].text exists and is a string
+                if (claudeResponse.content &&
+                    claudeResponse.content[0] &&
+                    claudeResponse.content[0].text) {
+                  
+                  const claudeContent = JSON.parse(claudeResponse.content[0].text);
+                  parsed = [];
+                  
+                  // Process strengths
+                  if (claudeContent.strengths) {
+                    claudeContent.strengths.forEach((strength: any, index: number) => {
+                      parsed.push({
+                        id: index + 1,
+                        type: "positive",
+                        title: strength.title,
+                        description: strength.description
+                      });
+                    });
+                  }
+                  
+                  // Process issues
+                  if (claudeContent.issues) {
+                    claudeContent.issues.forEach((issue: any, index: number) => {
+                      parsed.push({
+                        id: parsed.length + 1,
+                        type: "improvement",
+                        title: issue.issue,
+                        priority: issue.priority,
+                        description: issue.recommendation,
+                        location: issue.location,
+                        principle: issue.principle,
+                        technical_details: issue.technical_details
+                      });
+                    });
+                  }
+                }
+              } else {
+                // Already in the correct format
+                parsed = data.feedback;
               }
             } 
-            // Already in the correct format
-            else {
-              parsed = data.feedback;
-            }
             
             if (Array.isArray(parsed)) {
               setFeedbackItems(parsed);
@@ -140,6 +155,20 @@ export const useReviewData = (reviewId: string | undefined) => {
 
     fetchReviewDetails();
   }, [reviewId, navigate]);
+
+  // Helper function to type-check if an object is a Claude response
+  function isClaudeResponse(obj: any): obj is ClaudeResponse {
+    return (
+      obj !== null &&
+      typeof obj === 'object' &&
+      'content' in obj &&
+      Array.isArray(obj.content) &&
+      obj.content.length > 0 &&
+      typeof obj.content[0] === 'object' &&
+      'text' in obj.content[0] &&
+      typeof obj.content[0].text === 'string'
+    );
+  }
 
   const positiveFeatures = feedbackItems.filter(f => f.type === "positive");
   const issues = feedbackItems.filter(f => f.type === "improvement");

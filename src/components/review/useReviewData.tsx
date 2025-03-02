@@ -40,6 +40,12 @@ export const useReviewData = (reviewId: string | undefined) => {
           throw new Error("Review ID is required");
         }
 
+        // Validate UUID format - This is a basic validation, not comprehensive
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!uuidRegex.test(reviewId)) {
+          throw new Error(`Invalid review ID format: ${reviewId}`);
+        }
+
         // Fetch the review from the database
         try {
           const { data, error: dbError } = await supabase
@@ -75,9 +81,9 @@ export const useReviewData = (reviewId: string | undefined) => {
           console.error("Database operation failed:", dbError);
           setError("Database operation failed");
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error fetching review details:", error);
-        setError("Failed to load review");
+        setError(error.message || "Failed to load review");
       } finally {
         setLoading(false);
       }

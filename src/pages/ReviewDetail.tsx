@@ -1,5 +1,6 @@
 
-import { useParams } from "react-router-dom";
+import { useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { Navigation } from "@/components/layout/navigation";
 import { ReviewHeader } from "@/components/review/ReviewHeader";
 import { ReviewContent } from "@/components/review/ReviewContent";
@@ -7,7 +8,7 @@ import { ReviewLoader } from "@/components/review/ReviewLoader";
 import { useReviewData } from "@/components/review/useReviewData";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { toast } from "@/hooks/use-toast";
 
 const ReviewDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -23,6 +24,18 @@ const ReviewDetail = () => {
     getIssueCountByPriority,
     error
   } = useReviewData(id);
+
+  // Check for invalid routes and redirect accordingly
+  useEffect(() => {
+    if (id === "demo-analysis") {
+      toast({
+        title: "Demo analysis removed",
+        description: "The demo analysis feature has been removed. Please upload a design to analyze.",
+        variant: "destructive",
+      });
+      navigate("/saved-reviews");
+    }
+  }, [id, navigate]);
 
   const handleBackToSavedReviews = () => {
     navigate("/saved-reviews");

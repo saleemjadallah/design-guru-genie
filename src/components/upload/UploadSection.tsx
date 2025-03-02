@@ -7,6 +7,8 @@ import { MultiScreenshotUpload } from "@/components/multi-upload/MultiScreenshot
 import { UrlUpload } from "@/components/UrlUpload";
 import { ProcessingState } from "@/components/ProcessingState";
 import { UploadTypeSelector } from "./UploadTypeSelector";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 export const UploadSection = () => {
   const navigate = useNavigate();
@@ -15,37 +17,167 @@ export const UploadSection = () => {
   const [currentStage, setCurrentStage] = useState(0);
   const [analysisData, setAnalysisData] = useState(null);
 
-  const handleImageUpload = (file: File) => {
+  const handleImageUpload = async (file: File) => {
     console.log("Handling image upload:", file.name);
     setIsUploading(true);
-    simulateProcessing();
+    
+    try {
+      // Start processing stages for UI feedback
+      setCurrentStage(0);
+      
+      // Upload the file to Supabase Storage
+      const timestamp = new Date().getTime();
+      const filePath = `uploads/${timestamp}_${file.name}`;
+      
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('designs')
+        .upload(filePath, file);
+        
+      if (uploadError) throw uploadError;
+      
+      // Get the public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('designs')
+        .getPublicUrl(filePath);
+        
+      setCurrentStage(1);
+      
+      // Create a sample feedback analysis
+      // In a real app, this would be done by an AI service
+      const dummyFeedback = generateDummyFeedback();
+      
+      setCurrentStage(2);
+      
+      // Save the analysis to the database
+      const { data: reviewData, error: reviewError } = await supabase
+        .from('saved_reviews')
+        .insert({
+          title: `Review - ${file.name}`,
+          image_url: publicUrl,
+          feedback: dummyFeedback
+        })
+        .select()
+        .single();
+        
+      if (reviewError) throw reviewError;
+      
+      setCurrentStage(3);
+      
+      // Navigate to the new review page
+      setTimeout(() => {
+        setIsUploading(false);
+        if (reviewData && reviewData.id) {
+          navigate(`/analysis/${reviewData.id}`);
+        } else {
+          toast({
+            title: "Error",
+            description: "Failed to get review ID",
+            variant: "destructive"
+          });
+        }
+      }, 1000);
+      
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast({
+        title: "Upload failed",
+        description: "There was an error processing your design. Please try again.",
+        variant: "destructive"
+      });
+      setIsUploading(false);
+    }
   };
 
-  const handleUrlUpload = (imageUrl: string, data: any) => {
+  const handleUrlUpload = async (imageUrl: string, data: any) => {
     console.log("Handling URL upload:", imageUrl);
     setAnalysisData(data);
     setIsUploading(true);
-    simulateProcessing();
-  };
-
-  const simulateProcessing = () => {
-    setCurrentStage(0);
-    const timer1 = setTimeout(() => setCurrentStage(1), 1500);
-    const timer2 = setTimeout(() => setCurrentStage(2), 3000);
-    const timer3 = setTimeout(() => {
+    
+    try {
+      // Start processing stages for UI feedback
+      setCurrentStage(0);
+      
+      // Creating a sample feedback analysis
+      const dummyFeedback = data || generateDummyFeedback();
+      
+      setCurrentStage(1);
+      setCurrentStage(2);
+      
+      // Save the analysis to the database
+      const { data: reviewData, error: reviewError } = await supabase
+        .from('saved_reviews')
+        .insert({
+          title: `Website Review`,
+          image_url: imageUrl,
+          feedback: dummyFeedback
+        })
+        .select()
+        .single();
+        
+      if (reviewError) throw reviewError;
+      
       setCurrentStage(3);
+      
+      // Navigate to the new review page
       setTimeout(() => {
         setIsUploading(false);
-        // Navigate to analysis page instead of showing feedback drawer
-        navigate("/analysis/demo-analysis");
+        if (reviewData && reviewData.id) {
+          navigate(`/analysis/${reviewData.id}`);
+        } else {
+          toast({
+            title: "Error",
+            description: "Failed to get review ID",
+            variant: "destructive"
+          });
+        }
       }, 1000);
-    }, 4500);
+      
+    } catch (error) {
+      console.error("URL analysis error:", error);
+      toast({
+        title: "Analysis failed",
+        description: "There was an error analyzing the URL. Please try again.",
+        variant: "destructive"
+      });
+      setIsUploading(false);
+    }
+  };
 
-    return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-      clearTimeout(timer3);
-    };
+  const generateDummyFeedback = () => {
+    return [
+      {
+        id: 1,
+        type: "positive",
+        title: "Clean layout",
+        description: "The layout is well-structured and organized which makes information easy to scan."
+      },
+      {
+        id: 2,
+        type: "positive",
+        title: "Good use of white space",
+        description: "The spacing between elements is consistent and provides good visual separation."
+      },
+      {
+        id: 3,
+        type: "improvement",
+        title: "Low contrast buttons",
+        priority: "high",
+        description: "Some buttons have low contrast which makes them difficult to see for users with visual impairments.",
+        location: { x: 250, y: 440 },
+        principle: "Accessibility",
+        technical_details: "Consider using a contrast ratio of at least 4.5:1 for normal text and 3:1 for large text."
+      },
+      {
+        id: 4,
+        type: "improvement",
+        title: "Missing form labels",
+        priority: "medium",
+        description: "Form elements should have visible labels to improve accessibility.",
+        location: { x: 300, y: 530 },
+        principle: "Accessibility",
+        technical_details: "Add <label> elements associated with form controls using 'for' attribute."
+      }
+    ];
   };
 
   return (

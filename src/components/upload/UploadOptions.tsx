@@ -6,24 +6,18 @@ import { MultiScreenshotUpload } from "@/components/multi-upload/MultiScreenshot
 import { UrlUpload } from "@/components/UrlUpload";
 import { UploadTypeSelector } from "./UploadTypeSelector";
 import { ProcessingState } from "@/components/ProcessingState";
+import { useUpload } from "./UploadContext";
 
-interface UploadOptionsProps {
-  uploadType: "image" | "url" | "multi" | null;
-  setUploadType: (type: "image" | "url" | "multi" | null) => void;
-  handleImageUpload: (file: File) => void;
-  handleUrlUpload: (imageUrl: string, data: any) => void;
-  isUploading: boolean;
-  currentStage: number;
-}
+export const UploadOptions: React.FC = () => {
+  const { 
+    uploadType, 
+    setUploadType, 
+    isUploading, 
+    currentStage,
+    analyzeImage,
+    analyzeUrl
+  } = useUpload();
 
-export const UploadOptions: React.FC<UploadOptionsProps> = ({
-  uploadType,
-  setUploadType,
-  handleImageUpload,
-  handleUrlUpload,
-  isUploading,
-  currentStage,
-}) => {
   const BackButton = () => (
     <Button
       variant="outline"
@@ -47,21 +41,21 @@ export const UploadOptions: React.FC<UploadOptionsProps> = ({
       return (
         <div>
           <BackButton />
-          <ImageUpload onImageUpload={handleImageUpload} />
+          <ImageUpload onImageUpload={analyzeImage} />
         </div>
       );
     case "multi":
       return (
         <div>
           <BackButton />
-          <MultiScreenshotUpload onImageUpload={handleImageUpload} />
+          <MultiScreenshotUpload onImageUpload={analyzeImage} />
         </div>
       );
     case "url":
       return (
         <div>
           <BackButton />
-          <UrlUpload onUrlAnalyze={handleUrlUpload} />
+          <UrlUpload onUrlAnalyze={analyzeUrl} />
         </div>
       );
     default:

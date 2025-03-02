@@ -1,12 +1,11 @@
 
 import { Button } from "@/components/ui/button";
 import { Image, Images, Link } from "lucide-react";
+import { useUpload } from "./UploadContext";
 
-interface UploadTypeSelectorProps {
-  setUploadType: (type: "image" | "url" | "multi" | null) => void;
-}
+export const UploadTypeSelector = () => {
+  const { setUploadType } = useUpload();
 
-export const UploadTypeSelector = ({ setUploadType }: UploadTypeSelectorProps) => {
   return (
     <div className="space-y-6">
       <p className="text-center text-gray-600 mb-8">

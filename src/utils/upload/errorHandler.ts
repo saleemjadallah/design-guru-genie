@@ -50,9 +50,16 @@ export const handleAnalysisError = (analyzeError: any) => {
   console.error("Analysis error:", analyzeError);
   let errorMsg = "Error during AI analysis.";
   
+  // Check for network and connectivity errors
+  if (analyzeError.message?.includes("Failed to fetch") || 
+      analyzeError.message?.includes("Network error") ||
+      analyzeError.message?.includes("network")) {
+    errorMsg = "Network error while connecting to our AI service. Please check your connection and try again.";
+  }
   // Check for edge function errors
-  if (analyzeError.message?.includes("Failed to send a request to the Edge Function") || 
-      analyzeError.name === "FunctionsFetchError") {
+  else if (analyzeError.message?.includes("Failed to send a request to the Edge Function") || 
+      analyzeError.name === "FunctionsFetchError" ||
+      analyzeError.message?.includes("edge function")) {
     errorMsg = "Our AI service is currently unavailable. Please try again later.";
   } 
   // Check for Claude API errors
@@ -68,8 +75,16 @@ export const handleAnalysisError = (analyzeError: any) => {
     errorMsg = "API configuration issue. Please contact support.";
   } else if (analyzeError.message?.includes("maximum call stack")) {
     errorMsg = "The image is too complex for our analysis service. Please try a smaller or simpler image.";
-  } else if (analyzeError.message?.includes("non-2xx status code")) {
-    errorMsg = "AI service encountered an error. This might be due to image size or format.";
+  } else if (analyzeError.message?.includes("non-2xx status code") || 
+             analyzeError.message?.includes("400") || 
+             analyzeError.message?.includes("500")) {
+    errorMsg = "AI service encountered an error. Try using a different image format (JPG or PNG) or a simpler design.";
+  } else if (analyzeError.message?.includes("Empty response") || analyzeError.message?.includes("no content")) {
+    errorMsg = "The AI service returned an empty response. Please try again with a clearer image.";
+  } else if (analyzeError.message?.includes("parse") || analyzeError.message?.includes("JSON")) {
+    errorMsg = "Failed to process the AI response. Please try again later.";
+  } else if (analyzeError.message?.includes("image format") || analyzeError.message?.includes("not supported")) {
+    errorMsg = "The image format is not supported. Please try a JPG or PNG image.";
   }
   
   return errorMsg;

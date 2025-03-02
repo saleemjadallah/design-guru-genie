@@ -3,7 +3,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { ImageUpload } from "@/components/ImageUpload";
 import { MultiScreenshotUpload } from "@/components/multi-upload/MultiScreenshotUpload";
-import { UrlUpload } from "@/components/UrlUpload";
+import { UrlUpload } from "@/components/url-upload/UrlUpload";
 import { UploadTypeSelector } from "./UploadTypeSelector";
 import { ProcessingState } from "@/components/ProcessingState";
 import { useUpload } from "./UploadContext";

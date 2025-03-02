@@ -40,7 +40,10 @@ export const ImplementationChecklist = ({
       includes: issueId !== 0 && completedItems.includes(issueId)
     });
     
-    const handleToggleCompleted = () => {
+    const handleToggleCompleted = (e: React.MouseEvent) => {
+      // Make sure the event doesn't propagate if this is inside another clickable element
+      e.stopPropagation();
+      
       console.log("Button clicked for issue:", issueId);
       console.log("Before toggle, completedItems:", completedItems);
       
@@ -53,7 +56,8 @@ export const ImplementationChecklist = ({
       }
     };
     
-    const handleViewImplementation = () => {
+    const handleViewImplementation = (e: React.MouseEvent) => {
+      e.stopPropagation();
       if (onViewImplementation && issueId !== 0) {
         console.log("Viewing implementation from checklist for issue:", issueId);
         onViewImplementation(issueId);
@@ -92,6 +96,7 @@ export const ImplementationChecklist = ({
               size="sm"
               className={`mr-2 ${isCompleted ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100 hover:text-green-800" : ""}`}
               onClick={handleToggleCompleted}
+              type="button"
             >
               {isCompleted ? (
                 <>
@@ -108,6 +113,7 @@ export const ImplementationChecklist = ({
                 size="sm"
                 className="bg-primary/10 text-primary hover:bg-primary/20"
                 onClick={handleViewImplementation}
+                type="button"
               >
                 <FileCode className="w-4 h-4 mr-1" />
                 View Steps
@@ -139,12 +145,13 @@ export const ImplementationChecklist = ({
         </p>
 
         <div className="flex justify-end">
-          {onViewImplementation && issue.id !== undefined && (
+          {onViewImplementation && issueId !== 0 && (
             <Button
               variant="ghost"
               size="sm"
               className="text-primary hover:text-primary hover:bg-primary/10"
               onClick={handleViewImplementation}
+              type="button"
             >
               <span>Detailed Implementation</span>
               <ArrowRight className="w-4 h-4 ml-1" />

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import {
   Routes,
@@ -11,7 +10,6 @@ import NotFound from "@/pages/NotFound";
 import ReviewDetail from "@/pages/ReviewDetail";
 import SavedReviews from "@/pages/SavedReviews";
 import { supabase } from "@/integrations/supabase/client";
-import FollowUpAnalysis from "@/pages/FollowUpAnalysis";
 import FollowUpResults from "@/pages/FollowUpResults";
 import { Navigation } from "@/components/layout/Navigation";
 
@@ -32,7 +30,6 @@ const SiteHeader = () => {
               className="h-24"
             />
           </div>
-          {/* Navigation links removed as requested */}
         </div>
       </div>
     </header>
@@ -82,7 +79,6 @@ const App = () => {
         <Route path="/" element={<Index />} />
         <Route path="/analysis/:id" element={<ReviewDetail />} />
         <Route path="/saved-reviews" element={<SavedReviews />} />
-        <Route path="/follow-up-analysis" element={<FollowUpAnalysis />} />
         <Route path="/follow-up-results" element={<FollowUpResults />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

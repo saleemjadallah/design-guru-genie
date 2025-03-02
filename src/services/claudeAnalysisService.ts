@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { handleAnalysisError } from "@/utils/upload/errorHandler";
@@ -8,6 +7,7 @@ interface CompressionOptions {
   maxWidth?: number;
   maxHeight?: number;
   quality?: number;
+  maxSizeBytes?: number;
 }
 
 // Add image compression utility with more aggressive defaults
@@ -16,9 +16,10 @@ async function compressImage(
   options: CompressionOptions = {}
 ): Promise<string> {
   const {
-    maxWidth = 1000,   // Reduced from 1600 to 1000
-    maxHeight = 1000,  // Reduced from 1600 to 1000
-    quality = 0.7      // Reduced from 0.8 to 0.7
+    maxWidth = 800,    // Reduced from 1000 to 800
+    maxHeight = 1000,  // Keep at 1000
+    quality = 0.7,     // Keep at 0.7
+    maxSizeBytes = 4 * 1024 * 1024 // 4MB target (to stay safely under 5MB limit)
   } = options;
 
   try {
@@ -26,56 +27,74 @@ async function compressImage(
     const response = await fetch(imageUrl);
     const blob = await response.blob();
     
-    // If the image is already small, return it as is
-    if (blob.size < 1 * 1024 * 1024) { // If less than 1MB
+    console.log(`Original image size: ${Math.round(blob.size/1024)}KB`);
+    
+    // If the image is already small enough, return it as is
+    if (blob.size < maxSizeBytes) {
       console.log("Image already small enough, skipping compression");
       return imageUrl;
     }
     
-    console.log(`Original image size: ${Math.round(blob.size/1024)}KB, compressing...`);
-    
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => {
-        // Create canvas for resizing
-        const canvas = document.createElement('canvas');
+        let currentQuality = quality;
+        let currentWidth = img.width;
+        let currentHeight = img.height;
+        let attempt = 0;
+        const maxAttempts = 3;
         
-        // Calculate new dimensions while maintaining aspect ratio
-        let width = img.width;
-        let height = img.height;
-        
-        // More aggressive scaling for larger images
-        const scaleFactor = Math.max(width / maxWidth, height / maxHeight);
-        
-        if (scaleFactor > 1) {
-          width = Math.round(width / scaleFactor);
-          height = Math.round(height / scaleFactor);
-          console.log(`Resizing from ${img.width}x${img.height} to ${width}x${height}`);
-        } else {
-          console.log("Image dimensions already within limits");
-        }
-        
-        // Set canvas dimensions and draw resized image
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          reject(new Error('Failed to get canvas context'));
-          return;
-        }
-        
-        ctx.drawImage(img, 0, 0, width, height);
-        
-        // Convert to compressed data URL
-        canvas.toBlob((blob) => {
-          if (!blob) {
-            reject(new Error('Failed to create image blob'));
+        const compressWithSettings = () => {
+          attempt++;
+          console.log(`Compression attempt ${attempt} with dimensions ${currentWidth}x${currentHeight} and quality ${currentQuality}`);
+          
+          // Create canvas for resizing
+          const canvas = document.createElement('canvas');
+          canvas.width = currentWidth;
+          canvas.height = currentHeight;
+          
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Failed to get canvas context'));
             return;
           }
           
-          console.log(`Compressed to ${Math.round(blob.size/1024)}KB (${Math.round(blob.size/blob.size*100)}% of original)`);
-          resolve(URL.createObjectURL(blob));
-        }, 'image/jpeg', quality);
+          ctx.drawImage(img, 0, 0, currentWidth, currentHeight);
+          
+          // Convert to compressed data URL
+          canvas.toBlob((blob) => {
+            if (!blob) {
+              reject(new Error('Failed to create image blob'));
+              return;
+            }
+            
+            console.log(`Compressed to ${Math.round(blob.size/1024)}KB (${Math.round((blob.size/blob.size)*100)}% of original)`);
+            
+            // Check if the blob is still too large and we haven't reached max attempts
+            if (blob.size > maxSizeBytes && attempt < maxAttempts) {
+              // Reduce dimensions and quality for next attempt
+              const scaleFactor = Math.sqrt(maxSizeBytes / blob.size);
+              
+              // Be more aggressive with each attempt
+              currentWidth = Math.floor(currentWidth * (scaleFactor * 0.9));
+              currentHeight = Math.floor(currentHeight * (scaleFactor * 0.9));
+              currentQuality = Math.max(0.5, currentQuality - 0.1); // Don't go below 0.5 quality
+              
+              compressWithSettings();
+            } else {
+              if (blob.size > maxSizeBytes) {
+                console.warn(`Could not compress image below ${Math.round(maxSizeBytes/1024)}KB after ${attempt} attempts. Final size: ${Math.round(blob.size/1024)}KB`);
+              } else {
+                console.log(`Successfully compressed image to ${Math.round(blob.size/1024)}KB after ${attempt} attempts`);
+              }
+              
+              resolve(URL.createObjectURL(blob));
+            }
+          }, 'image/jpeg', currentQuality);
+        };
+        
+        // Start compression with initial settings
+        compressWithSettings();
       };
       
       img.onerror = () => {
@@ -160,11 +179,14 @@ export async function processWithClaudeAI(imageUrl: string, compressionOptions: 
     // Compress image before sending to Claude with more aggressive compression
     try {
       console.log("Compressing image before analysis...");
-      const compressedImageUrl = await compressImage(imageUrl, {
-        maxWidth: compressionOptions.maxWidth || 800,     // Even smaller dimensions
-        maxHeight: compressionOptions.maxHeight || 1000,  // Even smaller dimensions
-        quality: compressionOptions.quality || 0.7        // Lower quality
-      });
+      const mergedOptions = {
+        maxWidth: compressionOptions.maxWidth || 800,     // Reduced default
+        maxHeight: compressionOptions.maxHeight || 1000,  // Same default
+        quality: compressionOptions.quality || 0.65,      // Lower quality default
+        maxSizeBytes: 4 * 1024 * 1024 // Ensure 4MB limit (safely under 5MB)
+      };
+      
+      const compressedImageUrl = await compressImage(imageUrl, mergedOptions);
       console.log("Image compressed successfully");
       imageUrl = compressedImageUrl;
     } catch (compressionError) {

@@ -24,16 +24,45 @@ export async function processCombinedImage(
   const response = await fetch(combinedImage);
   const blob = await response.blob();
   
-  // Compress image if it's large
+  // Compress image if needed
   let processedBlob = blob;
-  if (blob.size > 2 * 1024 * 1024) { // If larger than 2MB
+  const maxSizeBytes = 4 * 1024 * 1024; // 4MB target (safely under 5MB limit)
+  
+  if (blob.size > maxSizeBytes) {
     try {
-      processedBlob = await compressImage(blob);
+      processedBlob = await compressImage(blob, {
+        maxWidth: 1200, 
+        maxHeight: 1600, 
+        quality: 0.7,
+        maxSizeBytes
+      });
       console.log(`Compressed combined image from ${Math.round(blob.size/1024)}KB to ${Math.round(processedBlob.size/1024)}KB`);
     } catch (err) {
       console.warn("Failed to compress combined image:", err);
-      // Continue with original if compression fails
+      
+      // Second attempt with more aggressive settings if first attempt failed
+      try {
+        processedBlob = await compressImage(blob, {
+          maxWidth: 800,
+          maxHeight: 1200,
+          quality: 0.6,
+          maxSizeBytes
+        });
+        console.log(`Second compression attempt: ${Math.round(blob.size/1024)}KB to ${Math.round(processedBlob.size/1024)}KB`);
+      } catch (secondErr) {
+        console.error("Both compression attempts failed:", secondErr);
+        // Continue with original if compression fails
+      }
     }
+  }
+  
+  // Check final image size after compression
+  if (processedBlob.size > 5 * 1024 * 1024) {
+    toast({
+      title: "Warning: Large Image",
+      description: "The combined image exceeds 5MB even after compression. Analysis may fail.",
+      variant: "destructive",
+    });
   }
   
   const file = new File([processedBlob], "combined-screenshot.png", { type: "image/png" });
@@ -73,8 +102,13 @@ export async function processCombinedImage(
   return file;
 }
 
-// Helper function to compress image blobs
-async function compressImage(blob: Blob, maxWidth = 1200, maxHeight = 1600, quality = 0.75): Promise<Blob> {
+// Enhanced compressImage function with retry logic and size limits
+async function compressImage(
+  blob: Blob, 
+  options: { maxWidth: number; maxHeight: number; quality: number; maxSizeBytes: number }
+): Promise<Blob> {
+  const { maxWidth, maxHeight, quality, maxSizeBytes } = options;
+  
   return new Promise((resolve, reject) => {
     const img = new Image();
     const url = URL.createObjectURL(blob);
@@ -82,43 +116,71 @@ async function compressImage(blob: Blob, maxWidth = 1200, maxHeight = 1600, qual
     img.onload = () => {
       URL.revokeObjectURL(url);
       
-      // Calculate new dimensions while maintaining aspect ratio
-      let width = img.width;
-      let height = img.height;
+      let currentQuality = quality;
+      let currentWidth = img.width;
+      let currentHeight = img.height;
+      let attempt = 0;
+      const maxAttempts = 3;
       
-      const scaleFactor = Math.max(width / maxWidth, height / maxHeight);
+      const compressWithSettings = () => {
+        attempt++;
+        console.log(`Compression attempt ${attempt} with dimensions ${currentWidth}x${currentHeight} and quality ${currentQuality}`);
+        
+        // Calculate new dimensions while maintaining aspect ratio
+        let width = currentWidth;
+        let height = currentHeight;
+        
+        // Create canvas and context
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        
+        if (!ctx) {
+          reject(new Error('Could not get canvas context'));
+          return;
+        }
+        
+        // Draw image on canvas
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Convert to blob
+        canvas.toBlob(
+          (resultBlob) => {
+            if (!resultBlob) {
+              reject(new Error('Could not create blob from canvas'));
+              return;
+            }
+            
+            console.log(`Result size: ${Math.round(resultBlob.size/1024)}KB`);
+            
+            // Check if the blob is still too large and we haven't reached max attempts
+            if (resultBlob.size > maxSizeBytes && attempt < maxAttempts) {
+              // Reduce dimensions and quality for next attempt
+              const scaleFactor = Math.sqrt(maxSizeBytes / resultBlob.size) * 0.9; // Be slightly more aggressive
+              
+              currentWidth = Math.floor(currentWidth * scaleFactor);
+              currentHeight = Math.floor(currentHeight * scaleFactor);
+              currentQuality = Math.max(0.5, currentQuality - 0.1); // Don't go below 0.5 quality
+              
+              compressWithSettings();
+            } else {
+              if (resultBlob.size > maxSizeBytes) {
+                console.warn(`Could not compress image below ${Math.round(maxSizeBytes/1024)}KB after ${attempt} attempts. Final size: ${Math.round(resultBlob.size/1024)}KB`);
+              } else {
+                console.log(`Successfully compressed image to ${Math.round(resultBlob.size/1024)}KB after ${attempt} attempts`);
+              }
+              
+              resolve(resultBlob);
+            }
+          },
+          'image/jpeg',
+          currentQuality
+        );
+      };
       
-      if (scaleFactor > 1) {
-        width = Math.round(width / scaleFactor);
-        height = Math.round(height / scaleFactor);
-      }
-      
-      // Create canvas and context
-      const canvas = document.createElement('canvas');
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d');
-      
-      if (!ctx) {
-        reject(new Error('Could not get canvas context'));
-        return;
-      }
-      
-      // Draw image on canvas
-      ctx.drawImage(img, 0, 0, width, height);
-      
-      // Convert to blob
-      canvas.toBlob(
-        (resultBlob) => {
-          if (!resultBlob) {
-            reject(new Error('Could not create blob from canvas'));
-            return;
-          }
-          resolve(resultBlob);
-        },
-        'image/png',
-        quality
-      );
+      // Start compression with initial settings
+      compressWithSettings();
     };
     
     img.onerror = () => {
@@ -129,3 +191,4 @@ async function compressImage(blob: Blob, maxWidth = 1200, maxHeight = 1600, qual
     img.src = url;
   });
 }
+

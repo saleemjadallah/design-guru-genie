@@ -63,11 +63,12 @@ export const useUrlScreenshot = () => {
       // Try to generate analysis with Claude - no fallbacks
       let analysisResults;
       try {
-        // Use a smaller size for Claude analysis
+        // Use more aggressive compression settings for URL screenshots
         analysisResults = await processWithClaudeAI(screenshotData.imageUrl, {
-          maxWidth: 800,  // Reduce max width for Claude analysis
-          maxHeight: 1000, // Reduce max height for Claude analysis
-          quality: 0.7     // Lower quality for smaller file size
+          maxWidth: 800,       // Reduce max width for Claude analysis
+          maxHeight: 1000,     // Reduce max height for Claude analysis
+          quality: 0.65,       // Lower quality for smaller file size
+          maxSizeBytes: 4 * 1024 * 1024 // Hard 4MB limit to stay safely under 5MB
         });
         
         toast({

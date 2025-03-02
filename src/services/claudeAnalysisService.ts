@@ -57,11 +57,28 @@ export async function processWithClaudeAI(imageUrl: string) {
       throw new Error("SVG placeholder detected instead of actual screenshot");
     }
     
+    // Check if the image URL is properly encoded
+    try {
+      const urlObject = new URL(imageUrl);
+      // If the URL has special characters, ensure they're properly encoded
+      if (urlObject.toString() !== imageUrl) {
+        imageUrl = urlObject.toString();
+        console.log("URL re-encoded:", imageUrl);
+      }
+    } catch (urlError) {
+      console.error("Invalid URL format:", urlError);
+      console.log("Proceeding with original URL format");
+    }
+    
     // Proceed with Claude analysis for proper images
     console.log("Calling analyze-design function with URL:", imageUrl);
     const { data: analyzeData, error: analyzeError } = await supabase.functions
       .invoke('analyze-design', {
         body: { imageUrl },
+        // Add a longer timeout for large images
+        options: {
+          timeout: 60000 // 60 seconds
+        }
       });
       
     if (analyzeError) {

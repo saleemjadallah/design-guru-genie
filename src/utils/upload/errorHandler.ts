@@ -66,6 +66,10 @@ export const handleAnalysisError = (analyzeError: any) => {
     errorMsg = "Authentication error with our AI service. Please try again later.";
   } else if (analyzeError.message?.includes("API key")) {
     errorMsg = "API configuration issue. Please contact support.";
+  } else if (analyzeError.message?.includes("maximum call stack")) {
+    errorMsg = "The image is too complex for our analysis service. Please try a smaller or simpler image.";
+  } else if (analyzeError.message?.includes("non-2xx status code")) {
+    errorMsg = "AI service encountered an error. This might be due to image size or format.";
   }
   
   return errorMsg;

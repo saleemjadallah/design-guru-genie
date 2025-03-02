@@ -20,7 +20,10 @@ export const useUrlScreenshot = () => {
       // First step: Generate a screenshot using the screenshot-url edge function
       const { data: screenshotData, error: screenshotError } = await supabase.functions.invoke("screenshot-url", {
         body: { url: normalizedUrl },
-        method: 'POST'
+        method: 'POST',
+        options: {
+          timeout: 30000 // 30 seconds timeout for screenshot generation
+        }
       });
 
       if (screenshotError) {
@@ -75,14 +78,20 @@ export const useUrlScreenshot = () => {
         });
       } else if (error.message?.includes("non-2xx status code")) {
         toast({
-          title: "Website access error",
-          description: "We couldn't access this website. It may be blocking our service, have security measures in place, or be temporarily down. Please try uploading a screenshot instead.",
+          title: "Analysis service error",
+          description: "Our AI analysis service encountered an issue. This might be due to image size or complexity. Please try uploading a smaller or simpler screenshot.",
           variant: "destructive",
         });
       } else if (error.message?.includes("timeout")) {
         toast({
           title: "Request timeout",
-          description: "The website took too long to respond. It might be too complex or temporarily slow. Please try uploading a screenshot instead.",
+          description: "The analysis took too long to complete. It might be too complex or our service is busy. Please try again with a smaller screenshot.",
+          variant: "destructive",
+        });
+      } else if (error.message?.includes("maximum call stack")) {
+        toast({
+          title: "Processing error",
+          description: "The image is too complex for our analysis service. Please try uploading a smaller or simpler screenshot.",
           variant: "destructive",
         });
       } else {

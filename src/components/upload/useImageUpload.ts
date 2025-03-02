@@ -23,6 +23,30 @@ export const useImageUpload = () => {
         description: `Uploading ${file.name} to our servers...`,
       });
       
+      // Check file size before uploading
+      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+        throw new Error("File is too large. Maximum size is 10MB. Please use a smaller image for better results.");
+      }
+      
+      // Check dimensions if it's an image
+      if (file.type.startsWith('image/')) {
+        try {
+          const dimensions = await getImageDimensions(file);
+          console.log("Image dimensions:", dimensions);
+          
+          if (dimensions.width * dimensions.height > 4000 * 3000) {
+            console.warn("Image is very large, may cause analysis issues:", dimensions);
+            toast({
+              title: "Large Image Detected",
+              description: "Your image is very large and may take longer to analyze. For better results, consider using a smaller image.",
+            });
+          }
+        } catch (e) {
+          console.error("Failed to check image dimensions:", e);
+          // Continue anyway, this is just a warning
+        }
+      }
+      
       // Sanitize filename by replacing spaces and special characters with underscores
       const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
       const timestamp = new Date().getTime();
@@ -64,9 +88,21 @@ export const useImageUpload = () => {
         console.log("Claude analysis complete:", analysisResults);
       } catch (analysisError: any) {
         console.error("Analysis error:", analysisError);
+        
+        // Provide more specific error messages based on the error type
+        let errorMessage = analysisError.message;
+        
+        if (errorMessage.includes("maximum call stack")) {
+          errorMessage = "The image is too complex for our analysis service. Please try a smaller or simpler image.";
+        } else if (errorMessage.includes("timeout")) {
+          errorMessage = "The analysis took too long to complete. Please try a smaller image or try again later.";
+        } else if (errorMessage.includes("non-2xx status code")) {
+          errorMessage = "Our AI service encountered an issue. This might be due to image size or complexity.";
+        }
+        
         toast({
           title: "AI Analysis Failed",
-          description: `Claude analysis error: ${analysisError.message}. Please try again later.`,
+          description: `Claude analysis error: ${errorMessage}. Please try again later.`,
           variant: "destructive",
         });
         
@@ -120,6 +156,23 @@ export const useImageUpload = () => {
       handleUploadError(error);
       setIsUploading(false);
     }
+  };
+
+  // Helper function to get image dimensions
+  const getImageDimensions = (file: File): Promise<{width: number, height: number}> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        resolve({
+          width: img.width,
+          height: img.height
+        });
+      };
+      img.onerror = () => {
+        reject(new Error("Failed to load image"));
+      };
+      img.src = URL.createObjectURL(file);
+    });
   };
 
   return {

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Check, Clock, FileCode, ArrowRight, Wrench } from "lucide-react";
@@ -28,6 +27,13 @@ export const ImplementationChecklist = ({
   const renderIssue = (issue: ImplementationFeedback) => {
     const isCompleted = issue.id !== undefined && completedItems.includes(issue.id);
     const isSelected = selectedIssue === issue.id;
+    
+    console.log(`Issue #${issue.id}:`, {
+      id: issue.id,
+      completedItems,
+      isCompleted,
+      includes: issue.id !== undefined && completedItems.includes(issue.id)
+    });
     
     const handleToggleCompleted = () => {
       if (issue.id !== undefined) {

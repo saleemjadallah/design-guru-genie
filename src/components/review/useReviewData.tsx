@@ -74,7 +74,12 @@ export const useReviewData = (reviewId: string | undefined) => {
               parsed = JSON.parse(data.feedback);
             } 
             // Check if feedback is Claude's response format
-            else if (data.feedback && data.feedback.content && data.feedback.content[0] && data.feedback.content[0].text) {
+            else if (data.feedback && 
+                    typeof data.feedback === 'object' && 
+                    data.feedback.content && 
+                    Array.isArray(data.feedback.content) && 
+                    data.feedback.content[0] && 
+                    data.feedback.content[0].text) {
               const claudeContent = JSON.parse(data.feedback.content[0].text);
               parsed = [];
               

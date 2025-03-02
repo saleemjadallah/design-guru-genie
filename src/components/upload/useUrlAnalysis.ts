@@ -28,7 +28,7 @@ export const useUrlAnalysis = () => {
       
       if (data) {
         // If data is provided and contains Claude's response format
-        if (data.content && data.content[0] && data.content[0].text) {
+        if (data.content && Array.isArray(data.content) && data.content[0] && data.content[0].text) {
           try {
             // Try to parse the JSON from Claude's response
             const parsedData = JSON.parse(data.content[0].text);
@@ -43,7 +43,8 @@ export const useUrlAnalysis = () => {
                   id: index + 1,
                   type: "positive",
                   title: strength.title,
-                  description: strength.description
+                  description: strength.description,
+                  location: strength.location || null
                 });
               });
             }
@@ -57,7 +58,7 @@ export const useUrlAnalysis = () => {
                   title: issue.issue,
                   priority: issue.priority,
                   description: issue.recommendation,
-                  location: issue.location,
+                  location: issue.location || null,
                   principle: issue.principle,
                   technical_details: issue.technical_details
                 });

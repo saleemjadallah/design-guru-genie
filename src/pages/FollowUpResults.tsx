@@ -35,23 +35,23 @@ const FollowUpResults = () => {
       { category: "Spacing", before: 55, after: 87, improvement: 32 },
     ],
     positiveAspects: [
-      { title: "Improved Color Contrast", description: "Text elements now have sufficient contrast against backgrounds" },
-      { title: "Consistent Typography", description: "Font sizes and styles are now more consistent throughout the interface" },
-      { title: "Better Element Spacing", description: "Improved spacing between elements creates better visual flow" },
-      { title: "Clear Visual Hierarchy", description: "Important elements stand out more clearly in the updated design" }
+      { title: "Improved Color Contrast", description: "Text elements now have sufficient contrast against backgrounds", id: 1, location: null },
+      { title: "Consistent Typography", description: "Font sizes and styles are now more consistent throughout the interface", id: 2, location: null },
+      { title: "Better Element Spacing", description: "Improved spacing between elements creates better visual flow", id: 3, location: null },
+      { title: "Clear Visual Hierarchy", description: "Important elements stand out more clearly in the updated design", id: 4, location: null }
     ],
     issues: {
       high: [
-        { title: "Navigation Contrast", description: "Mobile menu needs more contrast for better visibility" },
-        { title: "Form Field Labels", description: "Some form field labels are still difficult to read on certain backgrounds" }
+        { title: "Navigation Contrast", description: "Mobile menu needs more contrast for better visibility", id: 1, location: null },
+        { title: "Form Field Labels", description: "Some form field labels are still difficult to read on certain backgrounds", id: 2, location: null }
       ],
       medium: [
-        { title: "Button Hover States", description: "Button hover states could be more distinct for better user feedback" },
-        { title: "Loading Indicators", description: "Consider adding loading indicators for async operations" }
+        { title: "Button Hover States", description: "Button hover states could be more distinct for better user feedback", id: 3, location: null },
+        { title: "Loading Indicators", description: "Consider adding loading indicators for async operations", id: 4, location: null }
       ],
       low: [
-        { title: "Minor Spacing Issues", description: "Some padding inconsistencies in card components" },
-        { title: "Image Alt Text", description: "Add alt text for all remaining images to improve accessibility further" }
+        { title: "Minor Spacing Issues", description: "Some padding inconsistencies in card components", id: 5, location: null },
+        { title: "Image Alt Text", description: "Add alt text for all remaining images to improve accessibility further", id: 6, location: null }
       ]
     },
     screenshot: "/lovable-uploads/7a4a7d46-2665-4c5b-9666-801339014a81.png",
@@ -103,7 +103,12 @@ const FollowUpResults = () => {
           if (data) {
             // Try to parse feedback if it's in Claude's format
             let parsedFeedback;
-            if (data.feedback && data.feedback.content && data.feedback.content[0] && data.feedback.content[0].text) {
+            if (data.feedback && 
+                typeof data.feedback === 'object' && 
+                'content' in data.feedback && 
+                Array.isArray(data.feedback.content) && 
+                data.feedback.content[0] && 
+                'text' in data.feedback.content[0]) {
               try {
                 const claudeContent = JSON.parse(data.feedback.content[0].text);
                 
@@ -117,8 +122,8 @@ const FollowUpResults = () => {
                     const formattedIssue = {
                       title: issue.issue,
                       description: issue.recommendation,
-                      id: issue.id,
-                      location: issue.location
+                      id: issue.id || highIssues.length + mediumIssues.length + lowIssues.length + 1,
+                      location: issue.location || null
                     };
                     
                     if (issue.priority === 'high') {
@@ -132,9 +137,11 @@ const FollowUpResults = () => {
                 }
                 
                 // Update positive aspects from Claude
-                const positiveAspects = claudeContent.strengths?.map(item => ({
+                const positiveAspects = claudeContent.strengths?.map((item: any, index: number) => ({
                   title: item.title,
-                  description: item.description
+                  description: item.description,
+                  id: index + 1,
+                  location: item.location || null
                 })) || results.positiveAspects;
 
                 setResults(prev => ({
@@ -172,7 +179,8 @@ const FollowUpResults = () => {
     type: "positive" as const,
     title: aspect.title,
     description: aspect.description,
-    id: index
+    id: aspect.id || index,
+    location: aspect.location
   }));
 
   const issuesList = [

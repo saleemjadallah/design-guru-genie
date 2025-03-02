@@ -1,46 +1,30 @@
+import React, { createContext, useState, useContext } from 'react';
+import { useImageUpload } from './useImageUpload';
+import { useUrlAnalysis } from './useUrlAnalysis';
 
-import React, { createContext, useContext, ReactNode, useState } from "react";
-import { useImageAnalysis } from "./useImageAnalysis";
+const UploadContext = createContext(null);
 
-// Define the context type
-interface UploadContextType {
-  uploadType: "image" | "url" | "multi" | null;
-  setUploadType: (type: "image" | "url" | "multi" | null) => void;
-  isUploading: boolean;
-  currentStage: number;
-  analyzeImage: (file: File) => Promise<void>;
-  analyzeUrl: (imageUrl: string, data: any) => Promise<void>;
-}
+export const UploadProvider = ({ children }) => {
+  const [uploadData, setUploadData] = useState(null);
+  const { uploadImage } = useImageUpload();
+  const { analyzeUrl } = useUrlAnalysis();
 
-// Create the context with a default value
-const UploadContext = createContext<UploadContextType | undefined>(undefined);
+  const handleUpload = async (image) => {
+    const data = await uploadImage(image);
+    setUploadData(data);
+  };
 
-// Create a provider component
-export const UploadProvider = ({ children }: { children: ReactNode }) => {
-  const { isUploading, currentStage, analyzeImage, analyzeUrl } = useImageAnalysis();
-  const [uploadType, setUploadType] = useState<"image" | "url" | "multi" | null>(null);
-
-  const value = {
-    uploadType,
-    setUploadType,
-    isUploading,
-    currentStage,
-    analyzeImage,
-    analyzeUrl
+  const handleAnalysis = async (url, data) => {
+    await analyzeUrl(url, data);
   };
 
   return (
-    <UploadContext.Provider value={value}>
+    <UploadContext.Provider value={{ uploadData, handleUpload, handleAnalysis }}>
       {children}
     </UploadContext.Provider>
   );
 };
 
-// Create a custom hook to use the context
-export const useUpload = (): UploadContextType => {
-  const context = useContext(UploadContext);
-  if (context === undefined) {
-    throw new Error("useUpload must be used within an UploadProvider");
-  }
-  return context;
+export const useUpload = () => {
+  return useContext(UploadContext);
 };

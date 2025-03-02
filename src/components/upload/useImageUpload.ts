@@ -55,7 +55,7 @@ export const useImageUpload = () => {
         description: "Your image has been uploaded successfully. Starting analysis...",
       });
       
-      // Call analyze-design edge function to process with Claude
+      // Call analyze-design edge function to process with Claude - no fallbacks
       let analysisResults;
       
       try {
@@ -64,7 +64,6 @@ export const useImageUpload = () => {
         console.log("Claude analysis complete:", analysisResults);
       } catch (analysisError: any) {
         console.error("Analysis error:", analysisError);
-        // Provide a specific error message without falling back to dummy data
         toast({
           title: "AI Analysis Failed",
           description: `Claude analysis error: ${analysisError.message}. Please try again later.`,

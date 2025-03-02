@@ -122,7 +122,7 @@ export const useUrlAnalysis = () => {
         });
         
         console.log("No data provided - using Claude AI directly");
-        // Call Claude AI service directly
+        // Call Claude AI service directly - no fallbacks
         try {
           analysisResults = await processWithClaudeAI(imageUrl);
         } catch (claudeError: any) {

@@ -116,7 +116,7 @@ export async function processWithClaudeAI(imageUrl: string) {
     throw new Error("Invalid response format from Claude AI service");
   } catch (analyzeError: any) {
     console.error("Error calling analyze-design function:", analyzeError);
-    // Don't toast errors here - let the calling component handle that
+    // Don't use fallbacks - propagate the error so the user knows exactly what happened
     throw analyzeError;
   }
 }

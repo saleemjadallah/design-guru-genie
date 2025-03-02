@@ -44,7 +44,7 @@ export const useUrlScreenshot = () => {
         throw new Error("Failed to capture website screenshot. The website may be blocking our capture service or have security measures in place.");
       }
       
-      // Try to generate analysis with Claude
+      // Try to generate analysis with Claude - no fallbacks
       let analysisResults;
       try {
         analysisResults = await processWithClaudeAI(screenshotData.imageUrl);

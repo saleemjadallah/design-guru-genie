@@ -6,7 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')
+// Use the updated API key provided by the user
+const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY') || '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'
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -82,7 +83,7 @@ serve(async (req) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_API_KEY ?? '',
+        'x-api-key': ANTHROPIC_API_KEY,
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({

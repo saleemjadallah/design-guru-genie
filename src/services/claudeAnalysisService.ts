@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { handleAnalysisError } from "@/utils/upload/errorHandler";
@@ -76,11 +75,10 @@ export async function processWithClaudeAI(imageUrl: string) {
       .invoke('analyze-design', {
         body: { imageUrl },
         method: 'POST',
-        responseType: 'json',
         headers: {
           'Content-Type': 'application/json'
         },
-        // Add a longer timeout for large images - use AbortSignal for timeout
+        // Add a longer timeout for large images
         abortSignal: AbortSignal.timeout(60000) // 60 seconds
       });
       

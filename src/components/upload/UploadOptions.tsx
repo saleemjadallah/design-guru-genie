@@ -33,7 +33,7 @@ export const UploadOptions: React.FC = () => {
   }
 
   if (!uploadType) {
-    return <UploadTypeSelector setUploadType={setUploadType} />;
+    return <UploadTypeSelector />;
   }
 
   switch (uploadType) {

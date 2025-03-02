@@ -11,7 +11,7 @@ export const Index = () => {
     <div className="min-h-screen">
       <GeometricAccents />
 
-      <div className="max-w-screen-xl mx-auto px-4 py-12 sm:px-6 lg:py-16">
+      <div className="max-w-screen-xl mx-auto px-4 pt-24 pb-12 sm:px-6 lg:pt-32 lg:pb-16">
         <Hero />
 
         <div className="mt-16">

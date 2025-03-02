@@ -19,6 +19,7 @@ interface FeedbackIssue {
 
 interface FeedbackIssueCardProps {
   issue: FeedbackIssue;
+  displayNumber: number; // Added display number prop
   isSelected: boolean;
   onIssueSelect: (id: number | null) => void;
   onPriorityClick?: (id: number, priority: "low" | "medium" | "high") => void;
@@ -27,6 +28,7 @@ interface FeedbackIssueCardProps {
 
 export const FeedbackIssueCard = ({
   issue,
+  displayNumber, // Add display number to props
   isSelected,
   onIssueSelect,
   onPriorityClick,
@@ -104,7 +106,7 @@ export const FeedbackIssueCard = ({
               issue.priority === "high" ? "bg-red-500" : 
               issue.priority === "medium" ? "bg-amber-500" : "bg-blue-500"
             }`}>
-              {issue.id}
+              {displayNumber} {/* Use display number instead of issue.id */}
             </div>
           )}
           <h3 className="font-medium text-neutral-900">{issue.title}</h3>

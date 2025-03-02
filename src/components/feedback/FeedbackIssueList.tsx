@@ -42,6 +42,14 @@ export const FeedbackIssueList = ({
            (priorityOrder[bPriority as keyof typeof priorityOrder]);
   });
 
+  // Create a mapping between original IDs and display numbers
+  const displayNumberMap = new Map<number, number>();
+  sortedIssues.forEach((issue, index) => {
+    if (issue.id !== undefined) {
+      displayNumberMap.set(issue.id, index + 1);
+    }
+  });
+
   return (
     <>
       {issues.length > 0 && onViewAllImplementation && (
@@ -63,10 +71,11 @@ export const FeedbackIssueList = ({
             No issues found for this filter criteria.
           </div>
         ) : (
-          sortedIssues.map((issue) => (
+          sortedIssues.map((issue, index) => (
             <FeedbackIssueCard
               key={issue.id}
               issue={issue}
+              displayNumber={index + 1}
               isSelected={selectedIssue === issue.id}
               onIssueSelect={onIssueSelect}
               onPriorityClick={onPriorityClick}

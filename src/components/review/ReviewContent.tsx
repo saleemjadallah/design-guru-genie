@@ -1,4 +1,3 @@
-
 import { AnnotationCanvas } from "@/components/AnnotationCanvas";
 import { FeedbackPanel } from "@/components/feedback/FeedbackPanel";
 import { Overview } from "@/components/analysis/Overview";
@@ -52,6 +51,26 @@ export const ReviewContent = ({
     setIsImplementationGuideOpen(true);
   };
 
+  const createDisplayNumberMap = (issues) => {
+    const displayNumberMap = new Map<number, number>();
+    const sortedIssues = [...issues].sort((a, b) => {
+      const priorityOrder = { high: 1, medium: 2, low: 3, undefined: 4 };
+      const aPriority = a.priority || "undefined";
+      const bPriority = b.priority || "undefined";
+      
+      return (priorityOrder[aPriority as keyof typeof priorityOrder]) - 
+             (priorityOrder[bPriority as keyof typeof priorityOrder]);
+    });
+    
+    sortedIssues.forEach((issue, index) => {
+      if (issue.id !== undefined) {
+        displayNumberMap.set(issue.id, index + 1);
+      }
+    });
+    
+    return displayNumberMap;
+  };
+
   return (
     <div className="space-y-6">
       {isImplementationGuideOpen ? (
@@ -91,7 +110,6 @@ export const ReviewContent = ({
                   {review.image_url && (
                     <AnnotationCanvas
                       image={review.image_url}
-                      onSave={() => {}}
                       annotations={issues
                         .filter(f => f.location)
                         .map(f => ({
@@ -102,6 +120,7 @@ export const ReviewContent = ({
                         }))}
                       selectedIssue={selectedIssue}
                       onIssueSelect={setSelectedIssue}
+                      displayNumberMap={createDisplayNumberMap(issues)}
                     />
                   )}
                 </div>

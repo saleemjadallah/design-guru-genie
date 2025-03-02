@@ -1,4 +1,3 @@
-
 import { useRef, useEffect, useState } from "react";
 
 type Annotation = {
@@ -14,13 +13,15 @@ type Props = {
   annotations?: Annotation[];
   selectedIssue?: number | null;
   onIssueSelect?: (id: number | null) => void;
+  displayNumberMap?: Map<number, number>;
 };
 
 export const AnnotationCanvas = ({ 
   image, 
   annotations = [], 
   selectedIssue,
-  onIssueSelect 
+  onIssueSelect,
+  displayNumberMap
 }: Props) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
@@ -35,27 +36,21 @@ export const AnnotationCanvas = ({
 
   const loadImage = () => {
     console.log("Loading image:", image);
-    setImgLoaded(false); // Reset loading state first
+    setImgLoaded(false);
     
-    // Create a new image instance
     const img = new Image();
-    
-    // Set up onload handler before setting the src
     img.onload = () => {
       console.log("Image loaded successfully:", img.width, "x", img.height);
       imageRef.current = img;
       setImgLoaded(true);
       setImgError(false);
 
-      // Delay setting dimensions to ensure DOM has updated
       requestAnimationFrame(() => {
         if (canvasRef.current && containerRef.current) {
-          // Set canvas size based on container width while maintaining aspect ratio
           const container = containerRef.current;
           const containerWidth = container.clientWidth;
           const ratio = containerWidth / img.width;
           
-          // Update canvas dimensions - ensure non-zero values
           const newWidth = Math.max(containerWidth, 1);
           const newHeight = Math.max(Math.round(img.height * ratio), 1);
           
@@ -65,12 +60,10 @@ export const AnnotationCanvas = ({
           canvasRef.current.width = newWidth;
           canvasRef.current.height = newHeight;
           
-          // Calculate scale after dimensions are set
           const newScale = newWidth / img.width;
           console.log(`Setting scale: ${newWidth} / ${img.width} = ${newScale}`);
           setScale(newScale);
           
-          // Force draw after dimensions and scale are updated
           requestAnimationFrame(drawCanvas);
         }
       });
@@ -81,23 +74,18 @@ export const AnnotationCanvas = ({
       setImgError(true);
       setImgLoaded(false);
       
-      // If we haven't retried too many times, try again
       if (retryCount < 3) {
         setRetryCount(prev => prev + 1);
         setTimeout(() => loadImage(), 500);
       }
     };
 
-    // Set src after defining onload handler
     img.src = image;
     
-    // Force the img element to be immediately cached and processed
     if (img.complete) {
       if (img.naturalWidth) {
-        // Image is already cached
         img.onload?.(new Event('load') as any);
       } else {
-        // Image failed to load
         img.onerror?.(new Event('error') as any);
       }
     }
@@ -133,10 +121,8 @@ export const AnnotationCanvas = ({
 
     console.log(`Drawing canvas with ${annotations.length} annotations, scale: ${scale}`);
 
-    // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Draw image
     try {
       ctx.drawImage(imageRef.current, 0, 0, canvas.width, canvas.height);
     } catch (error) {
@@ -144,13 +130,10 @@ export const AnnotationCanvas = ({
       return;
     }
 
-    // Draw annotations with proper scaling and positioning
-    annotations.forEach((annotation) => {
-      // Scale coordinates to match current canvas size
+    annotations.forEach((annotation, index) => {
       const scaledX = Math.round(annotation.x * scale);
       const scaledY = Math.round(annotation.y * scale);
 
-      // Draw connector line
       ctx.beginPath();
       ctx.strokeStyle = annotation.priority === "high" 
         ? "rgba(239, 68, 68, 0.6)" 
@@ -159,19 +142,16 @@ export const AnnotationCanvas = ({
         : "rgba(59, 130, 246, 0.6)";
       ctx.lineWidth = 2;
       
-      // Calculate marker offset to prevent overlap
       const markerRadius = 16;
-      const offset = 30; // Distance from the point to the marker
-      const angle = Math.PI / 4; // 45 degrees angle for the line
+      const offset = 30;
+      const angle = Math.PI / 4;
       const markerX = scaledX + Math.cos(angle) * offset;
       const markerY = scaledY - Math.sin(angle) * offset;
       
-      // Draw connecting line
       ctx.moveTo(scaledX, scaledY);
       ctx.lineTo(markerX, markerY);
       ctx.stroke();
 
-      // Draw marker with shadow
       ctx.save();
       ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
       ctx.shadowBlur = 4;
@@ -195,24 +175,24 @@ export const AnnotationCanvas = ({
       ctx.fill();
       ctx.restore();
 
-      // Draw number with better typography
+      const displayNumber = displayNumberMap && annotation.id ? 
+        displayNumberMap.get(annotation.id) || index + 1 : 
+        index + 1;
+        
       ctx.font = "bold 14px Inter";
       ctx.fillStyle = "white";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(annotation.id.toString(), markerX, markerY);
+      ctx.fillText(displayNumber.toString(), markerX, markerY);
     });
   };
 
-  // Initialize image and canvas
   useEffect(() => {
     console.log("AnnotationCanvas initialized with", annotations.length, "annotations");
     loadImage();
     
-    // Flag to force an initial render
     setInitialRender(true);
     
-    // Cleanup function
     return () => {
       if (imageRef.current) {
         imageRef.current.onload = null;
@@ -221,7 +201,6 @@ export const AnnotationCanvas = ({
     };
   }, [image]);
 
-  // Handle window resizing
   useEffect(() => {
     const handleResize = () => {
       if (!imageRef.current || !canvasRef.current || !containerRef.current) return;
@@ -231,7 +210,6 @@ export const AnnotationCanvas = ({
       const containerWidth = container.clientWidth;
       const ratio = containerWidth / img.width;
       
-      // Update canvas dimensions state - ensure non-zero values
       const newWidth = Math.max(containerWidth, 1);
       const newHeight = Math.max(Math.round(img.height * ratio), 1);
       
@@ -260,7 +238,6 @@ export const AnnotationCanvas = ({
     };
   }, []);
 
-  // Redraw when annotations or selection changes
   useEffect(() => {
     console.log("Annotations or selection changed, redrawing canvas");
     if (imgLoaded) {
@@ -268,21 +245,17 @@ export const AnnotationCanvas = ({
     }
   }, [annotations, selectedIssue, imgLoaded]);
 
-  // Force redraw after a short delay to ensure rendering happens properly
   useEffect(() => {
     if (initialRender && imgLoaded) {
       console.log("Initial render with loaded image, scheduling redraws");
       
-      // Using requestAnimationFrame for smoother rendering
       const animationIds: number[] = [];
       
-      // Force multiple redraws at different times to catch any timing issues
       animationIds.push(window.requestAnimationFrame(() => {
         console.log("Redraw 1");
         drawCanvas();
       }));
       
-      // Second redraw with delay
       const timer = setTimeout(() => {
         animationIds.push(window.requestAnimationFrame(() => {
           console.log("Redraw 2");
@@ -290,7 +263,6 @@ export const AnnotationCanvas = ({
         }));
       }, 250);
       
-      // Third redraw with longer delay
       const timer2 = setTimeout(() => {
         animationIds.push(window.requestAnimationFrame(() => {
           console.log("Redraw 3");
@@ -298,11 +270,9 @@ export const AnnotationCanvas = ({
         }));
       }, 500);
       
-      // Set flag to prevent repeated initial renders
       setInitialRender(false);
       
       return () => {
-        // Clean up all animation frames and timers
         animationIds.forEach(id => window.cancelAnimationFrame(id));
         clearTimeout(timer);
         clearTimeout(timer2);
@@ -310,7 +280,6 @@ export const AnnotationCanvas = ({
     }
   }, [initialRender, imgLoaded]);
 
-  // Additional effect to react to scale changes
   useEffect(() => {
     if (scale > 0 && imgLoaded) {
       console.log("Scale changed to", scale, "- redrawing canvas");
@@ -328,12 +297,10 @@ export const AnnotationCanvas = ({
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
 
-    // Check if click is within any annotation
     const clickedAnnotation = annotations.find(annotation => {
       const scaledX = annotation.x * scale;
       const scaledY = annotation.y * scale;
       
-      // Calculate marker position with offset
       const offset = 30;
       const angle = Math.PI / 4;
       const markerX = scaledX + Math.cos(angle) * offset;
@@ -347,7 +314,6 @@ export const AnnotationCanvas = ({
     onIssueSelect(clickedAnnotation?.id || null);
   };
 
-  // Add a fallback display for when canvas errors out
   const renderFallback = () => {
     if (imgError) {
       return (
@@ -398,7 +364,6 @@ export const AnnotationCanvas = ({
               style={{ display: imgLoaded ? 'block' : 'none' }}
             />
             
-            {/* Fallback when image isn't loaded yet */}
             {!imgLoaded && !imgError && (
               <div className="absolute inset-0 flex items-center justify-center bg-neutral-50 rounded-lg min-h-[300px]">
                 <div className="animate-pulse text-neutral-500">

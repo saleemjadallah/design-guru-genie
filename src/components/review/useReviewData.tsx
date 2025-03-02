@@ -31,6 +31,7 @@ export const useReviewData = (reviewId: string | undefined) => {
   const [loading, setLoading] = useState(true);
   const [feedbackItems, setFeedbackItems] = useState<Feedback[]>([]);
   const [selectedIssue, setSelectedIssue] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
   
   useEffect(() => {
     const fetchReviewDetails = async () => {
@@ -39,49 +40,44 @@ export const useReviewData = (reviewId: string | undefined) => {
           throw new Error("Review ID is required");
         }
 
-        // Fetch the review from the database without validating the ID format
-        const { data, error } = await supabase
-          .from('saved_reviews')
-          .select('*')
-          .eq('id', reviewId)
-          .maybeSingle();
-
-        if (error) throw error;
-        
-        if (!data) {
-          navigate("/saved-reviews");
-          toast({
-            title: "Review not found",
-            description: "The requested review could not be found",
-            variant: "destructive",
-          });
-          return;
-        }
-
-        setReview(data);
-        
+        // Fetch the review from the database without validation
         try {
-          const parsedFeedback = typeof data.feedback === 'string' 
-            ? JSON.parse(data.feedback) 
-            : data.feedback;
+          const { data, error } = await supabase
+            .from('saved_reviews')
+            .select('*')
+            .eq('id', reviewId)
+            .maybeSingle();
+
+          if (error) {
+            console.error("Database error:", error);
+            setError("Database error: " + error.message);
+            return;
+          }
           
-          setFeedbackItems(parsedFeedback);
-        } catch (parseError) {
-          console.error("Error parsing feedback:", parseError);
-          toast({
-            title: "Error parsing feedback",
-            description: "There was an error loading the review details",
-            variant: "destructive",
-          });
+          if (!data) {
+            setError("Review not found");
+            return;
+          }
+
+          setReview(data);
+          
+          try {
+            const parsedFeedback = typeof data.feedback === 'string' 
+              ? JSON.parse(data.feedback) 
+              : data.feedback;
+            
+            setFeedbackItems(parsedFeedback);
+          } catch (parseError) {
+            console.error("Error parsing feedback:", parseError);
+            setError("Error parsing feedback data");
+          }
+        } catch (dbError) {
+          console.error("Database operation failed:", dbError);
+          setError("Database operation failed");
         }
       } catch (error) {
         console.error("Error fetching review details:", error);
-        toast({
-          title: "Failed to load review",
-          description: "There was an error loading the review details",
-          variant: "destructive",
-        });
-        navigate("/saved-reviews");
+        setError("Failed to load review");
       } finally {
         setLoading(false);
       }
@@ -108,6 +104,7 @@ export const useReviewData = (reviewId: string | undefined) => {
     positiveFeatures,
     issues,
     isUrlAnalysis,
-    getIssueCountByPriority
+    getIssueCountByPriority,
+    error
   };
 };

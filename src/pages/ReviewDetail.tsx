@@ -6,9 +6,12 @@ import { ReviewContent } from "@/components/review/ReviewContent";
 import { ReviewLoader } from "@/components/review/ReviewLoader";
 import { useReviewData } from "@/components/review/useReviewData";
 import { AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 const ReviewDetail = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const {
     review,
     loading,
@@ -17,8 +20,13 @@ const ReviewDetail = () => {
     selectedIssue,
     setSelectedIssue,
     isUrlAnalysis,
-    getIssueCountByPriority
+    getIssueCountByPriority,
+    error
   } = useReviewData(id);
+
+  const handleBackToSavedReviews = () => {
+    navigate("/saved-reviews");
+  };
 
   return (
     <div className="min-h-screen bg-neutral-50 pt-16">
@@ -26,17 +34,25 @@ const ReviewDetail = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <ReviewLoader loading={loading} />
         
-        {!loading && !review && (
-          <div className="bg-red-400 text-white p-8 rounded-lg shadow-sm">
+        {!loading && (error || !review) && (
+          <div className="bg-red-500 text-white p-8 rounded-lg shadow-sm">
             <h2 className="text-2xl font-bold mb-2 flex items-center">
               <AlertCircle className="mr-2" size={24} />
               Failed to load review
             </h2>
-            <p className="text-xl">There was an error loading the review details</p>
+            <p className="text-xl mb-4">There was an error loading the review details</p>
+            {error && <p className="mb-4 text-white/80">{error}</p>}
+            <Button 
+              variant="outline" 
+              className="bg-white text-red-500 hover:bg-white/90"
+              onClick={handleBackToSavedReviews}
+            >
+              Back to Saved Reviews
+            </Button>
           </div>
         )}
         
-        {!loading && review && (
+        {!loading && !error && review && (
           <>
             <ReviewHeader title={review.title} created_at={review.created_at} />
             

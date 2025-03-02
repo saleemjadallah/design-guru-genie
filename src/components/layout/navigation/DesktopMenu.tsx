@@ -6,8 +6,10 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, User } from "lucide-react";
+import { UserRound } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 type DesktopMenuProps = {
   user: any;
@@ -25,37 +27,58 @@ export const DesktopMenu = ({ user, handleSignOut, isLoading }: DesktopMenuProps
         Home
       </Link>
       
-      {user ? (
-        <>
-          <Link
-            to="/saved-reviews"
-            className="text-neutral-600 hover:text-neutral-900 transition-colors"
-          >
-            Saved Reviews
-          </Link>
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex items-center gap-2">
-                <User size={16} />
-                {user.email && user.email.split('@')[0]}
-                <ChevronDown size={14} />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleSignOut} disabled={isLoading}>
-                {isLoading ? "Signing out..." : "Sign out"}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </>
-      ) : (
-        <Link to="/auth">
-          <Button variant="outline" disabled={isLoading}>
-            {isLoading ? "Loading..." : "Sign in"}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="rounded-full h-10 w-10 p-0">
+            <Avatar>
+              <AvatarFallback className="bg-neutral-100 text-neutral-600">
+                <UserRound size={24} />
+              </AvatarFallback>
+            </Avatar>
           </Button>
-        </Link>
-      )}
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56 mt-1 bg-white">
+          {user ? (
+            <>
+              <DropdownMenuItem disabled className="opacity-70">
+                {user.email && user.email.split('@')[0]}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <Link to="/saved-reviews">
+                <DropdownMenuItem>Saved Reviews</DropdownMenuItem>
+              </Link>
+              <Link to="/#pricing">
+                <DropdownMenuItem>Pricing</DropdownMenuItem>
+              </Link>
+              <Link to="/support">
+                <DropdownMenuItem>Support</DropdownMenuItem>
+              </Link>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleSignOut} disabled={isLoading} className="text-red-600 hover:text-red-800 hover:bg-red-50">
+                {isLoading ? "Signing out..." : "Delete Account"}
+              </DropdownMenuItem>
+            </>
+          ) : (
+            <>
+              <Link to="/auth">
+                <DropdownMenuItem disabled={isLoading}>
+                  {isLoading ? "Loading..." : "Sign in"}
+                </DropdownMenuItem>
+              </Link>
+              <Link to="/auth?signup=true">
+                <DropdownMenuItem>Sign up</DropdownMenuItem>
+              </Link>
+              <DropdownMenuSeparator />
+              <Link to="/#pricing">
+                <DropdownMenuItem>Pricing</DropdownMenuItem>
+              </Link>
+              <Link to="/support">
+                <DropdownMenuItem>Support</DropdownMenuItem>
+              </Link>
+            </>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 };

@@ -1,7 +1,15 @@
 
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { X, Menu } from "lucide-react";
+import { X, Menu, UserRound } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 type MobileMenuProps = {
   isMenuOpen: boolean;
@@ -20,59 +28,64 @@ export const MobileMenu = ({
 }: MobileMenuProps) => {
   return (
     <div className="md:hidden">
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => setIsMenuOpen(!isMenuOpen)}
-        aria-label={isMenuOpen ? "Close menu" : "Open menu"}
-      >
-        {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
-      </Button>
-
-      {isMenuOpen && (
-        <div className="absolute top-16 left-0 right-0 bg-white shadow-lg p-4 z-50 flex flex-col space-y-4">
-          <Link
-            to="/"
-            className="text-neutral-600 hover:text-neutral-900 py-2 px-4 rounded-md"
-            onClick={() => setIsMenuOpen(false)}
-          >
-            Home
-          </Link>
-          
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="rounded-full h-10 w-10 p-0">
+            <Avatar>
+              <AvatarFallback className="bg-neutral-100 text-neutral-600">
+                <UserRound size={24} />
+              </AvatarFallback>
+            </Avatar>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56 mt-1 bg-white">
           {user ? (
             <>
-              <Link
-                to="/saved-reviews"
-                className="text-neutral-600 hover:text-neutral-900 py-2 px-4 rounded-md"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Saved Reviews
+              <DropdownMenuItem disabled className="opacity-70">
+                {user.email && user.email.split('@')[0]}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <Link to="/">
+                <DropdownMenuItem>Home</DropdownMenuItem>
               </Link>
-              
-              <Button
-                variant="ghost"
-                className="justify-start"
-                onClick={() => {
-                  handleSignOut();
-                  setIsMenuOpen(false);
-                }}
-                disabled={isLoading}
-              >
-                {isLoading ? "Signing out..." : "Sign out"}
-              </Button>
+              <Link to="/saved-reviews">
+                <DropdownMenuItem>Saved Reviews</DropdownMenuItem>
+              </Link>
+              <Link to="/#pricing">
+                <DropdownMenuItem>Pricing</DropdownMenuItem>
+              </Link>
+              <Link to="/support">
+                <DropdownMenuItem>Support</DropdownMenuItem>
+              </Link>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleSignOut} disabled={isLoading} className="text-red-600 hover:text-red-800 hover:bg-red-50">
+                {isLoading ? "Signing out..." : "Delete Account"}
+              </DropdownMenuItem>
             </>
           ) : (
-            <Link 
-              to="/auth"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              <Button variant="outline" className="w-full" disabled={isLoading}>
-                {isLoading ? "Loading..." : "Sign in"}
-              </Button>
-            </Link>
+            <>
+              <Link to="/">
+                <DropdownMenuItem>Home</DropdownMenuItem>
+              </Link>
+              <Link to="/auth">
+                <DropdownMenuItem disabled={isLoading}>
+                  {isLoading ? "Loading..." : "Sign in"}
+                </DropdownMenuItem>
+              </Link>
+              <Link to="/auth?signup=true">
+                <DropdownMenuItem>Sign up</DropdownMenuItem>
+              </Link>
+              <DropdownMenuSeparator />
+              <Link to="/#pricing">
+                <DropdownMenuItem>Pricing</DropdownMenuItem>
+              </Link>
+              <Link to="/support">
+                <DropdownMenuItem>Support</DropdownMenuItem>
+              </Link>
+            </>
           )}
-        </div>
-      )}
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 };

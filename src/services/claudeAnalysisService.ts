@@ -10,6 +10,9 @@ import { callClaudeAnalysisAPI, processClaudeResponse } from "@/services/claudeA
  * Handles preprocessing, API calls, and error handling
  */
 export async function processWithClaudeAI(imageUrl: string, compressionOptions: CompressionOptions = {}) {
+  // Store original URL for cleanup later
+  const originalUrl = imageUrl;
+  
   try {
     // Check if the image is a local blob URL that needs to be uploaded to Supabase
     if (imageUrl.startsWith('blob:')) {
@@ -105,10 +108,37 @@ export async function processWithClaudeAI(imageUrl: string, compressionOptions: 
     const analyzeData = await callClaudeAnalysisAPI(imageUrl);
     
     // Process the response from Claude
-    return processClaudeResponse(analyzeData);
+    const result = processClaudeResponse(analyzeData);
+    
+    // After successfully processing with Claude, clean up blob URLs to prevent memory leaks
+    if (originalUrl.startsWith('blob:')) {
+      console.log("Revoking blob URL to prevent memory leaks");
+      URL.revokeObjectURL(originalUrl);
+    }
+    
+    // Clean up any intermediate blob URLs created during compression
+    if (imageUrl !== originalUrl && imageUrl.startsWith('blob:')) {
+      console.log("Revoking intermediate blob URL");
+      URL.revokeObjectURL(imageUrl);
+    }
+    
+    return result;
     
   } catch (analyzeError: any) {
     console.error("Error in Claude AI analysis process:", analyzeError);
+    
+    // Ensure blob URLs are revoked even if processing fails
+    if (originalUrl.startsWith('blob:')) {
+      console.log("Revoking blob URL after error");
+      URL.revokeObjectURL(originalUrl);
+    }
+    
+    // Revoke any intermediate blob URLs created during processing
+    if (imageUrl !== originalUrl && imageUrl.startsWith('blob:')) {
+      console.log("Revoking intermediate blob URL after error");
+      URL.revokeObjectURL(imageUrl);
+    }
+    
     const errorMsg = handleAnalysisError(analyzeError);
     throw new Error(errorMsg);
   }

@@ -11,6 +11,9 @@ import { handleUrlAnalysisError, handleUrlAnalysisSuccess } from "@/utils/upload
  * @returns Analysis results in the required format
  */
 export const processUrlAnalysisData = async (imageUrl: string, data?: any) => {
+  // Store original URL for cleanup later
+  const originalUrl = imageUrl;
+  
   // Check image URL before proceeding
   if (!imageUrl) {
     toast({
@@ -45,9 +48,10 @@ export const processUrlAnalysisData = async (imageUrl: string, data?: any) => {
     }
   }
 
-  // If no usable data provided or parsing failed, use Claude API
-  console.log(data ? "Falling back to Claude AI" : "Using Claude AI directly");
   try {
+    // If no usable data provided or parsing failed, use Claude API
+    console.log(data ? "Falling back to Claude AI" : "Using Claude AI directly");
+    
     // Use more aggressive compression options
     const compressionOptions = {
       maxWidth: 800,
@@ -65,5 +69,11 @@ export const processUrlAnalysisData = async (imageUrl: string, data?: any) => {
     console.error("Claude API error:", claudeError);
     const errorMessage = handleUrlAnalysisError(claudeError);
     throw new Error(errorMessage);
+  } finally {
+    // Ensure blob URLs are properly revoked to prevent memory leaks
+    if (originalUrl.startsWith('blob:')) {
+      console.log("Revoking blob URL in URL analysis service");
+      URL.revokeObjectURL(originalUrl);
+    }
   }
 };

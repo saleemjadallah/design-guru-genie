@@ -1,6 +1,69 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { handleAnalysisError } from "@/utils/upload/errorHandler";
+
+// Add image compression utility
+async function compressImage(imageUrl: string, maxWidth = 1600, maxHeight = 1600, quality = 0.8): Promise<string> {
+  try {
+    // For blob URLs or remote URLs
+    const response = await fetch(imageUrl);
+    const blob = await response.blob();
+    
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        // Create canvas for resizing
+        const canvas = document.createElement('canvas');
+        
+        // Calculate new dimensions while maintaining aspect ratio
+        let width = img.width;
+        let height = img.height;
+        
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round(height * maxWidth / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round(width * maxHeight / height);
+            height = maxHeight;
+          }
+        }
+        
+        // Set canvas dimensions and draw resized image
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Failed to get canvas context'));
+          return;
+        }
+        
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Convert to compressed data URL
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            reject(new Error('Failed to create image blob'));
+            return;
+          }
+          resolve(URL.createObjectURL(blob));
+        }, 'image/jpeg', quality);
+      };
+      
+      img.onerror = () => {
+        reject(new Error('Failed to load image for compression'));
+      };
+      
+      img.src = URL.createObjectURL(blob);
+    });
+  } catch (error: any) {
+    console.error('Image compression error:', error);
+    throw new Error(`Failed to compress image: ${error.message}`);
+  }
+}
 
 export async function processWithClaudeAI(imageUrl: string) {
   try {
@@ -67,6 +130,17 @@ export async function processWithClaudeAI(imageUrl: string) {
     } catch (urlError) {
       console.error("Invalid URL format:", urlError);
       console.log("Proceeding with original URL format");
+    }
+    
+    // Compress image before sending to Claude
+    try {
+      console.log("Compressing image before analysis...");
+      const compressedImageUrl = await compressImage(imageUrl, 1200, 1200, 0.75);
+      console.log("Image compressed successfully");
+      imageUrl = compressedImageUrl;
+    } catch (compressionError) {
+      console.warn("Image compression failed, proceeding with original:", compressionError);
+      // Continue with the original URL - compression is optional
     }
     
     // Proceed with Claude analysis for proper images

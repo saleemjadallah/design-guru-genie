@@ -17,16 +17,27 @@ export const useUrlScreenshot = () => {
         description: "Our AI is capturing and analyzing the website design...",
       });
 
+      // Use Promise.race for timeout handling
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("Screenshot capture timed out after 30 seconds")), 30000);
+      });
+
       // First step: Generate a screenshot using the screenshot-url edge function
-      const { data: screenshotData, error: screenshotError } = await supabase.functions.invoke("screenshot-url", {
+      const screenshotPromise = supabase.functions.invoke("screenshot-url", {
         body: { url: normalizedUrl },
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         }
-        // Removed unsupported abortSignal property
-        // We'll use Promise.race with setTimeout for timeout handling if needed
       });
+
+      // Race between the screenshot capture and timeout
+      const { data: screenshotData, error: screenshotError } = await Promise.race([
+        screenshotPromise,
+        timeoutPromise.then(() => {
+          throw new Error("Screenshot generation timed out");
+        })
+      ]) as any;
 
       if (screenshotError) {
         console.error("URL screenshot error:", screenshotError);

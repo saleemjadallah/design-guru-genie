@@ -33,19 +33,32 @@ serve(async (req) => {
     // If the image is a Supabase URL, we need to fetch it first
     let imageBase64;
     try {
-      if (imageUrl.startsWith('http')) {
+      if (imageUrl.startsWith('http') || imageUrl.startsWith('blob:')) {
         console.log('Fetching image from URL:', imageUrl)
         
-        const imageResponse = await fetch(imageUrl)
+        // Add timeout to fetch operation
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 seconds timeout
+        
+        const imageResponse = await fetch(imageUrl, { 
+          signal: controller.signal
+        }).finally(() => clearTimeout(timeoutId));
+        
         if (!imageResponse.ok) {
           throw new Error(`Failed to fetch image: ${imageResponse.status}`)
         }
         
         const imageBlob = await imageResponse.blob()
+        
+        // Check image size and potentially reject very large images
+        if (imageBlob.size > 10 * 1024 * 1024) { // 10MB limit
+          throw new Error("Image is too large (>10MB). Please provide a smaller image or reduce the image quality.")
+        }
+        
         const arrayBuffer = await imageBlob.arrayBuffer()
         const buffer = new Uint8Array(arrayBuffer)
         imageBase64 = btoa(String.fromCharCode(...buffer))
-        console.log('Image fetched and converted to base64')
+        console.log('Image fetched and converted to base64, size:', Math.round(imageBase64.length / 1024), 'KB')
       } else if (imageUrl.startsWith('data:image/')) {
         // If it's already a data URL, extract the base64 part
         // Make sure it's not an SVG
@@ -77,24 +90,40 @@ serve(async (req) => {
       )
     }
     
+    // Check the size of the base64 data
+    if (imageBase64.length > 10 * 1024 * 1024) { // 10MB limit for base64
+      console.error('Base64 data too large:', Math.round(imageBase64.length / 1024), 'KB')
+      return new Response(
+        JSON.stringify({ 
+          error: "Image data is too large. Please provide a smaller or more compressed image." 
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      )
+    }
+    
+    // Add timeout for Claude API request
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 seconds timeout
+    
     // Call Claude API
     console.log('Sending request to Claude API')
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-3-opus-20240229',
-        max_tokens: 1024,
-        messages: [{
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: `You are DesignCritiqueAI, a professional UI/UX design consultant. Please analyze this design screenshot in detail and provide structured feedback. Focus on usability, accessibility, visual hierarchy, and conversion optimization.
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': ANTHROPIC_API_KEY,
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+          model: 'claude-3-opus-20240229',
+          max_tokens: 1024,
+          messages: [{
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: `You are DesignCritiqueAI, a professional UI/UX design consultant. Please analyze this design screenshot in detail and provide structured feedback. Focus on usability, accessibility, visual hierarchy, and conversion optimization.
 
 CRITICAL REQUIREMENTS:
 1. MUST include AT LEAST 2 high priority, 2 medium priority, and 2 low priority issues (you can include more if relevant)
@@ -122,27 +151,37 @@ Return a JSON object with this structure:
     }
   ]
 }`
-            },
-            {
-              type: 'image',
-              source: {
-                type: 'base64',
-                media_type: 'image/jpeg',
-                data: imageBase64
+              },
+              {
+                type: 'image',
+                source: {
+                  type: 'base64',
+                  media_type: 'image/jpeg',
+                  data: imageBase64
+                }
               }
-            }
-          ]
-        }]
-      })
-    })
+            ]
+          }]
+        }),
+        signal: controller.signal
+      }).finally(() => clearTimeout(timeoutId));
 
-    const result = await response.json()
-    console.log('Analysis complete')
+      const result = await response.json()
+      console.log('Analysis complete')
 
-    return new Response(
-      JSON.stringify({ result }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+      return new Response(
+        JSON.stringify({ result }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    } catch (apiError) {
+      console.error('Claude API error:', apiError)
+      return new Response(
+        JSON.stringify({ 
+          error: `Claude API error: ${apiError.message}. This may be due to image size or format issues.` 
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      )
+    }
   } catch (error) {
     console.error('Error in analyze-design function:', error)
     return new Response(

@@ -15,6 +15,7 @@ export interface CompressionOptions {
 /**
  * Compresses an image to ensure it's under the size limit for API requests
  * Uses multiple compression attempts with increasingly aggressive settings
+ * Always converts to JPEG format for Claude compatibility
  */
 export async function compressImageForAPI(
   imageUrl: string, 
@@ -28,64 +29,19 @@ export async function compressImageForAPI(
   } = options;
 
   try {
+    console.log("Starting image compression for Claude API, source URL type:", 
+               imageUrl.startsWith('data:') ? 'data URL' : 
+               imageUrl.startsWith('blob:') ? 'blob URL' : 'remote URL');
+               
     // For blob URLs or remote URLs
     const response = await fetch(imageUrl);
     const blob = await response.blob();
     
-    console.log(`Original image size: ${Math.round(blob.size/1024)}KB`);
+    console.log(`Original image: format=${blob.type}, size=${Math.round(blob.size/1024)}KB`);
     
-    // Check if the image is SVG - Claude might have issues with SVG images
-    if (blob.type.includes('svg')) {
-      console.warn("SVG format detected - Claude may have issues with this format");
-      // We'll continue processing but warn the user about potential issues
-    }
-    
-    // If the image is already small enough, return it as is but convert to data URL for consistency
-    if (blob.size < maxSizeBytes) {
-      console.log("Image already small enough, minimal processing needed");
-      
-      // Add a final explicit size check even for "small enough" images
-      if (blob.size > 5 * 1024 * 1024) {
-        throw new Error(`Image exceeds 5MB limit. Size: ${(blob.size / (1024 * 1024)).toFixed(2)}MB`);
-      }
-      
-      // Always convert to JPEG data URL for Claude - more reliable than other formats
-      return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          canvas.width = img.width;
-          canvas.height = img.height;
-          
-          const ctx = canvas.getContext('2d');
-          if (!ctx) {
-            reject(new Error('Failed to get canvas context'));
-            return;
-          }
-          
-          // Use white background for transparent images
-          ctx.fillStyle = '#FFFFFF';
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-          
-          ctx.drawImage(img, 0, 0);
-          
-          // Always use JPEG for Claude (most reliable format)
-          canvas.toBlob((convBlob) => {
-            if (!convBlob) {
-              reject(new Error('Failed to convert image'));
-              return;
-            }
-            
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.onerror = () => reject(new Error('Failed to read converted image'));
-            reader.readAsDataURL(convBlob);
-          }, 'image/jpeg', 0.9);
-        };
-        
-        img.onerror = () => reject(new Error('Failed to load image for conversion'));
-        img.src = URL.createObjectURL(blob);
-      });
+    // Check if the image is SVG or has transparency - Claude might have issues with these
+    if (blob.type.includes('svg') || blob.type.includes('webp') || blob.type.includes('png')) {
+      console.warn(`${blob.type} format detected - converting to JPEG for better Claude compatibility`);
     }
     
     return new Promise((resolve, reject) => {
@@ -95,7 +51,7 @@ export async function compressImageForAPI(
         let currentWidth = Math.min(img.width, maxWidth);
         let currentHeight = Math.min(img.height, maxHeight);
         let attempt = 0;
-        const maxAttempts = 4; // Increased max attempts
+        const maxAttempts = 4;
         
         // For very large images, apply more aggressive initial reduction
         if (img.width * img.height > 2000000) { // > 2 megapixels
@@ -120,7 +76,8 @@ export async function compressImageForAPI(
             return;
           }
           
-          // Use white background for transparent images
+          // IMPORTANT: Always use white background for transparent images
+          // This ensures Claude doesn't get confused by transparency
           ctx.fillStyle = '#FFFFFF';
           ctx.fillRect(0, 0, canvas.width, canvas.height);
           
@@ -133,7 +90,8 @@ export async function compressImageForAPI(
               return;
             }
             
-            console.log(`Compressed to ${Math.round(blob.size/1024)}KB (${Math.round((blob.size/originalBlobSize)*100)}% of original)`);
+            const originalBlobSize = blob.size;
+            console.log(`Compressed to ${Math.round(blob.size/1024)}KB (attempt ${attempt})`);
             
             // Check if the blob is still too large and we haven't reached max attempts
             if (blob.size > maxSizeBytes && attempt < maxAttempts) {
@@ -165,6 +123,7 @@ export async function compressImageForAPI(
               reader.onloadend = () => {
                 const dataUrl = reader.result as string;
                 console.log(`Final compressed size: ${Math.round(blob.size/1024)}KB after ${attempt} attempts`);
+                console.log(`Output format: JPEG as data URL (first 30 chars): ${dataUrl.substring(0, 30)}...`);
                 
                 // Final size check
                 try {
@@ -185,16 +144,19 @@ export async function compressImageForAPI(
           }, 'image/jpeg', currentQuality); // Always use JPEG for Claude
         };
         
-        // Store the original blob size for percentage calculations
-        const originalBlobSize = blob.size;
-        
         // Start compression with initial settings
         compressWithSettings();
       };
       
-      img.onerror = () => {
-        reject(new Error('Failed to load image for compression'));
+      img.onerror = (err) => {
+        console.error("Image loading error:", err);
+        reject(new Error(`Failed to load image for compression: ${err}`));
       };
+      
+      // Set crossOrigin attribute for CORS issues with remote images
+      if (!imageUrl.startsWith('data:') && !imageUrl.startsWith('blob:')) {
+        img.crossOrigin = "anonymous";
+      }
       
       img.src = URL.createObjectURL(blob);
     });

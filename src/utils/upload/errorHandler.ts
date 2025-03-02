@@ -48,43 +48,46 @@ export const handleDatabaseError = (reviewError: any) => {
 // Helper function to handle analysis errors
 export const handleAnalysisError = (analyzeError: any) => {
   console.error("Analysis error:", analyzeError);
+  const errorMessage = analyzeError.message || "";
   let errorMsg = "Error during AI analysis.";
   
   // Check for network and connectivity errors
-  if (analyzeError.message?.includes("Failed to fetch") || 
-      analyzeError.message?.includes("Network error") ||
-      analyzeError.message?.includes("network")) {
+  if (errorMessage.includes("Failed to fetch") || 
+      errorMessage.includes("Network error") ||
+      errorMessage.includes("network")) {
     errorMsg = "Network error while connecting to our AI service. Please check your connection and try again.";
   }
   // Check for edge function errors
-  else if (analyzeError.message?.includes("Failed to send a request to the Edge Function") || 
+  else if (errorMessage.includes("Failed to send a request to the Edge Function") || 
       analyzeError.name === "FunctionsFetchError" ||
-      analyzeError.message?.includes("edge function")) {
+      errorMessage.includes("edge function")) {
     errorMsg = "Our AI service is currently unavailable. Please try again later.";
   } 
   // Check for Claude API errors
-  else if (analyzeError.message?.includes("timeout") || analyzeError.message?.includes("timed out")) {
+  else if (errorMessage.includes("timeout") || errorMessage.includes("timed out")) {
     errorMsg = "Analysis timed out. Your design may be too complex or our service is busy.";
-  } else if (analyzeError.message?.includes("quota") || analyzeError.message?.includes("limit")) {
+  } else if (errorMessage.includes("quota") || errorMessage.includes("limit")) {
     errorMsg = "We've reached our AI service quota. Please try again later.";
-  } else if (analyzeError.message?.includes("rate limit")) {
+  } else if (errorMessage.includes("rate limit")) {
     errorMsg = "Too many requests. Please try again in a few minutes.";
-  } else if (analyzeError.message?.includes("unauthorized") || analyzeError.message?.includes("authentication")) {
+  } else if (errorMessage.includes("unauthorized") || errorMessage.includes("authentication")) {
     errorMsg = "Authentication error with our AI service. Please try again later.";
-  } else if (analyzeError.message?.includes("API key")) {
+  } else if (errorMessage.includes("API key")) {
     errorMsg = "API configuration issue. Please contact support.";
-  } else if (analyzeError.message?.includes("maximum call stack")) {
+  } else if (errorMessage.includes("maximum call stack")) {
     errorMsg = "The image is too complex for our analysis service. Please try a smaller or simpler image.";
-  } else if (analyzeError.message?.includes("non-2xx status code") || 
-             analyzeError.message?.includes("400") || 
-             analyzeError.message?.includes("500")) {
-    errorMsg = "AI service encountered an error. Try using a different image format (JPG or PNG) or a simpler design.";
-  } else if (analyzeError.message?.includes("Empty response") || analyzeError.message?.includes("no content")) {
+  } else if (errorMessage.includes("non-2xx status code") || 
+             errorMessage.includes("400") || 
+             errorMessage.includes("500") ||
+             errorMessage.includes("AI service encountered an error")) {
+    // More specific guidance for format-related errors
+    errorMsg = "AI service encountered an error. Try using a different image format (JPG or PNG) or a simpler design. If you're using an image with transparency or complex graphics, try a flat JPEG image instead.";
+  } else if (errorMessage.includes("Empty response") || errorMessage.includes("no content")) {
     errorMsg = "The AI service returned an empty response. Please try again with a clearer image.";
-  } else if (analyzeError.message?.includes("parse") || analyzeError.message?.includes("JSON")) {
+  } else if (errorMessage.includes("parse") || errorMessage.includes("JSON")) {
     errorMsg = "Failed to process the AI response. Please try again later.";
-  } else if (analyzeError.message?.includes("image format") || analyzeError.message?.includes("not supported")) {
-    errorMsg = "The image format is not supported. Please try a JPG or PNG image.";
+  } else if (errorMessage.includes("image format") || errorMessage.includes("not supported")) {
+    errorMsg = "The image format is not supported. Please use a JPG or PNG image without transparency.";
   }
   
   return errorMsg;

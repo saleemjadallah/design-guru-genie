@@ -14,16 +14,17 @@ export async function callClaudeAnalysisAPI(imageUrl: string) {
     description: "Our AI is analyzing your design for strengths and improvement opportunities...",
   });
   
-  console.log("Calling analyze-design function with URL:", imageUrl);
+  console.log("Calling analyze-design function with URL type:", 
+              imageUrl.startsWith('data:') ? 'data URL' : 
+              imageUrl.startsWith('blob:') ? 'blob URL' : 'remote URL');
   
   // Additional debug logging for URL type
   if (imageUrl.startsWith('data:')) {
-    console.log("Using data URL for analysis (first 50 chars):", imageUrl.substring(0, 50) + "...");
+    console.log("Data URL format:", imageUrl.substring(0, 30) + "...");
     // Verify that the data URL is a supported format
     if (!imageUrl.startsWith('data:image/jpeg') && 
-        !imageUrl.startsWith('data:image/png') && 
-        !imageUrl.startsWith('data:image/webp')) {
-      console.warn("Warning: Data URL may not be in an optimal format for Claude");
+        !imageUrl.startsWith('data:image/png')) {
+      console.warn("Using non-standard data URL format for Claude");
     }
   } else {
     console.log("Using remote URL for analysis:", imageUrl);
@@ -37,6 +38,8 @@ export async function callClaudeAnalysisAPI(imageUrl: string) {
   while (retryCount <= maxRetries) {
     try {
       // Proceed with Claude analysis with more explicit options
+      console.log(`Attempt ${retryCount + 1}/${maxRetries + 1} to call Claude API`);
+      
       const { data: analyzeData, error: analyzeError } = await supabase.functions
         .invoke('analyze-design', {
           body: { 
@@ -46,7 +49,8 @@ export async function callClaudeAnalysisAPI(imageUrl: string) {
               temperature: 0.1,    // Lower temperature for more consistent results
               compressImage: true,  // Tell Edge function to compress image as well
               format: "json",      // Explicitly request JSON format
-              timeout: 60000       // 60 second timeout
+              timeout: 60000,      // 60 second timeout
+              forceJpeg: true      // Tell edge function to force JPEG conversion
             }
           },
           method: 'POST',
@@ -69,10 +73,19 @@ export async function callClaudeAnalysisAPI(imageUrl: string) {
         throw new Error("Empty response from Claude API");
       }
       
+      // Log first bit of response for debugging
+      console.log("Analysis response sample:", 
+        typeof analyzeData === 'object' 
+          ? JSON.stringify(analyzeData).substring(0, 100) + "..." 
+          : analyzeData.toString().substring(0, 100) + "..."
+      );
+      
       return analyzeData;
     } catch (error) {
       lastError = error;
       retryCount++;
+      
+      console.error(`Attempt ${retryCount}/${maxRetries + 1} failed:`, error);
       
       if (retryCount <= maxRetries) {
         const backoffDelay = Math.pow(2, retryCount) * 1000; // Exponential backoff

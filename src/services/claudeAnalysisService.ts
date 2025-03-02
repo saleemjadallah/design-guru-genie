@@ -19,9 +19,63 @@ export async function processWithClaudeAI(imageUrl: string, compressionOptions: 
       try {
         const response = await fetch(imageUrl);
         const blob = await response.blob();
-        imageUrl = await uploadBlobToSupabase(blob); // Pass the blob directly
+        
+        console.log(`Original blob type: ${blob.type}, size: ${Math.round(blob.size/1024)}KB`);
+        
+        // If original is not a JPEG and not a PNG, convert to JPEG first
+        if (blob.type !== 'image/jpeg' && blob.type !== 'image/png') {
+          console.log(`Converting ${blob.type} to JPEG for better compatibility`);
+          const img = new Image();
+          await new Promise<void>((resolve, reject) => {
+            img.onload = () => {
+              const canvas = document.createElement('canvas');
+              canvas.width = img.width;
+              canvas.height = img.height;
+              const ctx = canvas.getContext('2d');
+              
+              if (!ctx) {
+                reject(new Error('Failed to get canvas context'));
+                return;
+              }
+              
+              // Use white background
+              ctx.fillStyle = '#FFFFFF';
+              ctx.fillRect(0, 0, canvas.width, canvas.height);
+              
+              ctx.drawImage(img, 0, 0);
+              URL.revokeObjectURL(img.src); // Clean up
+              
+              canvas.toBlob(
+                newBlob => {
+                  if (!newBlob) {
+                    reject(new Error('Failed to convert image format'));
+                    return;
+                  }
+                  
+                  console.log(`Converted to JPEG: ${Math.round(newBlob.size/1024)}KB`);
+                  
+                  // Replace the original blob
+                  blob = newBlob;
+                  resolve();
+                },
+                'image/jpeg',
+                0.85
+              );
+            };
+            
+            img.onerror = () => {
+              URL.revokeObjectURL(img.src);
+              reject(new Error('Failed to load image for format conversion'));
+            };
+            
+            img.src = URL.createObjectURL(blob);
+          });
+        }
+        
+        imageUrl = await uploadBlobToSupabase(blob); // Upload processed blob
+        console.log("Uploaded blob to Supabase:", imageUrl);
       } catch (error) {
-        console.error("Failed to fetch blob URL:", error);
+        console.error("Failed to fetch or process blob URL:", error);
         throw new Error("Could not process local image data");
       }
     }
@@ -40,11 +94,22 @@ export async function processWithClaudeAI(imageUrl: string, compressionOptions: 
       };
       
       const compressedImageUrl = await compressImageForAPI(imageUrl, mergedOptions);
-      console.log("Image compressed successfully");
+      console.log("Image compressed successfully to data URL");
       
-      // If result is a data URL, no need to fetch it again for size check
-      if (!compressedImageUrl.startsWith('data:')) {
-        // Verify compressed image size for non-data URLs
+      // For data URLs, check size estimation
+      if (compressedImageUrl.startsWith('data:')) {
+        // Estimate data URL size: 1 base64 char ~= 0.75 bytes
+        const base64Part = compressedImageUrl.split(',')[1] || '';
+        const estimatedSizeBytes = base64Part.length * 0.75;
+        const estimatedSizeMB = estimatedSizeBytes / (1024 * 1024);
+        
+        console.log(`Estimated data URL size: ${estimatedSizeMB.toFixed(2)}MB`);
+        
+        if (estimatedSizeMB > 5) {
+          throw new Error(`Image data is still too large (${estimatedSizeMB.toFixed(2)}MB) after compression. Maximum size allowed is 5MB.`);
+        }
+      } else if (!compressedImageUrl.startsWith('data:')) {
+        // For non-data URLs, fetch to check size
         try {
           const response = await fetch(compressedImageUrl);
           const blob = await response.blob();
@@ -61,8 +126,6 @@ export async function processWithClaudeAI(imageUrl: string, compressionOptions: 
           }
           console.warn("Size check failed, continuing anyway:", sizeCheckError);
         }
-      } else {
-        console.log("Using base64 data URL for Claude API");
       }
       
       imageUrl = compressedImageUrl;

@@ -1,4 +1,3 @@
-
 import { toast } from "@/hooks/use-toast";
 import { handleAnalysisError } from "@/utils/upload/errorHandler";
 import { compressImageForAPI, CompressionOptions } from "@/utils/upload/imageCompressionService";
@@ -18,13 +17,14 @@ export async function processWithClaudeAI(imageUrl: string, compressionOptions: 
     if (imageUrl.startsWith('blob:')) {
       try {
         const response = await fetch(imageUrl);
-        const blob = await response.blob();
+        const originalBlob = await response.blob();
         
-        console.log(`Original blob type: ${blob.type}, size: ${Math.round(blob.size/1024)}KB`);
+        console.log(`Original blob type: ${originalBlob.type}, size: ${Math.round(originalBlob.size/1024)}KB`);
         
         // If original is not a JPEG and not a PNG, convert to JPEG first
-        if (blob.type !== 'image/jpeg' && blob.type !== 'image/png') {
-          console.log(`Converting ${blob.type} to JPEG for better compatibility`);
+        let processedBlob = originalBlob;
+        if (originalBlob.type !== 'image/jpeg' && originalBlob.type !== 'image/png') {
+          console.log(`Converting ${originalBlob.type} to JPEG for better compatibility`);
           const img = new Image();
           await new Promise<void>((resolve, reject) => {
             img.onload = () => {
@@ -54,8 +54,8 @@ export async function processWithClaudeAI(imageUrl: string, compressionOptions: 
                   
                   console.log(`Converted to JPEG: ${Math.round(newBlob.size/1024)}KB`);
                   
-                  // Replace the original blob
-                  blob = newBlob;
+                  // Set the processed blob
+                  processedBlob = newBlob;
                   resolve();
                 },
                 'image/jpeg',
@@ -68,11 +68,11 @@ export async function processWithClaudeAI(imageUrl: string, compressionOptions: 
               reject(new Error('Failed to load image for format conversion'));
             };
             
-            img.src = URL.createObjectURL(blob);
+            img.src = URL.createObjectURL(originalBlob);
           });
         }
         
-        imageUrl = await uploadBlobToSupabase(blob); // Upload processed blob
+        imageUrl = await uploadBlobToSupabase(processedBlob); // Upload processed blob
         console.log("Uploaded blob to Supabase:", imageUrl);
       } catch (error) {
         console.error("Failed to fetch or process blob URL:", error);

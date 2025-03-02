@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Tool, Wrench, Code, PenTool, FileCode, Globe } from "lucide-react";
+import { Wrench, Code, PenTool, FileCode, Globe } from "lucide-react";
 import { ImplementationFeedback } from "./types";
 
 interface IssueToolsProps {

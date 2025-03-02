@@ -6,7 +6,7 @@ import ReviewDetail from "./pages/ReviewDetail";
 import FollowUpResults from "./pages/FollowUpResults";
 import SavedReviews from "./pages/SavedReviews";
 import { AuthPage } from "./pages/AuthPage";
-import { NotFound } from "./pages/NotFound";
+import NotFound from "./pages/NotFound";
 
 function App() {
   return (

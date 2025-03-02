@@ -1,16 +1,14 @@
 
-import React from "react";
 import { Link } from "react-router-dom";
-import { X, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { X, Menu } from "lucide-react";
 
 type MobileMenuProps = {
   isMenuOpen: boolean;
   setIsMenuOpen: (isOpen: boolean) => void;
   user: any;
   handleSignOut: () => Promise<void>;
-  handleSignIn: () => Promise<void>;
-  setIsOpen: (isOpen: boolean) => void;
+  isLoading: boolean;
 };
 
 export const MobileMenu = ({
@@ -18,92 +16,63 @@ export const MobileMenu = ({
   setIsMenuOpen,
   user,
   handleSignOut,
-  handleSignIn,
-  setIsOpen,
+  isLoading
 }: MobileMenuProps) => {
   return (
-    <>
-      {/* Mobile Menu Button */}
-      <button
-        className="md:hidden rounded-md p-2 text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100"
+    <div className="md:hidden">
+      <Button
+        variant="ghost"
+        size="icon"
         onClick={() => setIsMenuOpen(!isMenuOpen)}
+        aria-label={isMenuOpen ? "Close menu" : "Open menu"}
       >
-        {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-      </button>
+        {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
+      </Button>
 
-      {/* Mobile Menu Content */}
       {isMenuOpen && (
-        <div className="md:hidden bg-white shadow-lg">
-          <div className="container py-4">
-            <nav className="mb-4">
-              <ul className="space-y-2">
-                <li>
-                  <Link
-                    to="/saved-reviews"
-                    className="block px-3 py-2 rounded-md text-base font-medium text-neutral-900 hover:bg-neutral-100"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Saved Reviews
-                  </Link>
-                </li>
-                <li>
-                  <a
-                    href="#features"
-                    className="block px-3 py-2 rounded-md text-base font-medium text-neutral-900 hover:bg-neutral-100"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Features
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#pricing"
-                    className="block px-3 py-2 rounded-md text-base font-medium text-neutral-900 hover:bg-neutral-100"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Pricing
-                  </a>
-                </li>
-              </ul>
-            </nav>
-
-            {user ? (
-              <div className="space-y-2">
-                <Button
-                  variant="default"
-                  className="w-full"
-                  onClick={() => {
-                    setIsOpen(true);
-                    setIsMenuOpen(false);
-                  }}
-                >
-                  Dashboard
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => {
-                    handleSignOut();
-                    setIsMenuOpen(false);
-                  }}
-                >
-                  Sign Out
-                </Button>
-              </div>
-            ) : (
+        <div className="absolute top-16 left-0 right-0 bg-white shadow-lg p-4 z-50 flex flex-col space-y-4">
+          <Link
+            to="/"
+            className="text-neutral-600 hover:text-neutral-900 py-2 px-4 rounded-md"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            Home
+          </Link>
+          
+          {user ? (
+            <>
+              <Link
+                to="/saved-reviews"
+                className="text-neutral-600 hover:text-neutral-900 py-2 px-4 rounded-md"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Saved Reviews
+              </Link>
+              
               <Button
-                className="w-full"
+                variant="ghost"
+                className="justify-start"
                 onClick={() => {
-                  handleSignIn();
+                  handleSignOut();
                   setIsMenuOpen(false);
                 }}
+                disabled={isLoading}
               >
-                Sign In
+                {isLoading ? "Signing out..." : "Sign out"}
               </Button>
-            )}
-          </div>
+            </>
+          ) : (
+            <Link 
+              to="/auth"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              <Button variant="outline" className="w-full" disabled={isLoading}>
+                {isLoading ? "Loading..." : "Sign in"}
+              </Button>
+            </Link>
+          )}
         </div>
       )}
-    </>
+    </div>
   );
 };

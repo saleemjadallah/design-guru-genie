@@ -8,11 +8,14 @@ export const useNavigation = () => {
   const [user, setUser] = useState<any>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const checkSession = async () => {
+      setIsLoading(true);
       const { data } = await supabase.auth.getSession();
       setUser(data.session?.user || null);
+      setIsLoading(false);
     };
     
     checkSession();
@@ -20,6 +23,18 @@ export const useNavigation = () => {
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setUser(session?.user || null);
+        
+        if (event === 'SIGNED_IN') {
+          toast({
+            title: "Signed in successfully",
+            description: "You have been signed into your account.",
+          });
+        } else if (event === 'SIGNED_OUT') {
+          toast({
+            title: "Signed out successfully",
+            description: "You have been signed out of your account.",
+          });
+        }
       }
     );
     
@@ -40,33 +55,19 @@ export const useNavigation = () => {
   }, []);
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    toast({
-      title: "Signed out successfully",
-      description: "You have been signed out of your account.",
-    });
-  };
-
-  const handleSignIn = async () => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: 'user@example.com',
-        password: 'password123',
-      });
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Signed in successfully",
-        description: "You have been signed into your account.",
-      });
+      setIsLoading(true);
+      await supabase.auth.signOut();
+      // Toast notification is handled by the auth state change listener
     } catch (error) {
-      console.error("Error signing in:", error);
+      console.error("Error signing out:", error);
       toast({
-        title: "Failed to sign in",
-        description: "Please check your credentials and try again.",
+        title: "Failed to sign out",
+        description: "Please try again later.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -78,6 +79,6 @@ export const useNavigation = () => {
     isMenuOpen,
     setIsMenuOpen,
     handleSignOut,
-    handleSignIn
+    isLoading
   };
 };

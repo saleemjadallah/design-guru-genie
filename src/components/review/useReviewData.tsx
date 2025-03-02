@@ -39,20 +39,7 @@ export const useReviewData = (reviewId: string | undefined) => {
           throw new Error("Review ID is required");
         }
 
-        // Check if reviewId is a valid UUID format
-        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-        
-        if (!uuidRegex.test(reviewId)) {
-          // For non-UUID IDs, navigate back
-          navigate("/saved-reviews");
-          toast({
-            title: "Invalid review ID",
-            description: "The requested review ID format is invalid",
-            variant: "destructive",
-          });
-          return;
-        }
-
+        // Fetch the review from the database without validating the ID format
         const { data, error } = await supabase
           .from('saved_reviews')
           .select('*')

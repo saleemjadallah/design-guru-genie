@@ -50,12 +50,22 @@ export const handleAnalysisError = (analyzeError: any) => {
   console.error("Analysis error:", analyzeError);
   let errorMsg = "Error during AI analysis.";
   
-  if (analyzeError.message.includes("timeout")) {
+  // Check for edge function errors
+  if (analyzeError.message?.includes("Failed to send a request to the Edge Function") || 
+      analyzeError.name === "FunctionsFetchError") {
+    errorMsg = "Our AI service is currently unavailable. Please try again later.";
+  } 
+  // Check for Claude API errors
+  else if (analyzeError.message?.includes("timeout") || analyzeError.message?.includes("timed out")) {
     errorMsg = "Analysis timed out. Your design may be too complex or our service is busy.";
-  } else if (analyzeError.message.includes("quota")) {
+  } else if (analyzeError.message?.includes("quota") || analyzeError.message?.includes("limit")) {
     errorMsg = "We've reached our AI service quota. Please try again later.";
-  } else if (analyzeError.message.includes("rate limit")) {
+  } else if (analyzeError.message?.includes("rate limit")) {
     errorMsg = "Too many requests. Please try again in a few minutes.";
+  } else if (analyzeError.message?.includes("unauthorized") || analyzeError.message?.includes("authentication")) {
+    errorMsg = "Authentication error with our AI service. Please try again later.";
+  } else if (analyzeError.message?.includes("API key")) {
+    errorMsg = "API configuration issue. Please contact support.";
   }
   
   return errorMsg;

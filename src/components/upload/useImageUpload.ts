@@ -57,50 +57,11 @@ export const useImageUpload = () => {
       });
       
       // Call analyze-design edge function to process with Claude
+      let analysisResults;
+      let usedFallback = false;
+      
       try {
-        let analysisResults = await processWithClaudeAI(publicUrl);
-        
-        setCurrentStage(2);
-        toast({
-          title: "Analysis complete",
-          description: "Your design has been analyzed. Saving results...",
-        });
-        
-        // Save the analysis to the database
-        const { data: reviewData, error: reviewError } = await supabase
-          .from('saved_reviews')
-          .insert({
-            title: `Review - ${file.name}`,
-            image_url: publicUrl,
-            feedback: analysisResults
-          })
-          .select()
-          .single();
-          
-        if (reviewError) {
-          const dbErrorMsg = handleDatabaseError(reviewError);
-          throw new Error(dbErrorMsg);
-        }
-        
-        setCurrentStage(3);
-        toast({
-          title: "Review saved",
-          description: "Your design review has been saved. Redirecting to results...",
-        });
-        
-        // Navigate to the new review page
-        setTimeout(() => {
-          setIsUploading(false);
-          if (reviewData && reviewData.id) {
-            navigate(`/analysis/${reviewData.id}`);
-          } else {
-            toast({
-              title: "Error",
-              description: "Failed to get review ID",
-              variant: "destructive"
-            });
-          }
-        }, 1000);
+        analysisResults = await processWithClaudeAI(publicUrl);
       } catch (analysisError: any) {
         console.error("Analysis error:", analysisError);
         // If Claude analysis fails, provide a helpful error message
@@ -111,38 +72,54 @@ export const useImageUpload = () => {
           variant: "destructive",
         });
         
-        const dummyFeedback = generateDummyFeedback();
-        
-        // Still save the review with dummy data so the user can proceed
-        const { data: reviewData, error: reviewError } = await supabase
-          .from('saved_reviews')
-          .insert({
-            title: `Review - ${file.name} (Limited Analysis)`,
-            image_url: publicUrl,
-            feedback: dummyFeedback
-          })
-          .select()
-          .single();
-          
-        if (reviewError) {
-          console.error("Database error with dummy data:", reviewError);
-          throw new Error("Error saving your review to the database.");
-        }
-        
-        setCurrentStage(3);
-        setTimeout(() => {
-          setIsUploading(false);
-          if (reviewData && reviewData.id) {
-            navigate(`/analysis/${reviewData.id}`);
-          } else {
-            toast({
-              title: "Error",
-              description: "Failed to get review ID",
-              variant: "destructive"
-            });
-          }
-        }, 1000);
+        analysisResults = generateDummyFeedback();
+        usedFallback = true;
       }
+      
+      setCurrentStage(2);
+      
+      if (!usedFallback) {
+        toast({
+          title: "Analysis complete",
+          description: "Your design has been analyzed. Saving results...",
+        });
+      }
+      
+      // Save the analysis to the database
+      const { data: reviewData, error: reviewError } = await supabase
+        .from('saved_reviews')
+        .insert({
+          title: `Review - ${file.name}${usedFallback ? ' (Limited Analysis)' : ''}`,
+          image_url: publicUrl,
+          feedback: analysisResults
+        })
+        .select()
+        .single();
+        
+      if (reviewError) {
+        const dbErrorMsg = handleDatabaseError(reviewError);
+        throw new Error(dbErrorMsg);
+      }
+      
+      setCurrentStage(3);
+      toast({
+        title: "Review saved",
+        description: "Your design review has been saved. Redirecting to results...",
+      });
+      
+      // Navigate to the new review page
+      setTimeout(() => {
+        setIsUploading(false);
+        if (reviewData && reviewData.id) {
+          navigate(`/analysis/${reviewData.id}`);
+        } else {
+          toast({
+            title: "Error",
+            description: "Failed to get review ID",
+            variant: "destructive"
+          });
+        }
+      }, 1000);
       
     } catch (error: any) {
       handleUploadError(error);

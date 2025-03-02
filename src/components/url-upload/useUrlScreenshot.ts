@@ -36,6 +36,7 @@ export const useUrlScreenshot = () => {
       console.log("Screenshot generated:", screenshotData.imageUrl);
       
       let analysisResults;
+      let usedFallback = false;
       
       // Check if screenshot is an SVG placeholder (which means the screenshot failed)
       const isSvgPlaceholder = typeof screenshotData.imageUrl === 'string' && 
@@ -52,29 +53,38 @@ export const useUrlScreenshot = () => {
           analysisResults = await processWithClaudeAI(screenshotData.imageUrl);
         } catch (analysisError: any) {
           console.error("Claude analysis error:", analysisError);
+          usedFallback = true;
+          
+          // Show the error message
+          toast({
+            title: "AI Analysis Limited",
+            description: "We're using simulated results because our AI service is currently limited. The screenshot was still captured successfully.",
+            variant: "destructive",
+          });
           
           // If Claude analysis fails but we have an SVG placeholder,
           // use a fallback dummy analysis so user gets something
           if (isSvgPlaceholder) {
             console.log("Using dummy feedback for placeholder image");
-            toast({
-              title: "Limited Analysis",
-              description: "We couldn't capture the actual website. Using simulated analysis instead.",
-              variant: "destructive",
-            });
             analysisResults = generateDummyFeedback();
           } else {
-            throw analysisError;
+            analysisResults = generateDummyFeedback();
           }
         }
       }
       
-      toast({
-        title: "Analysis complete",
-        description: "Website design has been analyzed successfully.",
-      });
+      if (!usedFallback) {
+        toast({
+          title: "Analysis complete",
+          description: "Website design has been analyzed successfully.",
+        });
+      }
       
-      return { imageUrl: screenshotData.imageUrl, analysisResults };
+      return { 
+        imageUrl: screenshotData.imageUrl, 
+        analysisResults,
+        usedFallback
+      };
     } catch (error: any) {
       console.error("URL processing error:", error);
       
@@ -112,7 +122,11 @@ export const useUrlScreenshot = () => {
       const placeholderSvg = createPlaceholderSvg(normalizedUrl);
       const dummyData = generateDummyFeedback();
       
-      return { imageUrl: placeholderSvg, analysisResults: dummyData };
+      return { 
+        imageUrl: placeholderSvg, 
+        analysisResults: dummyData,
+        usedFallback: true
+      };
     } finally {
       setIsLoading(false);
     }

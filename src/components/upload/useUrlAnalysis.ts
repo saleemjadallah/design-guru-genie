@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { handleUploadError, handleDatabaseError } from "@/utils/upload/errorHandler";
 import { processWithClaudeAI } from "@/services/claudeAnalysisService";
+import { generateDummyFeedback } from "@/utils/upload/dummyData";
 
 // Helper to type check Claude AI response structure
 interface ClaudeResponse {
@@ -48,6 +49,7 @@ export const useUrlAnalysis = () => {
       
       // Process the data from Claude API or get new analysis
       let analysisResults;
+      let usedFallback = false;
       
       if (data) {
         console.log("Using provided analysis data");
@@ -101,7 +103,18 @@ export const useUrlAnalysis = () => {
               title: "Retrying analysis",
               description: "Processing your URL with our design analysis AI...",
             });
-            analysisResults = await processWithClaudeAI(imageUrl);
+            try {
+              analysisResults = await processWithClaudeAI(imageUrl);
+            } catch (claudeError) {
+              console.error("Claude API error:", claudeError);
+              toast({
+                title: "AI Analysis Limited",
+                description: "We're using simulated results because our AI service is currently limited.",
+                variant: "destructive",
+              });
+              analysisResults = generateDummyFeedback();
+              usedFallback = true;
+            }
           }
         } else {
           console.log("Using provided direct analysis data");
@@ -118,7 +131,18 @@ export const useUrlAnalysis = () => {
         
         console.log("No data provided - using Claude AI directly");
         // Call Claude AI service directly
-        analysisResults = await processWithClaudeAI(imageUrl);
+        try {
+          analysisResults = await processWithClaudeAI(imageUrl);
+        } catch (claudeError) {
+          console.error("Claude API error:", claudeError);
+          toast({
+            title: "AI Analysis Limited",
+            description: "We're using simulated results because our AI service is currently limited.",
+            variant: "destructive",
+          });
+          analysisResults = generateDummyFeedback();
+          usedFallback = true;
+        }
       }
       
       if (!analysisResults || (Array.isArray(analysisResults) && analysisResults.length === 0)) {
@@ -126,10 +150,13 @@ export const useUrlAnalysis = () => {
       }
       
       setCurrentStage(2);
-      toast({
-        title: "Generating feedback",
-        description: "Creating detailed design recommendations...",
-      });
+      
+      if (!usedFallback) {
+        toast({
+          title: "Generating feedback",
+          description: "Creating detailed design recommendations...",
+        });
+      }
       
       console.log("Saving analysis to database:", analysisResults);
       
@@ -137,7 +164,7 @@ export const useUrlAnalysis = () => {
       const { data: reviewData, error: reviewError } = await supabase
         .from('saved_reviews')
         .insert({
-          title: `Website Review - ${new URL(imageUrl).hostname || 'URL'}`,
+          title: `Website Review - ${new URL(imageUrl).hostname || 'URL'}${usedFallback ? ' (Limited Analysis)' : ''}`,
           image_url: imageUrl,
           feedback: analysisResults
         })

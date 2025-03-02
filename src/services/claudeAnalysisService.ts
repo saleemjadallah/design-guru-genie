@@ -45,12 +45,7 @@ export async function processWithClaudeAI(imageUrl: string) {
         console.log("Converted blob to public URL:", imageUrl);
       } catch (blobError) {
         console.error("Error processing blob URL:", blobError);
-        toast({
-          title: "Processing Error",
-          description: "Failed to process the image. Using simulated analysis instead.",
-          variant: "destructive",
-        });
-        return generateDummyFeedback();
+        throw new Error(`Failed to process the image: ${blobError.message}`);
       }
     }
     
@@ -60,17 +55,11 @@ export async function processWithClaudeAI(imageUrl: string) {
     
     if (isSvgPlaceholder) {
       console.log("Detected SVG placeholder instead of actual screenshot");
-      toast({
-        title: "Limited Analysis",
-        description: "We couldn't capture the website screenshot. Using simulated analysis instead.",
-        variant: "destructive",
-      });
-      
-      // Return dummy feedback data for SVG placeholders
-      return generateDummyFeedback();
+      throw new Error("SVG placeholder detected instead of actual screenshot");
     }
     
     // Proceed with Claude analysis for proper images
+    console.log("Calling analyze-design function with URL:", imageUrl);
     const { data: analyzeData, error: analyzeError } = await supabase.functions
       .invoke('analyze-design', {
         body: { imageUrl },
@@ -123,12 +112,8 @@ export async function processWithClaudeAI(imageUrl: string) {
     throw new Error("Invalid response format from Claude AI service");
   } catch (analyzeError: any) {
     console.error("Error calling analyze-design function:", analyzeError);
-    toast({
-      title: "Analysis failed",
-      description: analyzeError.message || "AI analysis failed. Please try again.",
-      variant: "destructive",
-    });
-    throw new Error(`AI analysis failed: ${analyzeError.message || "Unknown error"}`);
+    // Don't toast errors here - let the calling component handle that
+    throw analyzeError;
   }
 }
 

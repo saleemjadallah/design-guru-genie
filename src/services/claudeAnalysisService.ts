@@ -1,4 +1,3 @@
-
 import { toast } from "@/hooks/use-toast";
 import { handleAnalysisError } from "@/utils/upload/errorHandler";
 import { compressImageForAPI, CompressionOptions } from "@/utils/upload/imageCompressionService";
@@ -71,6 +70,26 @@ export async function processWithClaudeAI(imageUrl: string, compressionOptions: 
         throw compressionError;
       }
       // Otherwise continue with the original URL - compression is optional
+    }
+    
+    // Add a final explicit size check before calling the Claude API
+    try {
+      const finalResponse = await fetch(imageUrl);
+      const finalBlob = await finalResponse.blob();
+      if (finalBlob.size > 5 * 1024 * 1024) {
+        throw new Error(`Failed to compress image below 5MB limit. Final size: ${(finalBlob.size / (1024 * 1024)).toFixed(2)}MB`);
+      }
+    } catch (finalCheckError) {
+      console.error("Final size check error:", finalCheckError);
+      if (finalCheckError.message.includes("5MB limit")) {
+        toast({
+          title: "Image too large",
+          description: finalCheckError.message,
+          variant: "destructive",
+        });
+        throw finalCheckError;
+      }
+      // If it's just a fetch error but not a size error, continue
     }
     
     // Call the Claude AI analysis API

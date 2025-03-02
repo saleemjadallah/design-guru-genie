@@ -37,6 +37,12 @@ export async function compressImageForAPI(
     // If the image is already small enough, return it as is
     if (blob.size < maxSizeBytes) {
       console.log("Image already small enough, skipping compression");
+      
+      // Add a final explicit size check even for "small enough" images
+      if (blob.size > 5 * 1024 * 1024) {
+        throw new Error(`Image exceeds 5MB limit. Size: ${(blob.size / (1024 * 1024)).toFixed(2)}MB`);
+      }
+      
       return imageUrl;
     }
     
@@ -75,7 +81,7 @@ export async function compressImageForAPI(
           ctx.drawImage(img, 0, 0, currentWidth, currentHeight);
           
           // Convert to compressed data URL
-          canvas.toBlob((blob) => {
+          canvas.toBlob(async (blob) => {
             if (!blob) {
               reject(new Error('Failed to create image blob'));
               return;
@@ -108,8 +114,24 @@ export async function compressImageForAPI(
                 }
               }
               
+              const blobUrl = URL.createObjectURL(blob);
               console.log(`Final compressed size: ${Math.round(blob.size/1024)}KB after ${attempt} attempts`);
-              resolve(URL.createObjectURL(blob));
+              
+              // Add a final explicit size check before returning
+              try {
+                const finalResponse = await fetch(blobUrl);
+                const finalBlob = await finalResponse.blob();
+                if (finalBlob.size > 5 * 1024 * 1024) {
+                  URL.revokeObjectURL(blobUrl);
+                  reject(new Error(`Failed to compress image below 5MB limit. Final size: ${(finalBlob.size / (1024 * 1024)).toFixed(2)}MB`));
+                  return;
+                }
+              } catch (finalCheckError) {
+                console.warn("Final size check error:", finalCheckError);
+                // Continue despite the check error - we'll log but not fail
+              }
+              
+              resolve(blobUrl);
             }
           }, 'image/jpeg', currentQuality);
         };

@@ -98,7 +98,17 @@ export const FeedbackIssueCard = ({
       onClick={() => onIssueSelect(issue.id ?? null)}
     >
       <div className="flex justify-between items-start mb-2">
-        <h3 className="font-medium text-neutral-900">{issue.title}</h3>
+        <div className="flex items-center">
+          {issue.id !== undefined && issue.location && (
+            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white mr-2 ${
+              issue.priority === "high" ? "bg-red-500" : 
+              issue.priority === "medium" ? "bg-amber-500" : "bg-blue-500"
+            }`}>
+              {issue.id}
+            </div>
+          )}
+          <h3 className="font-medium text-neutral-900">{issue.title}</h3>
+        </div>
         <div
           className={`text-xs px-2 py-0.5 rounded-full ${getPriorityClasses(
             issue.priority

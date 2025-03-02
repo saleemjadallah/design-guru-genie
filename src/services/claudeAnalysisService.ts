@@ -77,9 +77,7 @@ export async function processWithClaudeAI(imageUrl: string) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
-        },
-        // Add a longer timeout for large images
-        abortSignal: AbortSignal.timeout(60000) // 60 seconds
+        }
       });
       
     if (analyzeError) {

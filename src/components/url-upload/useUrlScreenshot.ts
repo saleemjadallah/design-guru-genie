@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -22,9 +23,9 @@ export const useUrlScreenshot = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
-        },
-        // 30 seconds timeout for screenshot generation
-        abortSignal: AbortSignal.timeout(30000)
+        }
+        // Removed unsupported abortSignal property
+        // We'll use Promise.race with setTimeout for timeout handling if needed
       });
 
       if (screenshotError) {

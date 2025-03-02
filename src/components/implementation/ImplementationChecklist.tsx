@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Check, Clock, FileCode, ArrowRight, Wrench } from "lucide-react";
@@ -37,8 +38,12 @@ export const ImplementationChecklist = ({
     
     const handleToggleCompleted = () => {
       if (issue.id !== undefined) {
-        console.log("Toggling completion from checklist for issue:", issue.id);
+        console.log("Button clicked for issue:", issue.id);
+        console.log("Before toggle, completedItems:", completedItems);
         toggleCompleted(issue.id);
+        console.log("Toggling completion from checklist for issue:", issue.id);
+        // Check if toggleCompleted is synchronous or asynchronous
+        console.log("After toggle (if synchronous), completedItems:", completedItems);
       }
     };
     

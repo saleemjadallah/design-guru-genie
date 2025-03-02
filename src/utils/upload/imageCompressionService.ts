@@ -81,7 +81,7 @@ export async function compressImageForAPI(
               return;
             }
             
-            console.log(`Compressed to ${Math.round(blob.size/1024)}KB (${Math.round((blob.size/img.size)*100)}% of original)`);
+            console.log(`Compressed to ${Math.round(blob.size/1024)}KB (${Math.round((blob.size/originalBlobSize)*100)}% of original)`);
             
             // Check if the blob is still too large and we haven't reached max attempts
             if (blob.size > maxSizeBytes && attempt < maxAttempts) {
@@ -113,6 +113,9 @@ export async function compressImageForAPI(
             }
           }, 'image/jpeg', currentQuality);
         };
+        
+        // Store the original blob size for percentage calculations
+        const originalBlobSize = blob.size;
         
         // Start compression with initial settings
         compressWithSettings();

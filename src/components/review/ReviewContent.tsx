@@ -1,3 +1,4 @@
+
 import { AnnotationCanvas } from "@/components/AnnotationCanvas";
 import { FeedbackPanel } from "@/components/feedback/FeedbackPanel";
 import { Overview } from "@/components/analysis/Overview";
@@ -121,6 +122,7 @@ export const ReviewContent = ({
                       selectedIssue={selectedIssue}
                       onIssueSelect={setSelectedIssue}
                       displayNumberMap={createDisplayNumberMap(issues)}
+                      onSave={() => {}}
                     />
                   )}
                 </div>

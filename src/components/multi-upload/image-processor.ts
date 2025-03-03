@@ -1,3 +1,4 @@
+
 import { stitchImages } from "@/utils/image-stitching";
 import { ScreenshotFile } from "./types";
 import { toast } from "@/hooks/use-toast";
@@ -54,7 +55,7 @@ export async function processCombinedImage(
     throw new Error(`Image size (${Math.round(processedBlob.size/(1024*1024))}MB) exceeds the 5MB limit even after compression. Please reduce image size or try fewer screenshots.`);
   }
   
-  // Check the blob type and size, but Claude accepts multiple formats
+  // Check the blob type and size, but OpenAI accepts multiple formats
   let finalBlob = processedBlob;
   let finalFormat = processedBlob.type;
   let finalExtension = "png";

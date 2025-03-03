@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { handleUploadError } from "@/utils/upload/errorHandler";
-import { processWithClaudeAI } from "@/services/claudeAnalysisService";
+import { processWithOpenAI } from "@/services/openaiAnalysisService";
 import { processAndUploadImage } from "@/utils/upload/imageProcessing";
 import { saveReviewToDatabase } from "@/utils/upload/reviewStorage";
 
@@ -33,13 +33,13 @@ export const useImageUpload = () => {
         description: "Your image has been uploaded successfully. Starting analysis...",
       });
       
-      // Call analyze-design edge function to process with Claude - no fallbacks
+      // Analyze with OpenAI
       let analysisResults;
       
       try {
-        console.log("Starting Claude analysis for:", publicUrl);
-        analysisResults = await processWithClaudeAI(publicUrl);
-        console.log("Claude analysis complete:", analysisResults);
+        console.log("Starting OpenAI analysis for:", publicUrl);
+        analysisResults = await processWithOpenAI(publicUrl);
+        console.log("OpenAI analysis complete:", analysisResults);
       } catch (analysisError: any) {
         console.error("Analysis error:", analysisError);
         
@@ -56,7 +56,7 @@ export const useImageUpload = () => {
         
         toast({
           title: "AI Analysis Failed",
-          description: `Claude analysis error: ${errorMessage}. Please try again later.`,
+          description: `OpenAI analysis error: ${errorMessage}. Please try again later.`,
           variant: "destructive",
         });
         

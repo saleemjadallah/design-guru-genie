@@ -24,7 +24,7 @@ export const useUrlAnalysis = () => {
         description: "We're preparing to analyze your website URL...",
       });
       
-      // Process data or get new analysis from Claude
+      // Process data or get new analysis from OpenAI
       setCurrentStage(1);
       toast({
         title: "Processing URL",

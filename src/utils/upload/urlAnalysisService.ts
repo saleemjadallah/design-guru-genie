@@ -1,11 +1,10 @@
 
 import { toast } from "@/hooks/use-toast";
-import { processWithClaudeAI } from "@/services/claudeAnalysisService";
-import { parseClaudeResponseData } from "@/utils/upload/claudeResponseParser";
+import { processWithOpenAI } from "@/services/openaiAnalysisService";
 import { handleUrlAnalysisError, handleUrlAnalysisSuccess } from "@/utils/upload/urlAnalysisErrorHandler";
 
 /**
- * Process data or get new analysis from Claude API
+ * Process data or get new analysis from OpenAI API
  * @param imageUrl URL of the screenshot or website
  * @param data Optional pre-existing data
  * @returns Analysis results in the required format
@@ -25,32 +24,15 @@ export const processUrlAnalysisData = async (imageUrl: string, data?: any) => {
   }
   
   // If data is provided, try to use it
-  if (data) {
-    console.log("Processing provided analysis data");
-    try {
-      const parsedData = parseClaudeResponseData(data);
-      if (parsedData.length > 0) {
-        handleUrlAnalysisSuccess(parsedData.length);
-        return parsedData;
-      }
-      // If no valid results after parsing, continue to process with Claude API
-      toast({
-        title: "Retrying analysis",
-        description: "Processing your URL with our design analysis AI...",
-      });
-    } catch (parseError) {
-      console.error("Error parsing provided data:", parseError);
-      // Continue to process with Claude API
-      toast({
-        title: "Retrying analysis",
-        description: "Processing your URL with our design analysis AI...",
-      });
-    }
+  if (data && Array.isArray(data) && data.length > 0) {
+    console.log("Using provided analysis data");
+    handleUrlAnalysisSuccess(data.length);
+    return data;
   }
 
   try {
-    // If no usable data provided or parsing failed, use Claude API
-    console.log(data ? "Falling back to Claude AI" : "Using Claude AI directly");
+    // Use OpenAI API for analysis
+    console.log("Using OpenAI for URL analysis");
     
     // Use more aggressive compression options
     const compressionOptions = {
@@ -60,14 +42,14 @@ export const processUrlAnalysisData = async (imageUrl: string, data?: any) => {
       maxSizeBytes: 4 * 1024 * 1024 // 4MB target (safely under 5MB)
     };
     
-    const results = await processWithClaudeAI(imageUrl, compressionOptions);
+    const results = await processWithOpenAI(imageUrl, compressionOptions);
     if (results && Array.isArray(results) && results.length > 0) {
       handleUrlAnalysisSuccess(results.length);
     }
     return results;
-  } catch (claudeError: any) {
-    console.error("Claude API error:", claudeError);
-    const errorMessage = handleUrlAnalysisError(claudeError);
+  } catch (openAIError: any) {
+    console.error("OpenAI API error:", openAIError);
+    const errorMessage = handleUrlAnalysisError(openAIError);
     throw new Error(errorMessage);
   } finally {
     // Ensure blob URLs are properly revoked to prevent memory leaks

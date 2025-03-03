@@ -4,8 +4,21 @@ project_id = "nhljzyqmvvwobkyusuxp"
 [api]
 enabled = true
 port = 54321
-schemas = ["public", "storage", "graphql_public"]
+schemas = ["public", "storage"]
+
+[db]
+port = 54322
+
+[realtime]
+enabled = true
+
+[storage]
+enabled = true
+
+[auth]
+enabled = true
 
 [functions]
-[functions.analyze-design]
-verify_jwt = false
+analyze-design = {}
+screenshot-url = {}
+analyze-design-openai = {}

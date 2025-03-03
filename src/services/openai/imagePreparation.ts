@@ -2,7 +2,7 @@
 import { toast } from "@/hooks/use-toast";
 
 /**
- * Simplified image processing - no compression
+ * Simplified image preparation - no compression
  */
 export async function prepareImageForAnalysis(imageUrl: string) {
   try {

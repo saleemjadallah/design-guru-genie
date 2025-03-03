@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
 /**
- * Simplified OpenAI analysis API call
+ * Call OpenAI analysis API with improved error handling
  */
 export async function callOpenAIAnalysisAPI(imageUrl: string) {
   toast({
@@ -32,16 +32,23 @@ export async function callOpenAIAnalysisAPI(imageUrl: string) {
       
     if (analyzeError) {
       console.error("OpenAI analysis error:", analyzeError);
+      
+      if (analyzeError.message?.includes("non-2xx status code")) {
+        // This is likely due to an issue with the OpenAI API key
+        throw new Error("The OpenAI API key may be missing or invalid. Please check the OPENAI_API_KEY in your Supabase project settings.");
+      }
+      
       throw analyzeError;
     }
     
-    console.log("Analysis results received successfully");
-    
     if (!analyzeData) {
-      throw new Error("Empty response from OpenAI API");
+      console.error("Empty response from OpenAI API");
+      throw new Error("Empty response from OpenAI API. The service may be temporarily unavailable.");
     }
     
+    console.log("Analysis results received successfully");
     return analyzeData;
+    
   } catch (error: any) {
     console.error("Error in OpenAI analysis:", error);
     const errorMessage = error.message || "Unknown error";

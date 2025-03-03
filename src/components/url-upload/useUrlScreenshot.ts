@@ -60,7 +60,7 @@ export const useUrlScreenshot = () => {
         throw new Error("Failed to capture website screenshot. The website may be blocking our capture service or have security measures in place.");
       }
       
-      // Use OpenAI for analysis instead of Claude - FIX: removed second argument
+      // Use OpenAI for analysis
       let analysisResults;
       try {
         analysisResults = await processWithOpenAI(screenshotData.imageUrl);
@@ -92,19 +92,13 @@ export const useUrlScreenshot = () => {
       } else if (error.message?.includes("non-2xx status code")) {
         toast({
           title: "Analysis service error",
-          description: "Our AI analysis service encountered an issue. This might be due to image size or complexity. Please try uploading a smaller or simpler screenshot.",
+          description: "Our OpenAI analysis service encountered an issue. Please check that the OPENAI_API_KEY is set correctly in your Supabase project.",
           variant: "destructive",
         });
       } else if (error.message?.includes("timeout")) {
         toast({
           title: "Request timeout",
-          description: "The analysis took too long to complete. It might be too complex or our service is busy. Please try again with a smaller screenshot.",
-          variant: "destructive",
-        });
-      } else if (error.message?.includes("maximum call stack")) {
-        toast({
-          title: "Processing error",
-          description: "The image is too complex for our analysis service. Please try uploading a smaller or simpler screenshot.",
+          description: "The analysis took too long to complete. It might be too complex or our service is busy. Please try again later.",
           variant: "destructive",
         });
       } else {
@@ -128,4 +122,3 @@ export const useUrlScreenshot = () => {
     captureScreenshot
   };
 };
-

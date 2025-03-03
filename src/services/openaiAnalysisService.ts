@@ -6,15 +6,20 @@ import { processOpenAIResponse } from "./openai/responseProcessor";
 
 /**
  * Simplified process to analyze an image with OpenAI
- * No compression or complex formatting
  */
 export async function processWithOpenAI(imageUrl: string) {
   try {
+    console.log("Starting OpenAI analysis process for image:", imageUrl.substring(0, 50) + "...");
+    
     // Simply pass through the image
     const processedImageUrl = await prepareImageForAnalysis(imageUrl);
     
     // Call the OpenAI analysis API
     const analysisData = await callOpenAIAnalysisAPI(processedImageUrl);
+    
+    if (!analysisData) {
+      throw new Error("No analysis data returned from OpenAI");
+    }
     
     // Process the response
     const result = processOpenAIResponse(analysisData);

@@ -23,5 +23,4 @@ export interface TransparencyOptions {
   forceNoAlpha?: boolean;
 }
 
-// Export all types for use in other modules
-export type { CompressionOptions, TransparencyOptions };
+// No need for re-exporting since we're already using export directly on the interfaces

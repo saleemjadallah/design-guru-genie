@@ -5,6 +5,7 @@ import { toast } from "@/hooks/use-toast";
 import { handleUploadError } from "@/utils/upload/errorHandler";
 import { processUrlAnalysisData } from "@/utils/upload/urlAnalysisService";
 import { saveUrlReviewToDatabase } from "@/utils/upload/urlReviewStorage";
+import { processWithOpenAI } from "@/services/openaiAnalysisService";
 
 export const useUrlAnalysis = () => {
   const navigate = useNavigate();
@@ -24,14 +25,33 @@ export const useUrlAnalysis = () => {
         description: "We're preparing to analyze your website URL...",
       });
       
-      // Process data or get new analysis from OpenAI
+      // Process data or get new analysis
       setCurrentStage(1);
       toast({
         title: "Processing URL",
         description: "Retrieving and analyzing website design elements...",
       });
       
-      const analysisResults = await processUrlAnalysisData(imageUrl, data);
+      let analysisResults;
+      try {
+        // Try the primary analysis service
+        analysisResults = await processUrlAnalysisData(imageUrl, data);
+      } catch (primaryError) {
+        console.error("Primary URL analysis failed, trying OpenAI fallback:", primaryError);
+        
+        toast({
+          title: "Switching AI services",
+          description: "Primary AI service unavailable, using backup service...",
+        });
+        
+        // Fall back to OpenAI if the primary service fails
+        try {
+          analysisResults = await processWithOpenAI(imageUrl);
+        } catch (fallbackError) {
+          console.error("OpenAI fallback also failed:", fallbackError);
+          throw new Error("All AI analysis services failed. Please try again later.");
+        }
+      }
       
       // Generate feedback and save to database
       setCurrentStage(2);

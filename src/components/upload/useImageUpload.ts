@@ -6,6 +6,7 @@ import { handleUploadError } from "@/utils/upload/errorHandler";
 import { processWithClaudeAI } from "@/services/claudeAnalysisService";
 import { processAndUploadImage } from "@/utils/upload/imageProcessing";
 import { saveReviewToDatabase } from "@/utils/upload/reviewStorage";
+import { processWithOpenAI } from "@/services/openaiAnalysisService";
 
 export const useImageUpload = () => {
   const navigate = useNavigate();
@@ -33,9 +34,30 @@ export const useImageUpload = () => {
         description: "Your image has been uploaded successfully. Starting analysis...",
       });
       
-      // Analyze with Claude AI
-      const analysisResults = await processWithClaudeAI(publicUrl);
-      console.log("Claude analysis complete:", analysisResults);
+      // Try to analyze with Claude AI first
+      let analysisResults;
+      try {
+        console.log("Attempting analysis with Claude AI");
+        analysisResults = await processWithClaudeAI(publicUrl);
+        console.log("Claude analysis successful:", analysisResults);
+      } catch (claudeError) {
+        console.error("Claude analysis failed, falling back to OpenAI:", claudeError);
+        
+        toast({
+          title: "Switching AI services",
+          description: "Primary AI service unavailable, using backup service...",
+        });
+        
+        // Fall back to OpenAI if Claude fails
+        try {
+          console.log("Attempting analysis with OpenAI");
+          analysisResults = await processWithOpenAI(publicUrl);
+          console.log("OpenAI analysis successful");
+        } catch (openAIError) {
+          console.error("OpenAI analysis also failed:", openAIError);
+          throw new Error("All AI analysis services failed. Please try again later.");
+        }
+      }
       
       setCurrentStage(2);
       toast({

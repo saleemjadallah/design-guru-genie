@@ -46,7 +46,7 @@ export const handleDatabaseError = (reviewError: any) => {
 };
 
 /**
- * Error handler for Claude AI analysis errors with updated edge function approach
+ * Error handler for AI analysis errors with updated edge function approach
  */
 export const handleAnalysisError = (analyzeError: any) => {
   console.error("Analysis error:", analyzeError);
@@ -84,6 +84,20 @@ export const handleAnalysisError = (analyzeError: any) => {
   }
   else if (errorMessage.includes("API key not configured")) {
     errorMsg = "The API key is not properly configured. Please check the Edge Function secrets.";
+  }
+  // OpenAI specific errors
+  else if (errorMessage.includes("OpenAI")) {
+    if (errorMessage.includes("rate limit")) {
+      errorMsg = "OpenAI rate limit exceeded. Please try again later.";
+    } else if (errorMessage.includes("invalid API key")) {
+      errorMsg = "Invalid OpenAI API key. Please check your Edge Function secrets.";
+    } else {
+      errorMsg = "Error with OpenAI service. Please try again later.";
+    }
+  }
+  // General error case
+  else if (errorMessage.includes("All AI analysis services failed")) {
+    errorMsg = "All AI analysis services are currently unavailable. Please try again later.";
   }
   
   return errorMsg;

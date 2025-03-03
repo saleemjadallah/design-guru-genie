@@ -3,35 +3,35 @@ import { toast } from "@/hooks/use-toast";
 import { prepareImageForAnalysis, cleanupUrls } from "./openai/imagePreparation";
 import { callOpenAIAnalysisAPI } from "./openai/apiService";
 import { processOpenAIResponse } from "./openai/responseProcessor";
+import { handleAnalysisError } from "@/utils/upload/errorHandler";
 
 /**
- * Simplified process to analyze an image with Claude AI
- * (keeping the same function name to avoid updating all references)
+ * Process to analyze an image with OpenAI
  */
 export async function processWithOpenAI(imageUrl: string) {
   try {
-    console.log("Starting Claude AI analysis process for image:", imageUrl.substring(0, 50) + "...");
+    console.log("Starting OpenAI analysis process for image:", imageUrl.substring(0, 50) + "...");
     
-    // Simply pass through the image
+    // Prepare the image
     const processedImageUrl = await prepareImageForAnalysis(imageUrl);
     
-    console.log("Prepared image URL:", processedImageUrl.substring(0, 50) + "...");
-    console.log("Calling Claude analysis API via callOpenAIAnalysisAPI function");
+    console.log("Prepared image URL for OpenAI:", processedImageUrl.substring(0, 50) + "...");
+    console.log("Calling OpenAI analysis API");
     
-    // Call the Claude analysis API (using the same function name)
+    // Call the OpenAI analysis API
     const analysisData = await callOpenAIAnalysisAPI(processedImageUrl);
     
     if (!analysisData) {
-      console.error("No analysis data returned from Claude AI");
-      throw new Error("No analysis data returned from Claude AI");
+      console.error("No analysis data returned from OpenAI");
+      throw new Error("No analysis data returned from OpenAI");
     }
     
-    console.log("Analysis data received, processing response");
+    console.log("OpenAI analysis data received, processing response");
     
     // Process the response
     const result = processOpenAIResponse(analysisData);
     
-    console.log("Analysis complete, cleaning up resources");
+    console.log("OpenAI analysis complete, cleaning up resources");
     
     // Clean up resources
     cleanupUrls(imageUrl);
@@ -39,16 +39,16 @@ export async function processWithOpenAI(imageUrl: string) {
     return result;
     
   } catch (analyzeError: any) {
-    console.error("Error in Claude AI analysis process:", analyzeError);
+    console.error("Error in OpenAI analysis process:", analyzeError);
     
     // Clean up resources
     cleanupUrls(imageUrl);
     
-    // Now using hardcoded API key so these errors should be less common
-    let errorMessage = analyzeError.message || "There was an error analyzing your design.";
+    // Get error message from handler
+    const errorMessage = handleAnalysisError(analyzeError);
     
     toast({
-      title: "Analysis Failed",
+      title: "OpenAI Analysis Failed",
       description: errorMessage,
       variant: "destructive",
     });

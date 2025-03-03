@@ -1,9 +1,10 @@
+
 import { useState } from "react";
 import { Globe, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { processWithClaudeAI } from "@/services/claudeAnalysisService";
+import { processWithOpenAI } from "@/services/openaiAnalysisService";
 import { generateDummyFeedback } from "@/utils/upload/dummyData";
 
 export const UrlUpload = ({ onUrlAnalyze }: { onUrlAnalyze: (imageUrl: string, analysisData: any) => void }) => {
@@ -88,12 +89,17 @@ export const UrlUpload = ({ onUrlAnalyze }: { onUrlAnalyze: (imageUrl: string, a
           analysisResults = screenshotData.analysis;
         } else {
           try {
-            // Try to generate fresh analysis with Claude
-            analysisResults = await processWithClaudeAI(screenshotData.imageUrl);
+            // Use OpenAI for analysis instead of Claude
+            analysisResults = await processWithOpenAI(screenshotData.imageUrl, {
+              maxWidth: 800,
+              maxHeight: 1000,
+              quality: 0.65,
+              maxSizeBytes: 4 * 1024 * 1024
+            });
           } catch (analysisError: any) {
-            console.error("Claude analysis error:", analysisError);
+            console.error("OpenAI analysis error:", analysisError);
             
-            // If Claude analysis fails but we have an SVG placeholder,
+            // If analysis fails but we have an SVG placeholder,
             // use a fallback dummy analysis so user gets something
             if (isSvgPlaceholder) {
               console.log("Using dummy feedback for placeholder image");

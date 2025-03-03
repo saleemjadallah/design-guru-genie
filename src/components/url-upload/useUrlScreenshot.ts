@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { processWithClaudeAI } from "@/services/claudeAnalysisService";
+import { processWithOpenAI } from "@/services/openaiAnalysisService";
 import { createPlaceholderSvg } from "./UrlValidation";
 
 export const useUrlScreenshot = () => {
@@ -60,15 +60,14 @@ export const useUrlScreenshot = () => {
         throw new Error("Failed to capture website screenshot. The website may be blocking our capture service or have security measures in place.");
       }
       
-      // Try to generate analysis with Claude - no fallbacks
+      // Use OpenAI for analysis instead of Claude
       let analysisResults;
       try {
-        // Use more aggressive compression settings for URL screenshots
-        analysisResults = await processWithClaudeAI(screenshotData.imageUrl, {
-          maxWidth: 800,       // Reduce max width for Claude analysis
-          maxHeight: 1000,     // Reduce max height for Claude analysis
-          quality: 0.65,       // Lower quality for smaller file size
-          maxSizeBytes: 4 * 1024 * 1024 // Hard 4MB limit to stay safely under 5MB
+        analysisResults = await processWithOpenAI(screenshotData.imageUrl, {
+          maxWidth: 800,
+          maxHeight: 1000,
+          quality: 0.65,
+          maxSizeBytes: 4 * 1024 * 1024
         });
         
         toast({
@@ -76,8 +75,8 @@ export const useUrlScreenshot = () => {
           description: "Website design has been analyzed successfully.",
         });
       } catch (analysisError: any) {
-        console.error("Claude analysis error:", analysisError);
-        throw new Error(`Claude analysis failed: ${analysisError.message}`);
+        console.error("OpenAI analysis error:", analysisError);
+        throw new Error(`AI analysis failed: ${analysisError.message}`);
       }
       
       return { 

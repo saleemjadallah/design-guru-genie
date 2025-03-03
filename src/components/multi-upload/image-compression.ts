@@ -4,7 +4,7 @@ import { compressImageForAPI } from "@/utils/upload/imageCompressionService";
 
 /**
  * Compress an image blob with various compression settings
- * Always converts to JPEG for Claude compatibility
+ * Always converts to JPEG for API compatibility
  */
 export async function compressImage(
   blob: Blob, 
@@ -17,7 +17,7 @@ export async function compressImage(
     const blobUrl = URL.createObjectURL(blob);
     
     // Use the compressImageForAPI function from imageCompressionService
-    // And force JPEG conversion for Claude compatibility
+    // And force JPEG conversion for AI compatibility
     const compressedDataUrl = await compressImageForAPI(blobUrl, {
       maxWidth,
       maxHeight,
@@ -40,7 +40,7 @@ export async function compressImage(
 
 /**
  * Attempt to compress an image with multiple fallback compression settings
- * Always ensures JPEG format for Claude compatibility
+ * Always ensures JPEG format for API compatibility
  */
 export async function attemptImageCompression(
   blob: Blob, 
@@ -56,7 +56,7 @@ export async function attemptImageCompression(
   
   // Log the format conversion if needed
   if (blob.type !== 'image/jpeg') {
-    console.log(`Converting ${blob.type} to JPEG format for Claude compatibility`);
+    console.log(`Converting ${blob.type} to JPEG format for API compatibility`);
   }
   
   // Initial compression attempt

@@ -4,7 +4,7 @@
  * @param blobUrl Blob URL to process
  * @returns Promise resolving to Supabase storage URL
  */
-import { uploadBlobToSupabase, validateImageUrl } from "@/utils/upload/imageUploadService";
+import { uploadBlobToSupabase } from "@/utils/upload/imageUploadService";
 import { convertImageFormat } from "@/utils/upload/formatConversion";
 
 export async function processBlobUrl(blobUrl: string): Promise<string> {

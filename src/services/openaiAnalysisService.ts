@@ -7,7 +7,13 @@ import { compressImageForAPI } from "@/utils/upload/imageCompressionService";
  * Main function to process an image with OpenAI analysis
  * Handles preprocessing, API calls, and error handling
  */
-export async function processWithOpenAI(imageUrl: string, compressionOptions = {}) {
+export async function processWithOpenAI(imageUrl: string, compressionOptions: {
+  maxWidth?: number;
+  maxHeight?: number;
+  quality?: number;
+  maxSizeBytes?: number;
+  forceJpeg?: boolean;
+} = {}) {
   // Store original URL for cleanup later
   const originalUrl = imageUrl;
   
@@ -40,7 +46,13 @@ export async function processWithOpenAI(imageUrl: string, compressionOptions = {
 /**
  * Compresses an image URL for OpenAI processing
  */
-async function prepareImageForAnalysis(imageUrl: string, compressionOptions = {}) {
+async function prepareImageForAnalysis(imageUrl: string, compressionOptions: {
+  maxWidth?: number;
+  maxHeight?: number;
+  quality?: number;
+  maxSizeBytes?: number;
+  forceJpeg?: boolean;
+} = {}) {
   try {
     console.log("Compressing image before analysis...");
     const mergedOptions = {

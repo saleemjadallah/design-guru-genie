@@ -2,15 +2,7 @@
 import { toast } from "@/hooks/use-toast";
 import { processWithOpenAI } from "@/services/openaiAnalysisService";
 import { handleUrlAnalysisError, handleUrlAnalysisSuccess } from "@/utils/upload/urlAnalysisErrorHandler";
-
-// Define compression options interface to ensure type consistency
-interface CompressionOptions {
-  maxWidth?: number;
-  maxHeight?: number;
-  quality?: number;
-  maxSizeBytes?: number;
-  forceJpeg?: boolean;
-}
+import { CompressionOptions } from "@/services/openai/types";
 
 /**
  * Process data or get new analysis from OpenAI API

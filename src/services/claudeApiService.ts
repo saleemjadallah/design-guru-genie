@@ -1,9 +1,75 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { formatFeedbackFromJsonData } from "@/utils/upload/feedbackFormatter";
 import { compressImageForAPI } from "@/utils/upload/imageCompressionService";
 import { uploadBlobToSupabase, validateImageUrl } from "@/utils/upload/imageUploadService";
+
+/**
+ * Emergency function to ensure data URL is in a valid format and size for Claude API
+ * @param dataUrl Input data URL of any format
+ * @returns Promise resolving to properly formatted data URL
+ */
+async function emergencyConvertToJpeg(dataUrl: string): Promise<string> {
+  console.log("Starting emergency image format verification");
+  
+  try {
+    // Convert data URL to blob
+    const response = await fetch(dataUrl);
+    const blob = await response.blob();
+    
+    // Check if format is already acceptable
+    if (blob.type === 'image/jpeg' || blob.type === 'image/png' || 
+        blob.type === 'image/gif' || blob.type === 'image/webp') {
+      
+      // If size is good and format is supported, use as is
+      if (blob.size <= 4.5 * 1024 * 1024) {
+        console.log(`No conversion needed - format ${blob.type} is supported and size is acceptable`);
+        return dataUrl;
+      }
+      
+      console.log(`Format ${blob.type} is supported but size (${Math.round(blob.size/(1024*1024))}MB) is large. Compressing.`);
+    } else {
+      console.log(`Format ${blob.type} may not be supported. Converting to PNG.`);
+    }
+    
+    // Create a new image from the blob
+    const img = await createImageBitmap(blob);
+    console.log(`Created image bitmap: ${img.width}x${img.height}`);
+    
+    // Create a canvas with the image dimensions
+    const canvas = document.createElement("canvas");
+    canvas.width = img.width;
+    canvas.height = img.height;
+    
+    // Get context
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      throw new Error("Failed to get canvas context for conversion");
+    }
+    
+    // Draw the image (no need for special handling)
+    ctx.drawImage(img, 0, 0);
+    
+    // Try PNG format first
+    const pngDataUrl = canvas.toDataURL("image/png");
+    const pngSize = (pngDataUrl.length - 22) * 0.75 / (1024 * 1024); // Estimate size in MB
+    
+    if (pngSize <= 4.5) {
+      console.log(`Converted to PNG: estimated ${pngSize.toFixed(2)}MB`);
+      return pngDataUrl;
+    }
+    
+    // If PNG is too large, try JPEG
+    console.log(`PNG too large (${pngSize.toFixed(2)}MB). Trying JPEG format`);
+    const jpegDataUrl = canvas.toDataURL("image/jpeg", 0.9);
+    
+    console.log("Converted to JPEG format");
+    return jpegDataUrl;
+  } catch (error) {
+    console.error("Error in image format conversion:", error);
+    throw new Error(`Format conversion failed: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
 
 /**
  * Makes a request to the Claude AI analysis endpoint through Supabase Edge Functions
@@ -21,13 +87,39 @@ export async function callClaudeAnalysisAPI(imageUrl: string) {
   // Additional debug logging for URL type
   if (imageUrl.startsWith('data:')) {
     console.log("Data URL format:", imageUrl.substring(0, 30) + "...");
-    // Verify that the data URL is a supported format
-    if (!imageUrl.startsWith('data:image/jpeg') && 
-        !imageUrl.startsWith('data:image/png')) {
-      console.warn("Using non-standard data URL format for Claude");
+    
+    // Check if the data URL is in a supported format
+    const supportedFormats = ['data:image/jpeg', 'data:image/png', 'data:image/gif', 'data:image/webp'];
+    const isSupported = supportedFormats.some(format => imageUrl.startsWith(format));
+    
+    if (!isSupported) {
+      console.warn("Data URL is not in a supported format! Attempting conversion before analysis");
+      
+      try {
+        // Convert to a supported format before proceeding
+        imageUrl = await emergencyConvertToJpeg(imageUrl);
+        console.log("Format conversion successful");
+      } catch (conversionError) {
+        console.error("Format conversion failed:", conversionError);
+        console.warn("Proceeding with original format, but Claude analysis may fail");
+      }
+    } else {
+      // Check if the data URL might be too large
+      const estimatedSizeMB = (imageUrl.length * 0.75) / (1024 * 1024);
+      if (estimatedSizeMB > 4.5) {
+        console.warn(`Data URL is large (approximately ${estimatedSizeMB.toFixed(2)}MB). Attempting compression.`);
+        try {
+          imageUrl = await emergencyConvertToJpeg(imageUrl);
+          console.log("Size reduction successful");
+        } catch (compressionError) {
+          console.error("Size reduction failed:", compressionError);
+        }
+      }
     }
   } else {
     console.log("Using remote URL for analysis:", imageUrl);
+    
+    // No warnings needed for PNG or other formats since Claude supports them
   }
   
   // Add retry mechanism with exponential backoff
@@ -37,6 +129,15 @@ export async function callClaudeAnalysisAPI(imageUrl: string) {
   
   while (retryCount <= maxRetries) {
     try {
+      // Add a special flag for multi-screenshot uploads
+      const isMultiScreenshot = 
+        (imageUrl.startsWith('data:') && imageUrl.length > 500000) || // Large data URL
+        (imageUrl.includes('combined-screenshot') || imageUrl.includes('stitched'));
+      
+      if (isMultiScreenshot) {
+        console.log("Detected multi-screenshot upload, adding special handling flags");
+      }
+      
       // Proceed with Claude analysis with more explicit options
       console.log(`Attempt ${retryCount + 1}/${maxRetries + 1} to call Claude API`);
       
@@ -45,13 +146,17 @@ export async function callClaudeAnalysisAPI(imageUrl: string) {
           body: { 
             imageUrl,
             options: {
-              maxTokens: 1200,     // Reduced token usage to prevent timeouts
+              maxTokens: 1500,     // Enough tokens for detailed analysis
               temperature: 0.1,    // Lower temperature for more consistent results
-              compressImage: true,  // Tell Edge function to compress image as well
               format: "json",      // Explicitly request JSON format
-              timeout: 60000,      // 60 second timeout
-              forceJpeg: true,     // Tell edge function to force JPEG conversion
-              removeTransparency: true // Ensure transparency is handled properly
+              isMultiScreenshot: isMultiScreenshot, // Flag for special handling
+              // Size parameters only if needed for very large images
+              compressImage: imageUrl.length > 6000000,  // Only compress if needed (rough estimate for data URLs)
+              // Allow all supported formats (JPEG, PNG, GIF, WebP)
+              preserveFormat: true,     // Keep original format when possible
+              // For multi-screenshots, handle dimensions differently
+              quality: isMultiScreenshot ? 0.9 : 0.8,
+              maxWidth: isMultiScreenshot ? 2000 : 2400,  // Allow larger dimensions
             }
           },
           method: 'POST',

@@ -1,4 +1,3 @@
-
 import { toast } from "@/hooks/use-toast";
 
 // Helper function to handle upload errors
@@ -80,14 +79,28 @@ export const handleAnalysisError = (analyzeError: any) => {
              errorMessage.includes("400") || 
              errorMessage.includes("500") ||
              errorMessage.includes("AI service encountered an error")) {
-    // More specific guidance for format-related errors
-    errorMsg = "AI service encountered an error. Try using a different image format (JPG or PNG) or a simpler design. If you're using an image with transparency or complex graphics, try a flat JPEG image instead.";
+    // More specific guidance for multi-screenshot errors
+    errorMsg = "AI service encountered an error. For multiple screenshots, try using fewer images or providing them in JPEG format without transparency. If you're using PNG or images with transparency, try converting to a flat JPEG image instead.";
+  } else if (errorMessage.includes("failed to process") || 
+           errorMessage.includes("image processing") || 
+           errorMessage.includes("CRITICAL:") ||
+           errorMessage.includes("conversion failed")) {
+    // Specific handling for multi-screenshot errors
+    errorMsg = "There was an error processing your screenshots. Try using fewer screenshots, ensuring they don't contain transparency, or upload a single screenshot instead.";
   } else if (errorMessage.includes("Empty response") || errorMessage.includes("no content")) {
     errorMsg = "The AI service returned an empty response. Please try again with a clearer image.";
   } else if (errorMessage.includes("parse") || errorMessage.includes("JSON")) {
     errorMsg = "Failed to process the AI response. Please try again later.";
-  } else if (errorMessage.includes("image format") || errorMessage.includes("not supported")) {
-    errorMsg = "The image format is not supported. Please use a JPG or PNG image without transparency.";
+  } else if (errorMessage.includes("image format") || errorMessage.includes("not supported") ||
+           errorMessage.includes("transparency") || errorMessage.includes("alpha channel")) {
+    errorMsg = "The image format is not supported. Please use a JPG image without transparency. PNG images with transparency can cause issues with AI analysis.";
+  } else if (errorMessage.includes("canvas") || 
+           errorMessage.includes("context") || 
+           errorMessage.includes("blob") || 
+           errorMessage.includes("data URL")) {
+    // Technical errors with image processing
+    console.error("Technical image processing error:", errorMessage);
+    errorMsg = "Technical error processing your image. Try using a standard JPEG image without transparency or special formatting.";
   }
   
   return errorMsg;

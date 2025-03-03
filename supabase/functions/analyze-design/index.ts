@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 const corsHeaders = {
@@ -15,8 +14,15 @@ serve(async (req) => {
   }
 
   try {
-    const { imageUrl } = await req.json()
+    const { imageUrl, options } = await req.json()
     console.log('Analyzing design with Claude...')
+    
+    // Check for multi-screenshot flag - this needs special handling
+    const isMultiScreenshot = options?.isMultiScreenshot || false
+    
+    if (isMultiScreenshot) {
+      console.log('Multi-screenshot upload detected - applying special handling')
+    }
     
     // Check if we have a valid image URL
     if (!imageUrl) {
@@ -30,8 +36,15 @@ serve(async (req) => {
       throw new Error("Cannot analyze SVG placeholder. Please provide a proper screenshot.")
     }
     
-    // If the image is a Supabase URL, we need to fetch it first
+    // For multi-screenshots, we need to be extra careful about format
+    if (isMultiScreenshot && typeof imageUrl === 'string' && !imageUrl.startsWith('data:image/jpeg')) {
+      console.warn("Multi-screenshot upload is not in JPEG format - this may cause Claude issues")
+    }
+    
+    // If the image is a Supabase URL or any URL, we need to fetch it first
     let imageBase64;
+    let imageMediaType = 'image/jpeg'; // Default media type for Claude API
+    
     try {
       if (imageUrl.startsWith('http') || imageUrl.startsWith('blob:')) {
         console.log('Fetching image from URL:', imageUrl)
@@ -48,26 +61,226 @@ serve(async (req) => {
           throw new Error(`Failed to fetch image: ${imageResponse.status}`)
         }
         
-        const imageBlob = await imageResponse.blob()
+        let imageBlob = await imageResponse.blob()
+        console.log('Original image format:', imageBlob.type, 'size:', Math.round(imageBlob.size/1024), 'KB')
         
-        // Check image size and potentially reject very large images
-        if (imageBlob.size > 10 * 1024 * 1024) { // 10MB limit
-          throw new Error("Image is too large (>10MB). Please provide a smaller image or reduce the image quality.")
+        // Claude supports multiple image formats: JPEG, PNG, GIF, WebP
+        // Only convert if it's not one of the supported types
+        const supportedFormats = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (!supportedFormats.includes(imageMediaType)) {
+          console.warn(`Unsupported format detected in data URL: ${imageMediaType}. Converting to PNG.`)
+          
+          try {
+            // Extract base64 data
+            imageBase64 = imageUrl.split(',')[1]
+            
+            // Create a buffer from the base64 data
+            const imageBuffer = Uint8Array.from(atob(imageBase64), c => c.charCodeAt(0))
+            
+            // Create an ArrayBuffer from the Uint8Array
+            const arrayBuffer = imageBuffer.buffer
+            
+            // Create a Blob from the ArrayBuffer
+            const originalBlob = new Blob([arrayBuffer], { type: imageMediaType })
+            
+            // Check if this is likely a multi-screenshot image (large dimensions)
+            let quality = 0.85;
+            let scaleDown = false;
+            
+            // Convert to JPEG using createImageBitmap and OffscreenCanvas
+            // This should handle transparency in PNG images
+            const imageBitmap = await createImageBitmap(originalBlob)
+            
+            // For multi-screenshots, check dimensions and scale if needed
+            if (isMultiScreenshot || imageBitmap.width * imageBitmap.height > 3000 * 2000) {
+              console.log(`Large image detected: ${imageBitmap.width}x${imageBitmap.height} - likely a multi-screenshot`);
+              
+              // For extremely large images, scale down
+              if (imageBitmap.width * imageBitmap.height > 6000 * 4000) {
+                scaleDown = true;
+                console.log('Image is extremely large. Scaling down for Claude compatibility');
+                // Use slightly lower quality for large images, but keep detail
+                quality = 0.80; 
+              } else {
+                // For moderately large images, use high quality to preserve details
+                quality = 0.90;
+              }
+            }
+            
+            // Create appropriate canvas size
+            let canvasWidth = imageBitmap.width;
+            let canvasHeight = imageBitmap.height;
+            
+            // Scale down extremely large images
+            if (scaleDown) {
+              const scaleFactor = Math.sqrt((4000 * 3000) / (imageBitmap.width * imageBitmap.height));
+              canvasWidth = Math.floor(imageBitmap.width * scaleFactor);
+              canvasHeight = Math.floor(imageBitmap.height * scaleFactor);
+              console.log(`Scaling to: ${canvasWidth}x${canvasHeight} with quality ${quality}`);
+            }
+            
+            const canvas = new OffscreenCanvas(canvasWidth, canvasHeight)
+            const ctx = canvas.getContext('2d', { alpha: false })
+            
+            if (!ctx) {
+              throw new Error('Failed to create canvas context for JPEG conversion')
+            }
+            
+            // Draw the image (even with alpha: false, fill with white for safety)
+            ctx.fillStyle = '#FFFFFF'
+            ctx.fillRect(0, 0, canvas.width, canvas.height)
+            
+            // Draw the image with scaling if needed
+            if (scaleDown) {
+              ctx.drawImage(imageBitmap, 0, 0, canvasWidth, canvasHeight)
+            } else {
+              ctx.drawImage(imageBitmap, 0, 0)
+            }
+            
+            // For very large images, use JPEG for better compression
+            // For normal sizes, use PNG for better quality
+            const outputFormat = scaleDown ? 'image/jpeg' : 'image/png';
+            const outputQuality = outputFormat === 'image/jpeg' ? quality : undefined;
+            
+            const outputBlob = await canvas.convertToBlob({ 
+              type: outputFormat, 
+              quality: outputQuality 
+            });
+            
+            // Convert blob to base64
+            const outputArrayBuffer = await outputBlob.arrayBuffer()
+            const outputBuffer = new Uint8Array(outputArrayBuffer)
+            imageBase64 = btoa(String.fromCharCode(...outputBuffer))
+            
+            // Update the media type
+            imageMediaType = outputFormat
+            
+            console.log(`Successfully converted to ${outputFormat} format: ${Math.round(outputBuffer.length/1024)}KB`)
+          } catch (conversionError) {
+            console.error('Error converting image format:', conversionError)
+            console.warn('Proceeding with original format, but Claude analysis might fail')
+          }
+        } else {
+          // Only extract base64 data if we didn't already do conversion
+          imageBase64 = imageUrl.split(',')[1]
         }
         
-        const arrayBuffer = await imageBlob.arrayBuffer()
-        const buffer = new Uint8Array(arrayBuffer)
-        imageBase64 = btoa(String.fromCharCode(...buffer))
-        console.log('Image fetched and converted to base64, size:', Math.round(imageBase64.length / 1024), 'KB')
+        console.log('Using provided base64 image data, format:', imageMediaType)
       } else if (imageUrl.startsWith('data:image/')) {
-        // If it's already a data URL, extract the base64 part
+        // If it's already a data URL, extract the base64 part and media type
         // Make sure it's not an SVG
         if (imageUrl.startsWith('data:image/svg')) {
           throw new Error("SVG images are not supported for analysis")
         }
         
-        imageBase64 = imageUrl.split(',')[1]
-        console.log('Using provided base64 image data')
+        // Extract media type from data URL
+        const mediaTypeMatch = imageUrl.match(/^data:(image\/[^;]+);base64,/)
+        if (mediaTypeMatch && mediaTypeMatch[1]) {
+          imageMediaType = mediaTypeMatch[1]
+        }
+        
+        // Claude supports multiple image formats: JPEG, PNG, GIF, WebP
+        // Only convert if it's not one of the supported types
+        const supportedFormats = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (!supportedFormats.includes(imageMediaType)) {
+          console.warn(`Unsupported format detected in data URL: ${imageMediaType}. Converting to PNG.`)
+          
+          try {
+            // Extract base64 data
+            imageBase64 = imageUrl.split(',')[1]
+            
+            // Create a buffer from the base64 data
+            const imageBuffer = Uint8Array.from(atob(imageBase64), c => c.charCodeAt(0))
+            
+            // Create an ArrayBuffer from the Uint8Array
+            const arrayBuffer = imageBuffer.buffer
+            
+            // Create a Blob from the ArrayBuffer
+            const originalBlob = new Blob([arrayBuffer], { type: imageMediaType })
+            
+            // Check if this is likely a multi-screenshot image (large dimensions)
+            let quality = 0.85;
+            let scaleDown = false;
+            
+            // Convert to JPEG using createImageBitmap and OffscreenCanvas
+            // This should handle transparency in PNG images
+            const imageBitmap = await createImageBitmap(originalBlob)
+            
+            // For multi-screenshots, check dimensions and scale if needed
+            if (isMultiScreenshot || imageBitmap.width * imageBitmap.height > 3000 * 2000) {
+              console.log(`Large image detected: ${imageBitmap.width}x${imageBitmap.height} - likely a multi-screenshot`);
+              
+              // For extremely large images, scale down
+              if (imageBitmap.width * imageBitmap.height > 6000 * 4000) {
+                scaleDown = true;
+                console.log('Image is extremely large. Scaling down for Claude compatibility');
+                // Use slightly lower quality for large images, but keep detail
+                quality = 0.80; 
+              } else {
+                // For moderately large images, use high quality to preserve details
+                quality = 0.90;
+              }
+            }
+            
+            // Create appropriate canvas size
+            let canvasWidth = imageBitmap.width;
+            let canvasHeight = imageBitmap.height;
+            
+            // Scale down extremely large images
+            if (scaleDown) {
+              const scaleFactor = Math.sqrt((4000 * 3000) / (imageBitmap.width * imageBitmap.height));
+              canvasWidth = Math.floor(imageBitmap.width * scaleFactor);
+              canvasHeight = Math.floor(imageBitmap.height * scaleFactor);
+              console.log(`Scaling to: ${canvasWidth}x${canvasHeight} with quality ${quality}`);
+            }
+            
+            const canvas = new OffscreenCanvas(canvasWidth, canvasHeight)
+            const ctx = canvas.getContext('2d', { alpha: false })
+            
+            if (!ctx) {
+              throw new Error('Failed to create canvas context for JPEG conversion')
+            }
+            
+            // Draw the image (even with alpha: false, fill with white for safety)
+            ctx.fillStyle = '#FFFFFF'
+            ctx.fillRect(0, 0, canvas.width, canvas.height)
+            
+            // Draw the image with scaling if needed
+            if (scaleDown) {
+              ctx.drawImage(imageBitmap, 0, 0, canvasWidth, canvasHeight)
+            } else {
+              ctx.drawImage(imageBitmap, 0, 0)
+            }
+            
+            // For very large images, use JPEG for better compression
+            // For normal sizes, use PNG for better quality
+            const outputFormat = scaleDown ? 'image/jpeg' : 'image/png';
+            const outputQuality = outputFormat === 'image/jpeg' ? quality : undefined;
+            
+            const outputBlob = await canvas.convertToBlob({ 
+              type: outputFormat, 
+              quality: outputQuality 
+            });
+            
+            // Convert blob to base64
+            const outputArrayBuffer = await outputBlob.arrayBuffer()
+            const outputBuffer = new Uint8Array(outputArrayBuffer)
+            imageBase64 = btoa(String.fromCharCode(...outputBuffer))
+            
+            // Update the media type
+            imageMediaType = outputFormat
+            
+            console.log(`Successfully converted to ${outputFormat} format: ${Math.round(outputBuffer.length/1024)}KB`)
+          } catch (conversionError) {
+            console.error('Error converting image format:', conversionError)
+            console.warn('Proceeding with original format, but Claude analysis might fail')
+          }
+        } else {
+          // Only extract base64 data if we didn't already do conversion
+          imageBase64 = imageUrl.split(',')[1]
+        }
+        
+        console.log('Using provided base64 image data, format:', imageMediaType)
       } else {
         throw new Error("Invalid image URL format")
       }
@@ -100,10 +313,6 @@ serve(async (req) => {
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       )
     }
-    
-    // Add timeout for Claude API request
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 seconds timeout
     
     // Call Claude API
     console.log('Sending request to Claude API')
@@ -156,15 +365,14 @@ Return a JSON object with this structure:
                 type: 'image',
                 source: {
                   type: 'base64',
-                  media_type: 'image/jpeg',
+                  media_type: imageMediaType,
                   data: imageBase64
                 }
               }
             ]
           }]
-        }),
-        signal: controller.signal
-      }).finally(() => clearTimeout(timeoutId));
+        })
+      });
 
       const result = await response.json()
       console.log('Analysis complete')

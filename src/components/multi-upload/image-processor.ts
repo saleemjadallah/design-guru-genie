@@ -1,4 +1,3 @@
-
 import { stitchImages } from "@/utils/image-stitching";
 import { ScreenshotFile } from "./types";
 import { toast } from "@/hooks/use-toast";
@@ -55,8 +54,62 @@ export async function processCombinedImage(
     throw new Error(`Image size (${Math.round(processedBlob.size/(1024*1024))}MB) exceeds the 5MB limit even after compression. Please reduce image size or try fewer screenshots.`);
   }
   
-  // Create the file object
-  const file = new File([processedBlob], "combined-screenshot.png", { type: "image/png" });
+  // Check the blob type and size, but Claude accepts multiple formats
+  let finalBlob = processedBlob;
+  let finalFormat = processedBlob.type;
+  let finalExtension = "png";
+  
+  console.log(`Processed blob type: ${processedBlob.type}, size: ${Math.round(processedBlob.size/1024)}KB`);
+  
+  // If the blob is too large (close to 5MB), compress it further
+  if (processedBlob.size > 4.5 * 1024 * 1024) {
+    console.warn(`Blob is close to size limit (${Math.round(processedBlob.size/(1024*1024))}MB). Compressing further.`);
+    
+    try {
+      // Create a new image from the blob
+      const img = await createImageBitmap(processedBlob);
+      
+      // Create a canvas for compression
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      
+      // Get canvas context
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) {
+        throw new Error('Failed to get canvas context for compression');
+      }
+      
+      // Draw the image
+      ctx.drawImage(img, 0, 0);
+      
+      // Try as JPEG for better compression
+      finalBlob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob(
+          (newBlob) => {
+            if (!newBlob) {
+              reject(new Error('Failed to create compressed blob'));
+            } else {
+              resolve(newBlob);
+            }
+          },
+          'image/jpeg',
+          0.85 // Good quality but with compression
+        );
+      });
+      
+      finalFormat = 'image/jpeg';
+      finalExtension = "jpg";
+      console.log(`Compressed to JPEG: ${Math.round(finalBlob.size/1024)}KB`);
+    } catch (error) {
+      console.error('Error compressing blob:', error);
+      console.warn('Using original blob, but it may exceed size limits');
+    }
+  }
+  
+  // Create the file object with the appropriate format
+  const file = new File([finalBlob], `combined-screenshot.${finalExtension}`, { type: finalFormat });
   console.log("Processed combined image:", file.name, file.type, file.size);
   
   // Update processing stages

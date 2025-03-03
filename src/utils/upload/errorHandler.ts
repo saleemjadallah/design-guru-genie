@@ -46,7 +46,7 @@ export const handleDatabaseError = (reviewError: any) => {
 };
 
 /**
- * Error handler for Claude AI analysis errors
+ * Error handler for Claude AI analysis errors with improved edge function diagnosis
  */
 export const handleAnalysisError = (analyzeError: any) => {
   console.error("Analysis error:", analyzeError);
@@ -57,13 +57,17 @@ export const handleAnalysisError = (analyzeError: any) => {
   // Default error message
   let errorMsg = "Error during AI analysis. Please try again.";
   
+  // Check for edge function specific errors
+  if (errorMessage.includes("Failed to send a request to the Edge Function")) {
+    errorMsg = "Could not connect to the Edge Function. Please make sure 'analyze-design' function is deployed correctly in Supabase.";
+  }
   // Check for specific error types
-  if (errorMessage.includes("Failed to fetch") || 
+  else if (errorMessage.includes("Failed to fetch") || 
       errorMessage.includes("Network error")) {
     errorMsg = "Network error while connecting to our AI service. Please check your connection and try again.";
   }
-  else if (errorMessage.includes("Failed to send a request to the Edge Function")) {
-    errorMsg = "Our AI service is currently unavailable. Please try again in a few minutes.";
+  else if (errorMessage.includes("Edge Function") && errorMessage.includes("correctly")) {
+    errorMsg = "Edge Function configuration issue. Please check that the 'analyze-design' function exists and is deployed.";
   } 
   else if (errorMessage.includes("timeout") || errorMessage.includes("timed out")) {
     errorMsg = "Analysis timed out. Please try again later.";
@@ -73,6 +77,9 @@ export const handleAnalysisError = (analyzeError: any) => {
   }
   else if (errorMessage.includes("Claude API key")) {
     errorMsg = "There's an issue with the Claude API key. Please check that ANTHROPIC_API_KEY is correctly set in the Edge Function secrets.";
+  }
+  else if (errorMessage.includes("ANTHROPIC_API_KEY")) {
+    errorMsg = "ANTHROPIC_API_KEY configuration issue. Make sure it has the EXACT name 'ANTHROPIC_API_KEY' (case sensitive) in Edge Function secrets.";
   }
   
   return errorMsg;

@@ -22,6 +22,9 @@ export const useUrlScreenshot = () => {
         setTimeout(() => reject(new Error("Screenshot capture timed out after 30 seconds")), 30000);
       });
 
+      // Log function name for debugging
+      console.log("Invoking Supabase Edge Function: 'screenshot-url'");
+
       // First step: Generate a screenshot using the screenshot-url edge function
       const screenshotPromise = supabase.functions.invoke("screenshot-url", {
         body: { url: normalizedUrl },
@@ -41,6 +44,12 @@ export const useUrlScreenshot = () => {
 
       if (screenshotError) {
         console.error("URL screenshot error:", screenshotError);
+        
+        // Check for function invocation errors
+        if (screenshotError.message?.includes("Failed to send a request to the Edge Function")) {
+          throw new Error("Failed to call the screenshot-url Edge Function. Please check that the function is deployed correctly.");
+        }
+        
         throw new Error(`Failed to capture website: ${screenshotError.message}`);
       }
 
@@ -60,6 +69,9 @@ export const useUrlScreenshot = () => {
         throw new Error("Failed to capture website screenshot. The website may be blocking our capture service or have security measures in place.");
       }
       
+      // Log function name for debugging
+      console.log("Starting Claude analysis via processWithOpenAI function");
+      
       // Use Claude (via the same processWithOpenAI function) for analysis
       let analysisResults;
       try {
@@ -71,6 +83,12 @@ export const useUrlScreenshot = () => {
         });
       } catch (analysisError: any) {
         console.error("Claude analysis error:", analysisError);
+        
+        // Provide more specific error messages for API key issues
+        if (analysisError.message?.includes("ANTHROPIC_API_KEY")) {
+          throw new Error("API key configuration issue: Please make sure the ANTHROPIC_API_KEY is correctly set with the EXACT name in Edge Function secrets.");
+        }
+        
         throw new Error(`AI analysis failed: ${analysisError.message}`);
       }
       
@@ -85,8 +103,8 @@ export const useUrlScreenshot = () => {
       if (error.message?.includes("Failed to send a request to the Edge Function") || 
           error.name === "FunctionsFetchError") {
         toast({
-          title: "Service unavailable",
-          description: "The URL analysis feature is currently unavailable. Please try again later or upload a screenshot instead.",
+          title: "Edge Function Error",
+          description: "Could not connect to the Edge Function. Please check that 'analyze-design' and 'screenshot-url' functions are deployed correctly in Supabase.",
           variant: "destructive",
         });
       } else if (error.message?.includes("Claude API key access issue")) {
@@ -105,6 +123,12 @@ export const useUrlScreenshot = () => {
         toast({
           title: "API Key Access Issue",
           description: "The ANTHROPIC_API_KEY is not accessible by the Edge Function. Check the exact name 'ANTHROPIC_API_KEY' in Edge Function secrets.",
+          variant: "destructive",
+        });
+      } else if (error.message?.includes("ANTHROPIC_API_KEY")) {
+        toast({
+          title: "API Key Configuration Issue",
+          description: "Please verify the API key is set with the EXACT name 'ANTHROPIC_API_KEY' (case sensitive) in Edge Function secrets.",
           variant: "destructive",
         });
       } else if (error.message?.includes("timeout")) {

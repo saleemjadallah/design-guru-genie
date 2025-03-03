@@ -98,7 +98,7 @@ serve(async (req: Request) => {
         "anthropic-version": "2023-06-01"
       },
       body: JSON.stringify({
-        model: "claude-3-haiku-20240307",
+        model: "claude-3-opus-20240229", // Using more capable model for better image analysis
         max_tokens: maxTokens,
         temperature: temperature,
         messages: [
@@ -106,7 +106,23 @@ serve(async (req: Request) => {
             role: "user",
             content: [
               { type: "text", text: prompt },
-              { type: "image", source: { type: "url", url: imageUrl } }
+              // Support both URL and base64 images
+              imageUrl.startsWith('data:') 
+                ? {
+                    type: "image",
+                    source: {
+                      type: "base64",
+                      media_type: imageUrl.split(';')[0].replace('data:', ''),
+                      data: imageUrl.split(',')[1]
+                    }
+                  }
+                : { 
+                    type: "image", 
+                    source: { 
+                      type: "url", 
+                      url: imageUrl 
+                    } 
+                  }
             ]
           }
         ]

@@ -8,17 +8,17 @@ import { parseClaudeResponseData } from "@/utils/upload/claudeResponseParser";
  * @param imageUrl URL of the image to analyze
  * @param timeoutMs Optional timeout in milliseconds (default: 90000ms - 90 seconds)
  */
-export async function callClaudeAnalysisAPI(imageUrl: string, timeoutMs: number = 90000) {
+export async function callClaudeAnalysisAPI(imageUrl: string, timeoutMs: number = 120000) { // Extended timeout to 120 seconds
   toast({
     title: "AI Analysis",
     description: "Our AI is analyzing your design for strengths and improvement opportunities...",
   });
   
   console.log(`Calling analyze-design function with timeout: ${timeoutMs}ms`);
-  console.log(`Image URL length: ${imageUrl.length} characters`);
+  console.log(`Image URL type: ${imageUrl.startsWith('data:') ? 'data URL' : 'remote URL'}`);
   
   // Improved retry mechanism with better backoff strategy
-  const maxRetries = 2;
+  const maxRetries = 3; // Increased from 2 to 3
   let retryCount = 0;
   let lastError = null;
   
@@ -29,7 +29,7 @@ export async function callClaudeAnalysisAPI(imageUrl: string, timeoutMs: number 
     try {
       // Calculate remaining time for this attempt
       const elapsedTime = Date.now() - startTime;
-      const remainingTime = Math.max(timeoutMs - elapsedTime, 10000); // Ensure at least 10s
+      const remainingTime = Math.max(timeoutMs - elapsedTime, 20000); // Ensure at least 20s
       
       console.log(`Attempt ${retryCount + 1}/${maxRetries + 1} to call Claude API (${remainingTime}ms remaining)`);
       
@@ -41,26 +41,39 @@ export async function callClaudeAnalysisAPI(imageUrl: string, timeoutMs: number 
         });
       }
       
-      // Simplify the options to reduce potential parsing issues
+      // Add useful metadata for debugging and better Claude handling
       const requestBody = { 
         imageUrl,
         options: {
           maxTokens: 2000,
-          temperature: 0.1
+          temperature: 0.1,
+          isDataUrl: imageUrl.startsWith('data:'),
+          isMultiScreenshot: imageUrl.length > 500000 // Useful hint for edge function
         }
       };
       
-      console.log(`Sending request with body structure: ${JSON.stringify(Object.keys(requestBody))}`);
+      console.log("Sending request to Claude API...");
       
-      // Removed the signal property from the options as it's not supported
-      const { data: analyzeData, error: analyzeError } = await supabase.functions
-        .invoke('analyze-design', {
-          body: requestBody,
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
+      // Create a promise that times out if the edge function takes too long
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("Edge function timed out")), remainingTime);
+      });
+      
+      // Wrap the supabase function call in a Promise.race with the timeout
+      const functionCallPromise = supabase.functions.invoke('analyze-design', {
+        body: requestBody,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      const { data: analyzeData, error: analyzeError } = await Promise.race([
+        functionCallPromise,
+        timeoutPromise.then(() => {
+          throw new Error("Edge function timed out");
+        })
+      ]) as any;
       
       if (analyzeError) {
         console.error("Claude analysis error:", analyzeError);
@@ -75,6 +88,12 @@ export async function callClaudeAnalysisAPI(imageUrl: string, timeoutMs: number 
       
       console.log("Analysis results received successfully");
       
+      // Better debug logging
+      console.log("Response type:", typeof analyzeData);
+      if (typeof analyzeData === 'object') {
+        console.log("Response keys:", Object.keys(analyzeData));
+      }
+      
       // Verify we actually got a response with expected structure
       if (!analyzeData) {
         throw new Error("Empty response from Claude API");
@@ -87,9 +106,9 @@ export async function callClaudeAnalysisAPI(imageUrl: string, timeoutMs: number 
       return analyzeData;
     } catch (error: any) {
       // Check if this was an abort error (timeout)
-      if (error.name === "AbortError" || (error.message && error.message.includes("aborted"))) {
-        console.error("Request aborted due to timeout");
-        lastError = new Error(`Claude analysis timed out after ${timeoutMs}ms`);
+      if (error.name === "AbortError" || (error.message && error.message.includes("time"))) {
+        console.error("Request timed out");
+        lastError = new Error(`Claude analysis timed out after ${timeoutMs}ms. The design may be too complex for analysis.`);
       } else {
         lastError = error;
       }
@@ -109,7 +128,7 @@ export async function callClaudeAnalysisAPI(imageUrl: string, timeoutMs: number 
         // More informative toast
         toast({
           title: `Retry ${retryCount}/${maxRetries}`,
-          description: "The AI service needs more time to analyze your complex design. Retrying with adjusted settings...",
+          description: "The AI service needs more time to analyze your design. Retrying with adjusted settings...",
         });
         
         await new Promise(resolve => setTimeout(resolve, backoffDelay));

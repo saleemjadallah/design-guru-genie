@@ -41,78 +41,83 @@ export function isStructuredFeedback(data: any): boolean {
  * @returns Formatted feedback array
  */
 export const parseClaudeResponseData = (data: any) => {
-  // If data is already in our expected format, return it directly
-  if (isStructuredFeedback(data)) {
-    console.log("Data already in required format, using directly");
-    return data;
-  }
+  console.log("Parsing Claude response data. Type:", typeof data);
   
-  // If data is a Claude response, parse it
-  if (isClaudeResponse(data)) {
-    try {
-      console.log("Parsing Claude response format");
-      // Try to parse the JSON from Claude's response
-      const claudeResponse = data as ClaudeResponse;
-      const parsedData = JSON.parse(claudeResponse.content[0].text);
-      
-      // Format the data for our feedback system
-      const analysisResults = [];
-      
-      // Add strengths as positive feedback
-      if (parsedData.strengths && Array.isArray(parsedData.strengths)) {
-        parsedData.strengths.forEach((strength: any, index: number) => {
-          analysisResults.push({
-            id: index + 1,
-            type: "positive",
-            title: strength.title,
-            description: strength.description,
-            location: strength.location || null
-          });
-        });
-      }
-      
-      // Add issues as improvement feedback
-      if (parsedData.issues && Array.isArray(parsedData.issues)) {
-        parsedData.issues.forEach((issue: any, index: number) => {
-          analysisResults.push({
-            id: analysisResults.length + 1,
-            type: "improvement",
-            title: issue.issue,
-            priority: issue.priority,
-            description: issue.recommendation,
-            location: issue.location || null,
-            principle: issue.principle,
-            technical_details: issue.technical_details
-          });
-        });
-      }
-      
-      // Validate that we have some feedback items
-      if (analysisResults.length === 0) {
-        console.error("No feedback items found in parsed data:", parsedData);
-        throw new Error("No feedback items found in the analysis results");
-      }
-      
-      return analysisResults;
-    } catch (parseError) {
-      console.error("Error parsing Claude response:", parseError);
-      throw new Error(`Failed to parse Claude response: ${parseError.message}`);
+  try {
+    // If data is already in our expected format, return it directly
+    if (isStructuredFeedback(data)) {
+      console.log("Data already in required format, using directly");
+      return data;
     }
-  }
-  
-  // Try to extract data from Claude's "result" format
-  if (data && data.result) {
-    try {
-      return extractDataFromResult(data.result);
-    } catch (resultError) {
-      console.error("Error extracting from result format:", resultError);
-      throw resultError;
+    
+    // If data is a direct JSON object from the Edge Function (most likely case)
+    if (typeof data === 'object' && !Array.isArray(data)) {
+      console.log("Processing direct JSON object from Edge Function");
+      
+      // Check for strengths and issues/improvements fields
+      if ((data.strengths || data.issues || data.improvements) && 
+          (Array.isArray(data.strengths) || Array.isArray(data.issues) || Array.isArray(data.improvements))) {
+        console.log("Direct object has expected fields, formatting");
+        return formatFeedbackFromJsonData(data);
+      }
     }
+    
+    // If data is a Claude response object with content array
+    if (isClaudeResponse(data)) {
+      console.log("Processing standard Claude response format");
+      try {
+        const claudeResponse = data as ClaudeResponse;
+        const parsedData = JSON.parse(claudeResponse.content[0].text);
+        return formatFeedbackFromJsonData(parsedData);
+      } catch (parseError) {
+        console.error("Error parsing Claude response JSON:", parseError);
+        console.log("Raw content:", data.content[0].text.substring(0, 200));
+        
+        // Try to extract JSON from potential markdown formatting
+        const jsonMatches = data.content[0].text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+        if (jsonMatches && jsonMatches[1]) {
+          try {
+            console.log("Attempting to extract JSON from markdown code block");
+            const extractedJson = JSON.parse(jsonMatches[1]);
+            return formatFeedbackFromJsonData(extractedJson);
+          } catch (e) {
+            console.error("Failed to parse extracted JSON:", e);
+          }
+        }
+        
+        throw new Error(`Failed to parse Claude response: ${parseError.message}`);
+      }
+    }
+    
+    // Try to extract data from Claude's "result" format
+    if (data && data.result) {
+      console.log("Processing result-wrapped format");
+      try {
+        return extractDataFromResult(data.result);
+      } catch (resultError) {
+        console.error("Error extracting from result format:", resultError);
+        throw resultError;
+      }
+    }
+    
+    // Last resort: if data is a string, try to parse it as JSON
+    if (typeof data === 'string' && data.trim().startsWith('{')) {
+      try {
+        console.log("Attempting to parse string as JSON");
+        const parsedJson = JSON.parse(data);
+        return formatFeedbackFromJsonData(parsedJson);
+      } catch (stringParseError) {
+        console.error("Failed to parse string as JSON:", stringParseError);
+      }
+    }
+    
+    // If we reach here, we don't know how to handle this data format
+    console.error("Unknown data format:", typeof data, data);
+    throw new Error("Unrecognized data format from Claude API");
+  } catch (error) {
+    console.error("Error in parseClaudeResponseData:", error);
+    throw error;
   }
-  
-  // If we reach here, we don't know how to handle this data format
-  console.error("Unknown data format:", data);
-  throw new Error("Unrecognized data format from Claude API");
 };
 
 /**
@@ -158,42 +163,89 @@ function extractDataFromResult(result: any) {
  * Formats JSON data from Claude into our standardized feedback format
  */
 function formatFeedbackFromJsonData(jsonData: any) {
+  console.log("Formatting feedback from JSON data");
   const formattedFeedback = [];
   
   // Add strengths as positive feedback
   if (jsonData.strengths && Array.isArray(jsonData.strengths)) {
+    console.log(`Processing ${jsonData.strengths.length} strengths`);
     jsonData.strengths.forEach((strength: any, index: number) => {
       formattedFeedback.push({
         id: index + 1,
         type: "positive",
-        title: strength.title,
-        description: strength.description,
+        title: strength.title || "Design Strength",
+        description: strength.description || strength.details || strength.text || "",
         location: strength.location || null
       });
     });
   }
   
-  // Add issues as improvement feedback
+  // First try the 'issues' field
   if (jsonData.issues && Array.isArray(jsonData.issues)) {
+    console.log(`Processing ${jsonData.issues.length} issues`);
     jsonData.issues.forEach((issue: any, index: number) => {
       formattedFeedback.push({
         id: formattedFeedback.length + 1,
         type: "improvement",
-        title: issue.issue,
-        priority: issue.priority,
-        description: issue.recommendation,
+        title: issue.issue || issue.title || "Design Issue",
+        priority: issue.priority || "medium",
+        description: issue.recommendation || issue.description || issue.details || issue.text || "",
         location: issue.location || null,
-        principle: issue.principle,
-        technical_details: issue.technical_details
+        principle: issue.principle || issue.designPrinciple || "",
+        technical_details: issue.technical_details || issue.implementation || ""
       });
     });
+  } 
+  // Then try the 'improvements' field (alternate format)
+  else if (jsonData.improvements && Array.isArray(jsonData.improvements)) {
+    console.log(`Processing ${jsonData.improvements.length} improvements`);
+    jsonData.improvements.forEach((improvement: any, index: number) => {
+      formattedFeedback.push({
+        id: formattedFeedback.length + 1,
+        type: "improvement",
+        title: improvement.title || improvement.issue || "Design Improvement",
+        priority: improvement.priority || "medium",
+        description: improvement.description || improvement.recommendation || improvement.details || "",
+        location: improvement.location || null,
+        principle: improvement.principle || improvement.designPrinciple || "",
+        technical_details: improvement.technical_details || improvement.implementation || ""
+      });
+    });
+  }
+  
+  // Add overall feedback as a special type
+  if (jsonData.overallFeedback || jsonData.overview) {
+    const overallFeedback = jsonData.overallFeedback || jsonData.overview;
+    if (typeof overallFeedback === 'string' && overallFeedback.trim()) {
+      console.log("Added overall feedback to results");
+      formattedFeedback.push({
+        id: 0, // Special ID for overall feedback
+        type: "overview",
+        title: "Overall Assessment",
+        description: overallFeedback
+      });
+    }
   }
   
   // Check if we have any feedback items
   if (formattedFeedback.length === 0) {
     console.error("No feedback items found in Claude response:", jsonData);
+    // If there's any kind of content, try to salvage it
+    if (jsonData.ratings || jsonData.assessment || jsonData.analysis) {
+      // Create a dummy feedback item
+      formattedFeedback.push({
+        id: 1,
+        type: "overview",
+        title: "Design Assessment",
+        description: typeof jsonData === 'string' ? jsonData : 
+                    JSON.stringify(jsonData.ratings || jsonData.assessment || jsonData.analysis)
+      });
+      console.warn("Created fallback feedback from available data");
+      return formattedFeedback;
+    }
     throw new Error("No feedback items found in the analysis results");
   }
   
+  console.log(`Formatted ${formattedFeedback.length} feedback items`);
   return formattedFeedback;
 }

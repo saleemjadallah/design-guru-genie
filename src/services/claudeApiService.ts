@@ -26,10 +26,6 @@ export async function callClaudeAnalysisAPI(imageUrl: string, timeoutMs: number 
   const startTime = Date.now();
   
   while (retryCount <= maxRetries) {
-    // Create an AbortController for timeout management
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-    
     try {
       // Calculate remaining time for this attempt
       const elapsedTime = Date.now() - startTime;
@@ -56,19 +52,16 @@ export async function callClaudeAnalysisAPI(imageUrl: string, timeoutMs: number 
       
       console.log(`Sending request with body structure: ${JSON.stringify(Object.keys(requestBody))}`);
       
+      // Removed the signal property from the options as it's not supported
       const { data: analyzeData, error: analyzeError } = await supabase.functions
         .invoke('analyze-design', {
           body: requestBody,
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
-          },
-          signal: controller.signal // Connect AbortController for timeout
+          }
         });
       
-      // Clear the timeout since the request completed
-      clearTimeout(timeoutId);
-        
       if (analyzeError) {
         console.error("Claude analysis error:", analyzeError);
         
@@ -93,9 +86,6 @@ export async function callClaudeAnalysisAPI(imageUrl: string, timeoutMs: number 
       
       return analyzeData;
     } catch (error: any) {
-      // Always clear timeout to prevent memory leaks
-      clearTimeout(timeoutId);
-      
       // Check if this was an abort error (timeout)
       if (error.name === "AbortError" || (error.message && error.message.includes("aborted"))) {
         console.error("Request aborted due to timeout");

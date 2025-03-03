@@ -1,7 +1,8 @@
 
 import { toast } from "@/hooks/use-toast";
 import { handleAnalysisError } from "@/utils/upload/errorHandler";
-import { compressImageForAPI, CompressionOptions } from "@/utils/upload/imageCompressionService";
+import { compressImageForAPI } from "@/utils/upload/imageCompressionService";
+import type { CompressionOptions } from "@/utils/upload/compression-types";
 import { callClaudeAnalysisAPI, processClaudeResponse } from "./claudeApiService";
 
 /**
@@ -49,7 +50,7 @@ async function prepareImageForClaudeAnalysis(imageUrl: string, compressionOption
       toast({
         title: "Transparency issue",
         description: "Your image contains transparency which may cause issues with Claude analysis. Converting to JPEG format.",
-        variant: "warning",
+        variant: "destructive",  // Changed from "warning" to "destructive" as "warning" is not a valid variant
       });
     }
     

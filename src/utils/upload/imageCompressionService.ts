@@ -111,3 +111,6 @@ export async function compressImageForAPI(
 // Re-export functions for backwards compatibility
 export { createCanvas } from './canvas-utils';
 export { blobToDataUrl } from './canvas-utils';
+
+// Re-export types
+export type { CompressionOptions } from './compression-types';

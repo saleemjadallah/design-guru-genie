@@ -1,40 +1,41 @@
 
-import { handleAnalysisError } from "@/utils/upload/errorHandler";
-import { CompressionOptions } from "./openai/types";
+import { toast } from "@/hooks/use-toast";
 import { prepareImageForAnalysis, cleanupUrls } from "./openai/imagePreparation";
 import { callOpenAIAnalysisAPI } from "./openai/apiService";
 import { processOpenAIResponse } from "./openai/responseProcessor";
 
 /**
- * Main function to process an image with OpenAI analysis
- * Handles preprocessing, API calls, and error handling
+ * Simplified process to analyze an image with OpenAI
+ * No compression or complex formatting
  */
-export async function processWithOpenAI(imageUrl: string, compressionOptions: CompressionOptions = {}) {
-  // Store original URL for cleanup later
-  const originalUrl = imageUrl;
-  
+export async function processWithOpenAI(imageUrl: string) {
   try {
-    // Prepare image (compress, validate size)
-    const processedImageUrl = await prepareImageForAnalysis(imageUrl, compressionOptions);
+    // Simply pass through the image
+    const processedImageUrl = await prepareImageForAnalysis(imageUrl);
     
-    // Call the OpenAI analysis API through Supabase Edge Function
+    // Call the OpenAI analysis API
     const analysisData = await callOpenAIAnalysisAPI(processedImageUrl);
     
     // Process the response
     const result = processOpenAIResponse(analysisData);
     
     // Clean up resources
-    cleanupUrls(originalUrl, processedImageUrl);
+    cleanupUrls(imageUrl);
     
     return result;
     
   } catch (analyzeError: any) {
     console.error("Error in OpenAI analysis process:", analyzeError);
     
-    // Clean up resources even when there's an error
-    cleanupUrls(originalUrl, imageUrl);
+    // Clean up resources
+    cleanupUrls(imageUrl);
     
-    const errorMsg = handleAnalysisError(analyzeError);
-    throw new Error(errorMsg);
+    toast({
+      title: "Analysis Failed",
+      description: analyzeError.message || "There was an error analyzing your design.",
+      variant: "destructive",
+    });
+    
+    throw new Error(analyzeError.message || "Analysis failed");
   }
 }

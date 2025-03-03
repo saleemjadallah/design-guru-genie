@@ -1,20 +1,11 @@
 
 import { toast } from "@/hooks/use-toast";
 import { processWithOpenAI } from "@/services/openaiAnalysisService";
-import { handleUrlAnalysisError, handleUrlAnalysisSuccess } from "@/utils/upload/urlAnalysisErrorHandler";
-import { CompressionOptions } from "@/services/openai/types";
 
 /**
- * Process data or get new analysis from OpenAI API
- * @param imageUrl URL of the screenshot or website
- * @param data Optional pre-existing data
- * @returns Analysis results in the required format
+ * Simplified URL analysis service - no compression options
  */
 export const processUrlAnalysisData = async (imageUrl: string, data?: any) => {
-  // Store original URL for cleanup later
-  const originalUrl = imageUrl;
-  
-  // Check image URL before proceeding
   if (!imageUrl) {
     toast({
       title: "Error",
@@ -24,39 +15,42 @@ export const processUrlAnalysisData = async (imageUrl: string, data?: any) => {
     throw new Error("No image URL provided for analysis");
   }
   
-  // If data is provided, try to use it
+  // If data is provided, use it
   if (data && Array.isArray(data) && data.length > 0) {
     console.log("Using provided analysis data");
-    handleUrlAnalysisSuccess(data.length);
+    toast({
+      title: "Analysis complete",
+      description: `Analysis found ${data.length} design insights.`,
+    });
     return data;
   }
 
   try {
-    // Use OpenAI API for analysis
+    // Use OpenAI for analysis
     console.log("Using OpenAI for URL analysis");
+    const results = await processWithOpenAI(imageUrl);
     
-    // Use more aggressive compression options
-    const compressionOptions: CompressionOptions = {
-      maxWidth: 800,
-      maxHeight: 1000,
-      quality: 0.65,
-      maxSizeBytes: 4 * 1024 * 1024 // 4MB target (safely under 5MB)
-    };
-    
-    const results = await processWithOpenAI(imageUrl, compressionOptions);
     if (results && Array.isArray(results) && results.length > 0) {
-      handleUrlAnalysisSuccess(results.length);
+      toast({
+        title: "Analysis complete",
+        description: `Analysis found ${results.length} design insights.`,
+      });
     }
+    
     return results;
-  } catch (openAIError: any) {
-    console.error("OpenAI API error:", openAIError);
-    const errorMessage = handleUrlAnalysisError(openAIError);
-    throw new Error(errorMessage);
+  } catch (error: any) {
+    console.error("URL analysis error:", error);
+    toast({
+      title: "URL analysis failed",
+      description: error.message || "There was an error analyzing the URL.",
+      variant: "destructive"
+    });
+    throw new Error(error.message || "URL analysis failed");
   } finally {
-    // Ensure blob URLs are properly revoked to prevent memory leaks
-    if (originalUrl.startsWith('blob:')) {
+    // Clean up blob URLs
+    if (imageUrl.startsWith('blob:')) {
       console.log("Revoking blob URL in URL analysis service");
-      URL.revokeObjectURL(originalUrl);
+      URL.revokeObjectURL(imageUrl);
     }
   }
 };

@@ -24,7 +24,7 @@ export const useImageUpload = () => {
         description: `Uploading ${file.name} to our servers...`,
       });
       
-      // Process and upload the image
+      // Upload the image - no compression
       const { publicUrl } = await processAndUploadImage(file);
       
       setCurrentStage(1);
@@ -33,36 +33,9 @@ export const useImageUpload = () => {
         description: "Your image has been uploaded successfully. Starting analysis...",
       });
       
-      // Analyze with OpenAI
-      let analysisResults;
-      
-      try {
-        console.log("Starting OpenAI analysis for:", publicUrl);
-        analysisResults = await processWithOpenAI(publicUrl);
-        console.log("OpenAI analysis complete:", analysisResults);
-      } catch (analysisError: any) {
-        console.error("Analysis error:", analysisError);
-        
-        // Provide more specific error messages based on the error type
-        let errorMessage = analysisError.message;
-        
-        if (errorMessage.includes("maximum call stack")) {
-          errorMessage = "The image is too complex for our analysis service. Please try a smaller or simpler image.";
-        } else if (errorMessage.includes("timeout")) {
-          errorMessage = "The analysis took too long to complete. Please try a smaller image or try again later.";
-        } else if (errorMessage.includes("non-2xx status code")) {
-          errorMessage = "Our AI service encountered an issue. This might be due to image size or complexity.";
-        }
-        
-        toast({
-          title: "AI Analysis Failed",
-          description: `OpenAI analysis error: ${errorMessage}. Please try again later.`,
-          variant: "destructive",
-        });
-        
-        setIsUploading(false);
-        return;
-      }
+      // Analyze with OpenAI - simplified
+      const analysisResults = await processWithOpenAI(publicUrl);
+      console.log("OpenAI analysis complete:", analysisResults);
       
       setCurrentStage(2);
       toast({

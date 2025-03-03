@@ -59,6 +59,6 @@ export async function processWithOpenAI(imageUrl: string) {
       variant: "destructive",
     });
     
-    throw new Error(errorMessage || "Analysis failed");
+    throw new Error(errorMessage);
   }
 }

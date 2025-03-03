@@ -35,6 +35,20 @@ export async function callOpenAIAnalysisAPI(imageUrl: string) {
     if (analyzeError) {
       console.error("Claude AI analysis error:", analyzeError);
       
+      // Log more detailed error information to help with debugging
+      if (typeof analyzeError === 'object') {
+        console.error("Error type:", analyzeError.constructor.name);
+        console.error("Error properties:", Object.keys(analyzeError));
+        
+        if (analyzeError.message) {
+          console.error("Error message:", analyzeError.message);
+        }
+        
+        if (analyzeError.stack) {
+          console.error("Error stack:", analyzeError.stack);
+        }
+      }
+      
       // Check for function invocation errors
       if (analyzeError.message?.includes("Failed to send a request to the Edge Function")) {
         console.error("Edge Function invocation failed. This could be due to an incorrectly deployed function.");
@@ -61,6 +75,7 @@ export async function callOpenAIAnalysisAPI(imageUrl: string) {
     console.error("Error in Claude AI analysis:", error);
     
     const errorMessage = error.message || "Unknown error";
+    console.error("Error message details:", errorMessage);
     
     // Add more specific error handling based on the error message
     if (errorMessage.includes("invalid or has expired")) {

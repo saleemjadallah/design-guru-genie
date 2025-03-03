@@ -44,63 +44,145 @@ export const handleDatabaseError = (reviewError: any) => {
   return dbErrorMsg;
 };
 
-// Helper function to handle analysis errors
+/**
+ * Enhanced error handler for AI analysis errors
+ * Provides more detailed and actionable error messages
+ * Includes troubleshooting steps for common issues
+ */
 export const handleAnalysisError = (analyzeError: any) => {
   console.error("Analysis error:", analyzeError);
+  
+  // Extract error message and any additional metadata
   const errorMessage = analyzeError.message || "";
-  let errorMsg = "Error during AI analysis.";
+  const statusCode = analyzeError.status || analyzeError.statusCode || 0;
+  const errorType = analyzeError.type || analyzeError.code || "";
+  
+  // Additional logging for troubleshooting
+  console.log(`Error details - Message: "${errorMessage}", Status: ${statusCode}, Type: ${errorType}`);
+  
+  // Default error message with troubleshooting guidance
+  let errorMsg = "Error during AI analysis. Try using a simpler image or a different format.";
   
   // Check for network and connectivity errors
   if (errorMessage.includes("Failed to fetch") || 
       errorMessage.includes("Network error") ||
-      errorMessage.includes("network")) {
-    errorMsg = "Network error while connecting to our AI service. Please check your connection and try again.";
+      errorMessage.includes("network") ||
+      errorMessage.includes("CORS") ||
+      errorMessage.includes("connection")) {
+    errorMsg = "Network error while connecting to our AI service. Please check your connection and try again. If the problem persists, try using a smaller image.";
   }
   // Check for edge function errors
   else if (errorMessage.includes("Failed to send a request to the Edge Function") || 
       analyzeError.name === "FunctionsFetchError" ||
-      errorMessage.includes("edge function")) {
-    errorMsg = "Our AI service is currently unavailable. Please try again later.";
+      errorMessage.includes("edge function") ||
+      errorMessage.includes("Function execution error")) {
+    errorMsg = "Our AI service is currently unavailable. Please try again in a few minutes. If the problem persists, try using a simpler JPEG image.";
   } 
-  // Check for Claude API errors
-  else if (errorMessage.includes("timeout") || errorMessage.includes("timed out")) {
-    errorMsg = "Analysis timed out. Your design may be too complex or our service is busy.";
-  } else if (errorMessage.includes("quota") || errorMessage.includes("limit")) {
-    errorMsg = "We've reached our AI service quota. Please try again later.";
-  } else if (errorMessage.includes("rate limit")) {
-    errorMsg = "Too many requests. Please try again in a few minutes.";
-  } else if (errorMessage.includes("unauthorized") || errorMessage.includes("authentication")) {
-    errorMsg = "Authentication error with our AI service. Please try again later.";
-  } else if (errorMessage.includes("API key")) {
-    errorMsg = "API configuration issue. Please contact support.";
-  } else if (errorMessage.includes("maximum call stack")) {
-    errorMsg = "The image is too complex for our analysis service. Please try a smaller or simpler image.";
-  } else if (errorMessage.includes("non-2xx status code") || 
-             errorMessage.includes("400") || 
-             errorMessage.includes("500") ||
-             errorMessage.includes("AI service encountered an error")) {
-    // More specific guidance for multi-screenshot errors
-    errorMsg = "AI service encountered an error. For multiple screenshots, try using fewer images or providing them in JPEG format without transparency. If you're using PNG or images with transparency, try converting to a flat JPEG image instead.";
-  } else if (errorMessage.includes("failed to process") || 
-           errorMessage.includes("image processing") || 
-           errorMessage.includes("CRITICAL:") ||
-           errorMessage.includes("conversion failed")) {
-    // Specific handling for multi-screenshot errors
-    errorMsg = "There was an error processing your screenshots. Try using fewer screenshots, ensuring they don't contain transparency, or upload a single screenshot instead.";
-  } else if (errorMessage.includes("Empty response") || errorMessage.includes("no content")) {
-    errorMsg = "The AI service returned an empty response. Please try again with a clearer image.";
-  } else if (errorMessage.includes("parse") || errorMessage.includes("JSON")) {
-    errorMsg = "Failed to process the AI response. Please try again later.";
-  } else if (errorMessage.includes("image format") || errorMessage.includes("not supported") ||
-           errorMessage.includes("transparency") || errorMessage.includes("alpha channel")) {
-    errorMsg = "The image format is not supported. Please use a JPG image without transparency. PNG images with transparency can cause issues with AI analysis.";
-  } else if (errorMessage.includes("canvas") || 
-           errorMessage.includes("context") || 
-           errorMessage.includes("blob") || 
-           errorMessage.includes("data URL")) {
-    // Technical errors with image processing
+  // Check for timeout errors with enhanced guidance
+  else if (errorMessage.includes("timeout") || 
+          errorMessage.includes("timed out") || 
+          errorMessage.includes("aborted") || 
+          statusCode === 408) {
+    errorMsg = "Analysis timed out. Your design may be too complex for our AI service. Try these solutions:\n" +
+               "1. Use a simpler screenshot with fewer UI elements\n" +
+               "2. Try a JPEG format instead of PNG\n" +
+               "3. Reduce image dimensions (e.g., resize to 1200×800 pixels)\n" +
+               "4. Try again during off-peak hours";
+  } 
+  // Rate limits and quotas
+  else if (errorMessage.includes("quota") || 
+          errorMessage.includes("limit") ||
+          errorMessage.includes("rate limit") ||
+          statusCode === 429) {
+    errorMsg = "We've reached our AI service limit. Please try again in 10-15 minutes. This is a temporary issue that occurs during peak usage.";
+  } 
+  // Authentication errors
+  else if (errorMessage.includes("unauthorized") || 
+          errorMessage.includes("authentication") ||
+          errorMessage.includes("API key") ||
+          statusCode === 401 ||
+          statusCode === 403) {
+    errorMsg = "Authentication error with our AI service. Please refresh the page and try again. If the problem persists, contact support.";
+  } 
+  // Image complexity errors
+  else if (errorMessage.includes("maximum call stack") ||
+          errorMessage.includes("image dimensions") ||
+          errorMessage.includes("too large") ||
+          errorMessage.includes("too complex")) {
+    errorMsg = "Your image is too complex for our analysis service. Please try:\n" +
+               "1. Using a smaller or lower-resolution image\n" +
+               "2. Cropping to focus on the most important UI elements\n" +
+               "3. Converting to JPEG format with 80% quality";
+  } 
+  // Server errors with transparency guidance
+  else if (errorMessage.includes("non-2xx status code") || 
+          errorMessage.includes("400") || 
+          errorMessage.includes("500") ||
+          errorMessage.includes("AI service encountered an error") ||
+          (statusCode >= 400 && statusCode < 600)) {
+    errorMsg = "AI service encountered an error analyzing your design. Common causes:\n" +
+               "1. PNG images with transparency - convert to JPEG first\n" +
+               "2. Very large or complex UI designs\n" +
+               "3. Multiple screenshots - try with a single screenshot\n\n" +
+               "For best results, use a simple JPEG screenshot without transparency.";
+  } 
+  // Image processing errors with specific guidance
+  else if (errorMessage.includes("failed to process") || 
+          errorMessage.includes("image processing") || 
+          errorMessage.includes("CRITICAL:") ||
+          errorMessage.includes("conversion failed") ||
+          errorMessage.includes("dimensions") ||
+          errorMessage.includes("size")) {
+    errorMsg = "There was an error processing your image. Try these solutions:\n" +
+               "1. Use a standard JPEG format instead of PNG\n" +
+               "2. Resize to smaller dimensions (e.g., 1200×800 pixels)\n" +
+               "3. Ensure the image doesn't contain transparency\n" +
+               "4. Try a screenshot with simpler UI elements";
+  } 
+  // Response parsing and empty response errors
+  else if (errorMessage.includes("Empty response") || 
+          errorMessage.includes("no content") ||
+          errorMessage.includes("parse") || 
+          errorMessage.includes("JSON") ||
+          errorMessage.includes("invalid format")) {
+    errorMsg = "The AI couldn't generate a proper analysis of your design. This usually happens when:\n" +
+               "1. The image quality is too low\n" +
+               "2. The design has unusual elements the AI can't interpret\n" +
+               "3. The image format is unsupported\n\n" +
+               "Try a clearer screenshot or a different section of your UI.";
+  } 
+  // Format and transparency errors with clear guidance
+  else if (errorMessage.includes("image format") || 
+          errorMessage.includes("not supported") ||
+          errorMessage.includes("transparency") || 
+          errorMessage.includes("alpha channel") ||
+          errorMessage.includes("PNG") ||
+          errorMessage.includes("WebP")) {
+    errorMsg = "Your image contains transparency which our AI can't process correctly. Please:\n" +
+               "1. Convert PNG to JPEG format before uploading\n" +
+               "2. Take a screenshot without transparent elements\n" +
+               "3. If using design software, export with a white background\n\n" +
+               "JPEG format works best for our AI analysis.";
+  } 
+  // Technical image processing errors
+  else if (errorMessage.includes("canvas") || 
+          errorMessage.includes("context") || 
+          errorMessage.includes("blob") || 
+          errorMessage.includes("data URL") ||
+          errorMessage.includes("createImageBitmap") ||
+          errorMessage.includes("buffer")) {
     console.error("Technical image processing error:", errorMessage);
-    errorMsg = "Technical error processing your image. Try using a standard JPEG image without transparency or special formatting.";
+    errorMsg = "Technical error processing your image. For best results:\n" +
+               "1. Use standard JPEG format\n" +
+               "2. Avoid screenshots with unusual aspect ratios\n" +
+               "3. Try a simpler UI with fewer elements\n" +
+               "4. Ensure your browser is up to date";
+  }
+  
+  // If the error includes an HTTP status code, add it to the returned message for better debugging
+  // But only in development environment
+  if (process.env.NODE_ENV === 'development' && statusCode > 0) {
+    errorMsg += ` (Status: ${statusCode})`;
   }
   
   return errorMsg;

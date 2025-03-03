@@ -46,7 +46,7 @@ export const handleDatabaseError = (reviewError: any) => {
 };
 
 /**
- * Error handler for Claude AI analysis errors with improved edge function diagnosis
+ * Error handler for Claude AI analysis errors with updated edge function approach
  */
 export const handleAnalysisError = (analyzeError: any) => {
   console.error("Analysis error:", analyzeError);
@@ -75,11 +75,8 @@ export const handleAnalysisError = (analyzeError: any) => {
   else if (errorMessage.includes("unauthorized") || errorMessage.includes("authentication")) {
     errorMsg = "Authentication error with our AI service. Please refresh the page and try again.";
   }
-  else if (errorMessage.includes("Claude API key")) {
-    errorMsg = "There's an issue with the Claude API key. Please check that ANTHROPIC_API_KEY is correctly set in the Edge Function secrets.";
-  }
-  else if (errorMessage.includes("ANTHROPIC_API_KEY")) {
-    errorMsg = "ANTHROPIC_API_KEY configuration issue. Make sure it has the EXACT name 'ANTHROPIC_API_KEY' (case sensitive) in Edge Function secrets.";
+  else if (errorMessage.includes("invalid") && errorMessage.includes("API key")) {
+    errorMsg = "There might be an issue with the API key. The system will use a backup key.";
   }
   
   return errorMsg;

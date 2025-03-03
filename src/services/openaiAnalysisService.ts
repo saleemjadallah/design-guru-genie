@@ -44,14 +44,8 @@ export async function processWithOpenAI(imageUrl: string) {
     // Clean up resources
     cleanupUrls(imageUrl);
     
-    // Improve error messages for API key configuration issues
+    // Now using hardcoded API key so these errors should be less common
     let errorMessage = analyzeError.message || "There was an error analyzing your design.";
-    
-    if (errorMessage.includes("ANTHROPIC_API_KEY")) {
-      errorMessage = "API key configuration issue: Please make sure the ANTHROPIC_API_KEY is correctly set with the EXACT name in Edge Function secrets.";
-    } else if (errorMessage.includes("Claude API key")) {
-      errorMessage = "There's an issue with the Claude API key. Please check that ANTHROPIC_API_KEY is correctly set in the Edge Function secrets.";
-    }
     
     toast({
       title: "Analysis Failed",

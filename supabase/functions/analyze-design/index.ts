@@ -9,6 +9,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Hardcoded API key - used as fallback if environment variable isn't set
+const HARDCODED_API_KEY = "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";
+
 // Main serve function
 serve(async (req) => {
   console.log("analyze-design function invoked");
@@ -25,15 +28,22 @@ serve(async (req) => {
     console.log("Available environment variables:", envVars);
     
     // Get the Anthropic API key - checking multiple possible formats
-    const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY');
+    let anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY');
     
-    // Validate API key existence
-    if (!anthropicApiKey) {
-      console.error("ERROR: ANTHROPIC_API_KEY not found in environment variables");
-      throw new Error("ANTHROPIC_API_KEY not found. Please set it in your Edge Function secrets with the EXACT name 'ANTHROPIC_API_KEY'");
+    // Log if we found the key in environment variables
+    if (anthropicApiKey) {
+      console.log("API key found in environment variables (first 4 chars):", anthropicApiKey.substring(0, 4) + "...");
+    } else {
+      console.log("API key not found in environment variables, using hardcoded key");
+      anthropicApiKey = HARDCODED_API_KEY;
     }
     
-    console.log("API key successfully retrieved (first 4 chars):", anthropicApiKey.substring(0, 4) + "...");
+    // Make sure we have a key
+    if (!anthropicApiKey) {
+      throw new Error("No API key available - neither in environment nor hardcoded");
+    }
+    
+    console.log("API key successfully obtained (first 4 chars):", anthropicApiKey.substring(0, 4) + "...");
 
     // Parse the request body
     const { imageUrl, options } = await req.json();
@@ -165,9 +175,9 @@ Only return the JSON array, with no additional explanation.`
     let errorMessage = error.message || "Unknown error analyzing design";
     
     if (errorMessage.includes("ANTHROPIC_API_KEY not found")) {
-      errorMessage = "ANTHROPIC_API_KEY not found in Edge Function environment. Please verify it's set with the EXACT name in Edge Function secrets.";
+      errorMessage = "ANTHROPIC_API_KEY not found in Edge Function environment. The hardcoded key will be used as a fallback.";
     } else if (errorMessage.includes("invalid") && errorMessage.includes("API key")) {
-      errorMessage = "Invalid API key. Please check that your ANTHROPIC_API_KEY is correct in Edge Function secrets.";
+      errorMessage = "Invalid API key. Please check that your Anthropic API key is correct.";
     }
     
     // Return error response

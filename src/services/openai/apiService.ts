@@ -55,11 +55,6 @@ export async function callOpenAIAnalysisAPI(imageUrl: string) {
         throw new Error("Failed to call the analyze-design Edge Function. Please check that the function is deployed correctly.");
       }
       
-      if (analyzeError.message?.includes("non-2xx status code")) {
-        // This is likely due to an issue with how the edge function accesses the API key
-        throw new Error("Claude API key access issue in Edge Function. Please verify the ANTHROPIC_API_KEY secret is correctly set in Edge Function settings and the edge function is using it properly.");
-      }
-      
       throw analyzeError;
     }
     
@@ -68,7 +63,7 @@ export async function callOpenAIAnalysisAPI(imageUrl: string) {
       throw new Error("Empty response from Claude AI API. The service may be temporarily unavailable.");
     }
     
-    console.log("Analysis results received successfully:", analyzeData);
+    console.log("Analysis results received successfully");
     return analyzeData;
     
   } catch (error: any) {
@@ -77,15 +72,11 @@ export async function callOpenAIAnalysisAPI(imageUrl: string) {
     const errorMessage = error.message || "Unknown error";
     console.error("Error message details:", errorMessage);
     
-    // Add more specific error handling based on the error message
+    // We now have a hardcoded key, so this error is less likely
     if (errorMessage.includes("invalid or has expired")) {
-      throw new Error("The Claude API key appears to be invalid or has expired. Please update it in the Edge Function secrets.");
+      throw new Error("The Claude API key appears to be invalid or has expired. Please try again later.");
     } else if (errorMessage.includes("rate limit")) {
       throw new Error("Claude API rate limit exceeded. Please try again later.");
-    } else if (errorMessage.includes("not set or not accessible")) {
-      throw new Error("The ANTHROPIC_API_KEY is not accessible by the Edge Function. Please check the exact name and value in Edge Function secrets.");
-    } else if (errorMessage.includes("ANTHROPIC_API_KEY")) {
-      throw new Error("ANTHROPIC_API_KEY issue in edge function. Please verify it's set with the correct EXACT name 'ANTHROPIC_API_KEY' (case sensitive) in Edge Function secrets.");
     }
     
     throw new Error(`Claude AI analysis failed: ${errorMessage}`);

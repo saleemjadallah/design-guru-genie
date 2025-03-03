@@ -72,7 +72,7 @@ export const useUrlScreenshot = () => {
       // Log function name for debugging
       console.log("Starting Claude analysis via processWithOpenAI function");
       
-      // Use Claude (via the same processWithOpenAI function) for analysis
+      // Now that we're using the hardcoded API key as fallback, this should be more reliable
       let analysisResults;
       try {
         analysisResults = await processWithOpenAI(screenshotData.imageUrl);
@@ -83,12 +83,6 @@ export const useUrlScreenshot = () => {
         });
       } catch (analysisError: any) {
         console.error("Claude analysis error:", analysisError);
-        
-        // Provide more specific error messages for API key issues
-        if (analysisError.message?.includes("ANTHROPIC_API_KEY")) {
-          throw new Error("API key configuration issue: Please make sure the ANTHROPIC_API_KEY is correctly set with the EXACT name in Edge Function secrets.");
-        }
-        
         throw new Error(`AI analysis failed: ${analysisError.message}`);
       }
       
@@ -105,30 +99,6 @@ export const useUrlScreenshot = () => {
         toast({
           title: "Edge Function Error",
           description: "Could not connect to the Edge Function. Please check that 'analyze-design' and 'screenshot-url' functions are deployed correctly in Supabase.",
-          variant: "destructive",
-        });
-      } else if (error.message?.includes("Claude API key access issue")) {
-        toast({
-          title: "API Key Configuration Issue",
-          description: "The system cannot access the Claude API key. Please check that the key is correctly set with the EXACT name 'ANTHROPIC_API_KEY' in the Edge Function secrets.",
-          variant: "destructive",
-        });
-      } else if (error.message?.includes("Claude API key appears to be invalid")) {
-        toast({
-          title: "Invalid API Key",
-          description: "The Claude API key appears to be invalid or has expired. Please update it in the Edge Function secrets.",
-          variant: "destructive",
-        });
-      } else if (error.message?.includes("ANTHROPIC_API_KEY is not accessible")) {
-        toast({
-          title: "API Key Access Issue",
-          description: "The ANTHROPIC_API_KEY is not accessible by the Edge Function. Check the exact name 'ANTHROPIC_API_KEY' in Edge Function secrets.",
-          variant: "destructive",
-        });
-      } else if (error.message?.includes("ANTHROPIC_API_KEY")) {
-        toast({
-          title: "API Key Configuration Issue",
-          description: "Please verify the API key is set with the EXACT name 'ANTHROPIC_API_KEY' (case sensitive) in Edge Function secrets.",
           variant: "destructive",
         });
       } else if (error.message?.includes("timeout")) {

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Globe, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -89,13 +88,8 @@ export const UrlUpload = ({ onUrlAnalyze }: { onUrlAnalyze: (imageUrl: string, a
           analysisResults = screenshotData.analysis;
         } else {
           try {
-            // Use OpenAI for analysis instead of Claude
-            analysisResults = await processWithOpenAI(screenshotData.imageUrl, {
-              maxWidth: 800,
-              maxHeight: 1000,
-              quality: 0.65,
-              maxSizeBytes: 4 * 1024 * 1024
-            });
+            // FIX: removed second argument to processWithOpenAI
+            analysisResults = await processWithOpenAI(screenshotData.imageUrl);
           } catch (analysisError: any) {
             console.error("OpenAI analysis error:", analysisError);
             

@@ -60,15 +60,10 @@ export const useUrlScreenshot = () => {
         throw new Error("Failed to capture website screenshot. The website may be blocking our capture service or have security measures in place.");
       }
       
-      // Use OpenAI for analysis instead of Claude
+      // Use OpenAI for analysis instead of Claude - FIX: removed second argument
       let analysisResults;
       try {
-        analysisResults = await processWithOpenAI(screenshotData.imageUrl, {
-          maxWidth: 800,
-          maxHeight: 1000,
-          quality: 0.65,
-          maxSizeBytes: 4 * 1024 * 1024
-        });
+        analysisResults = await processWithOpenAI(screenshotData.imageUrl);
         
         toast({
           title: "Analysis complete",
@@ -133,3 +128,4 @@ export const useUrlScreenshot = () => {
     captureScreenshot
   };
 };
+

@@ -57,11 +57,15 @@ export const handleAnalysisError = (analyzeError: any) => {
   // Default error message
   let errorMsg = "Error during AI analysis. Please try again.";
   
+  // Check for common edge function errors
+  if (errorMessage.includes("non-2xx status code")) {
+    errorMsg = "The AI analysis service returned an error. Please try again in a few moments.";
+  }
   // Check for edge function specific errors
-  if (errorMessage.includes("Failed to send a request to the Edge Function")) {
+  else if (errorMessage.includes("Failed to send a request to the Edge Function")) {
     errorMsg = "Could not connect to the Edge Function. Please make sure 'analyze-design' function is deployed correctly in Supabase.";
   }
-  // Check for specific error types
+  // Check for network errors
   else if (errorMessage.includes("Failed to fetch") || 
       errorMessage.includes("Network error")) {
     errorMsg = "Network error while connecting to our AI service. Please check your connection and try again.";
@@ -70,13 +74,16 @@ export const handleAnalysisError = (analyzeError: any) => {
     errorMsg = "Edge Function configuration issue. Please check that the 'analyze-design' function exists and is deployed.";
   } 
   else if (errorMessage.includes("timeout") || errorMessage.includes("timed out")) {
-    errorMsg = "Analysis timed out. Please try again later.";
+    errorMsg = "Analysis timed out. Please try again later or with a simpler design image.";
   } 
   else if (errorMessage.includes("unauthorized") || errorMessage.includes("authentication")) {
     errorMsg = "Authentication error with our AI service. Please refresh the page and try again.";
   }
   else if (errorMessage.includes("invalid") && errorMessage.includes("API key")) {
     errorMsg = "There might be an issue with the API key. The system will use a backup key.";
+  }
+  else if (errorMessage.includes("API key not configured")) {
+    errorMsg = "The API key is not properly configured. Please check the Edge Function secrets.";
   }
   
   return errorMsg;

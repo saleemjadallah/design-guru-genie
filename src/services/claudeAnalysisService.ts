@@ -1,3 +1,4 @@
+
 import { toast } from "@/hooks/use-toast";
 import { handleAnalysisError } from "@/utils/upload/errorHandler";
 import { compressImageForAPI, CompressionOptions } from "@/utils/upload/imageCompressionService";
@@ -77,6 +78,13 @@ export async function processWithClaudeAI(imageUrl: string, compressionOptions: 
     console.error("Error in Claude AI analysis process:", analyzeError);
     
     const errorMsg = handleAnalysisError(analyzeError);
+    
+    toast({
+      title: "Analysis Failed",
+      description: errorMsg,
+      variant: "destructive",
+    });
+    
     throw new Error(errorMsg);
   }
 }

@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { parseClaudeResponseData } from "@/utils/upload/claudeResponseParser";
@@ -14,9 +15,10 @@ export async function callClaudeAnalysisAPI(imageUrl: string, timeoutMs: number 
   });
   
   console.log(`Calling analyze-design function with timeout: ${timeoutMs}ms`);
+  console.log(`Image URL length: ${imageUrl.length} characters`);
   
   // Improved retry mechanism with better backoff strategy
-  const maxRetries = 3;
+  const maxRetries = 2;
   let retryCount = 0;
   let lastError = null;
   
@@ -43,17 +45,20 @@ export async function callClaudeAnalysisAPI(imageUrl: string, timeoutMs: number 
         });
       }
       
+      // Simplify the options to reduce potential parsing issues
+      const requestBody = { 
+        imageUrl,
+        options: {
+          maxTokens: 2000,
+          temperature: 0.1
+        }
+      };
+      
+      console.log(`Sending request with body structure: ${JSON.stringify(Object.keys(requestBody))}`);
+      
       const { data: analyzeData, error: analyzeError } = await supabase.functions
         .invoke('analyze-design', {
-          body: { 
-            imageUrl,
-            options: {
-              maxTokens: 2000,
-              temperature: 0.1,
-              timeout: remainingTime,
-              isMultiScreenshot: imageUrl.length > 500000
-            }
-          },
+          body: requestBody,
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'

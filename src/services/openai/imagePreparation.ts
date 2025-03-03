@@ -60,7 +60,7 @@ export async function prepareImageForAnalysis(imageUrl: string, compressionOptio
       toast({
         title: "Transparency issue",
         description: "Your image contains transparency which may affect analysis quality. We've attempted to fix this automatically.",
-        variant: "warning",
+        variant: "default", // Changed from "warning" to "default" since "warning" isn't a valid variant
       });
       // Continue with original as we've warned the user
     }

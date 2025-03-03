@@ -61,8 +61,8 @@ export async function callOpenAIAnalysisAPI(imageUrl: string, timeoutMs: number 
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
-          },
-          signal: controller.signal // Connect AbortController for timeout
+          }
+          // Removed 'signal: controller.signal' as it's not supported in FunctionInvokeOptions
         });
       
       // Clear the timeout since the request completed

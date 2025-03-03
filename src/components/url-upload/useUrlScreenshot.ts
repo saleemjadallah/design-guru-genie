@@ -92,7 +92,13 @@ export const useUrlScreenshot = () => {
       } else if (error.message?.includes("non-2xx status code")) {
         toast({
           title: "Analysis service error",
-          description: "Our OpenAI analysis service encountered an issue. Please check that the OPENAI_API_KEY is set correctly in your Supabase project.",
+          description: "Our OpenAI analysis service encountered an issue. Please check that the OPENAI_API_KEY is correctly set in the Edge Function settings.",
+          variant: "destructive",
+        });
+      } else if (error.message?.includes("OpenAI API key may not be properly configured")) {
+        toast({
+          title: "API Key Configuration Error",
+          description: "The OpenAI API key exists but may not be correctly accessed by the Edge Function. Please verify the Edge Function configuration.",
           variant: "destructive",
         });
       } else if (error.message?.includes("timeout")) {

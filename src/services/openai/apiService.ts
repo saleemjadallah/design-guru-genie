@@ -34,8 +34,8 @@ export async function callOpenAIAnalysisAPI(imageUrl: string) {
       console.error("OpenAI analysis error:", analyzeError);
       
       if (analyzeError.message?.includes("non-2xx status code")) {
-        // This is likely due to an issue with the OpenAI API key
-        throw new Error("The OpenAI API key may be missing or invalid. Please check the OPENAI_API_KEY in your Supabase project settings.");
+        // This is likely due to an issue with the OpenAI API key or the edge function
+        throw new Error("The OpenAI API key may not be properly configured. Please check that the edge function is using the correct OPENAI_API_KEY secret.");
       }
       
       throw analyzeError;

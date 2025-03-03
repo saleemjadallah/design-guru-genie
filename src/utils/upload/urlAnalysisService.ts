@@ -1,9 +1,9 @@
 
 import { toast } from "@/hooks/use-toast";
-import { processWithOpenAI } from "@/services/openaiAnalysisService";
+import { processWithClaudeAI } from "@/services/claudeAnalysisService";
 
 /**
- * Simplified URL analysis service using Claude AI
+ * URL analysis service using Claude AI for design evaluation
  */
 export const processUrlAnalysisData = async (imageUrl: string, data?: any) => {
   if (!imageUrl) {
@@ -26,9 +26,9 @@ export const processUrlAnalysisData = async (imageUrl: string, data?: any) => {
   }
 
   try {
-    // Use Claude AI for analysis (same function name as before)
+    // Use Claude AI for analysis
     console.log("Using Claude AI for URL analysis");
-    const results = await processWithOpenAI(imageUrl);
+    const results = await processWithClaudeAI(imageUrl);
     
     if (results && Array.isArray(results) && results.length > 0) {
       toast({

@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { processWithOpenAI } from "@/services/openaiAnalysisService";
+import { processWithClaudeAI } from "@/services/claudeAnalysisService";
 import { createPlaceholderSvg } from "./UrlValidation";
 
 export const useUrlScreenshot = () => {
@@ -70,12 +70,12 @@ export const useUrlScreenshot = () => {
       }
       
       // Log function name for debugging
-      console.log("Starting Claude analysis via processWithOpenAI function");
+      console.log("Starting Claude analysis with processWithClaudeAI function");
       
-      // Now that we're using the hardcoded API key as fallback, this should be more reliable
+      // Process with Claude AI
       let analysisResults;
       try {
-        analysisResults = await processWithOpenAI(screenshotData.imageUrl);
+        analysisResults = await processWithClaudeAI(screenshotData.imageUrl);
         
         toast({
           title: "Analysis complete",

@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { handleUploadError } from "@/utils/upload/errorHandler";
-import { processWithOpenAI } from "@/services/openaiAnalysisService";
+import { processWithClaudeAI } from "@/services/claudeAnalysisService";
 import { processAndUploadImage } from "@/utils/upload/imageProcessing";
 import { saveReviewToDatabase } from "@/utils/upload/reviewStorage";
 
@@ -33,9 +33,9 @@ export const useImageUpload = () => {
         description: "Your image has been uploaded successfully. Starting analysis...",
       });
       
-      // Analyze with OpenAI - simplified
-      const analysisResults = await processWithOpenAI(publicUrl);
-      console.log("OpenAI analysis complete:", analysisResults);
+      // Analyze with Claude AI
+      const analysisResults = await processWithClaudeAI(publicUrl);
+      console.log("Claude analysis complete:", analysisResults);
       
       setCurrentStage(2);
       toast({

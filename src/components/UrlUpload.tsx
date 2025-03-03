@@ -3,7 +3,7 @@ import { Globe, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { processWithOpenAI } from "@/services/openaiAnalysisService";
+import { processWithClaudeAI } from "@/services/claudeAnalysisService";
 import { generateDummyFeedback } from "@/utils/upload/dummyData";
 
 export const UrlUpload = ({ onUrlAnalyze }: { onUrlAnalyze: (imageUrl: string, analysisData: any) => void }) => {
@@ -88,10 +88,10 @@ export const UrlUpload = ({ onUrlAnalyze }: { onUrlAnalyze: (imageUrl: string, a
           analysisResults = screenshotData.analysis;
         } else {
           try {
-            // FIX: removed second argument to processWithOpenAI
-            analysisResults = await processWithOpenAI(screenshotData.imageUrl);
+            // Use Claude AI for analysis
+            analysisResults = await processWithClaudeAI(screenshotData.imageUrl);
           } catch (analysisError: any) {
-            console.error("OpenAI analysis error:", analysisError);
+            console.error("Claude analysis error:", analysisError);
             
             // If analysis fails but we have an SVG placeholder,
             // use a fallback dummy analysis so user gets something

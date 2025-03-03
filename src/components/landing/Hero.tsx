@@ -67,6 +67,9 @@ export const Hero = () => {
           <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto font-medium">
             Transform Designs Through Expert AI Critique
           </p>
+          <p className="text-sm text-white/80 max-w-xl mx-auto mt-3 font-medium">
+            Free first analysis / $18 after / cancel anytime
+          </p>
         </div>
       </div>
       

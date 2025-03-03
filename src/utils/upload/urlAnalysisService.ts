@@ -3,7 +3,7 @@ import { toast } from "@/hooks/use-toast";
 import { processWithOpenAI } from "@/services/openaiAnalysisService";
 
 /**
- * Simplified URL analysis service - no compression options
+ * Simplified URL analysis service using Claude AI
  */
 export const processUrlAnalysisData = async (imageUrl: string, data?: any) => {
   if (!imageUrl) {
@@ -26,8 +26,8 @@ export const processUrlAnalysisData = async (imageUrl: string, data?: any) => {
   }
 
   try {
-    // Use OpenAI for analysis
-    console.log("Using OpenAI for URL analysis");
+    // Use Claude AI for analysis (same function name as before)
+    console.log("Using Claude AI for URL analysis");
     const results = await processWithOpenAI(imageUrl);
     
     if (results && Array.isArray(results) && results.length > 0) {

@@ -5,20 +5,21 @@ import { callOpenAIAnalysisAPI } from "./openai/apiService";
 import { processOpenAIResponse } from "./openai/responseProcessor";
 
 /**
- * Simplified process to analyze an image with OpenAI
+ * Simplified process to analyze an image with Claude AI
+ * (keeping the same function name to avoid updating all references)
  */
 export async function processWithOpenAI(imageUrl: string) {
   try {
-    console.log("Starting OpenAI analysis process for image:", imageUrl.substring(0, 50) + "...");
+    console.log("Starting Claude AI analysis process for image:", imageUrl.substring(0, 50) + "...");
     
     // Simply pass through the image
     const processedImageUrl = await prepareImageForAnalysis(imageUrl);
     
-    // Call the OpenAI analysis API
+    // Call the Claude analysis API (using the same function name)
     const analysisData = await callOpenAIAnalysisAPI(processedImageUrl);
     
     if (!analysisData) {
-      throw new Error("No analysis data returned from OpenAI");
+      throw new Error("No analysis data returned from Claude AI");
     }
     
     // Process the response
@@ -30,7 +31,7 @@ export async function processWithOpenAI(imageUrl: string) {
     return result;
     
   } catch (analyzeError: any) {
-    console.error("Error in OpenAI analysis process:", analyzeError);
+    console.error("Error in Claude AI analysis process:", analyzeError);
     
     // Clean up resources
     cleanupUrls(imageUrl);

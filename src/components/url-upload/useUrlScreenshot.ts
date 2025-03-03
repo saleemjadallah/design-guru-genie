@@ -60,7 +60,7 @@ export const useUrlScreenshot = () => {
         throw new Error("Failed to capture website screenshot. The website may be blocking our capture service or have security measures in place.");
       }
       
-      // Use OpenAI for analysis
+      // Use Claude (via the same processWithOpenAI function) for analysis
       let analysisResults;
       try {
         analysisResults = await processWithOpenAI(screenshotData.imageUrl);
@@ -70,7 +70,7 @@ export const useUrlScreenshot = () => {
           description: "Website design has been analyzed successfully.",
         });
       } catch (analysisError: any) {
-        console.error("OpenAI analysis error:", analysisError);
+        console.error("Claude analysis error:", analysisError);
         throw new Error(`AI analysis failed: ${analysisError.message}`);
       }
       
@@ -89,22 +89,22 @@ export const useUrlScreenshot = () => {
           description: "The URL analysis feature is currently unavailable. Please try again later or upload a screenshot instead.",
           variant: "destructive",
         });
-      } else if (error.message?.includes("OpenAI API key access issue")) {
+      } else if (error.message?.includes("Claude API key access issue")) {
         toast({
           title: "API Key Configuration Issue",
-          description: "The system cannot access the OpenAI API key. Please check that the key is correctly set with the EXACT name 'OPENAI_API_KEY' in the Edge Function secrets.",
+          description: "The system cannot access the Claude API key. Please check that the key is correctly set with the EXACT name 'ANTHROPIC_API_KEY' in the Edge Function secrets.",
           variant: "destructive",
         });
-      } else if (error.message?.includes("OpenAI API key appears to be invalid")) {
+      } else if (error.message?.includes("Claude API key appears to be invalid")) {
         toast({
           title: "Invalid API Key",
-          description: "The OpenAI API key appears to be invalid or has expired. Please update it in the Edge Function secrets.",
+          description: "The Claude API key appears to be invalid or has expired. Please update it in the Edge Function secrets.",
           variant: "destructive",
         });
-      } else if (error.message?.includes("OPENAI_API_KEY is not accessible")) {
+      } else if (error.message?.includes("ANTHROPIC_API_KEY is not accessible")) {
         toast({
           title: "API Key Access Issue",
-          description: "The OPENAI_API_KEY is not accessible by the Edge Function. Check the exact name 'OPENAI_API_KEY' in Edge Function secrets.",
+          description: "The ANTHROPIC_API_KEY is not accessible by the Edge Function. Check the exact name 'ANTHROPIC_API_KEY' in Edge Function secrets.",
           variant: "destructive",
         });
       } else if (error.message?.includes("timeout")) {

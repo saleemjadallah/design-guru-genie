@@ -11,30 +11,74 @@ import { createCanvas } from './canvas-utils';
  * @param width Target width
  * @param height Target height
  * @param quality JPEG quality (0-1)
+ * @param options Additional options for compression
  * @returns Promise resolving to a blob
  */
 export function compressAttempt(
   img: HTMLImageElement, 
   width: number, 
   height: number, 
-  quality: number
+  quality: number,
+  options: { 
+    removeTransparency?: boolean,
+    outputFormat?: string
+  } = {}
 ): Promise<Blob> {
   return new Promise((resolve, reject) => {
-    const { ctx, canvas } = createCanvas(img, width, height);
+    // Create canvas with specific options for transparency handling
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    
+    // Try to use non-alpha context if transparency should be removed
+    let ctx: CanvasRenderingContext2D | null;
+    if (options.removeTransparency) {
+      try {
+        // First try with alpha: false for best transparency handling
+        ctx = canvas.getContext('2d', { alpha: false });
+        console.log("Using non-alpha canvas context to eliminate transparency");
+      } catch (e) {
+        console.warn("Failed to create non-alpha context, falling back to standard context");
+        ctx = canvas.getContext('2d');
+      }
+    } else {
+      // Standard context if we don't need to specifically handle transparency
+      ctx = canvas.getContext('2d');
+    }
+    
+    if (!ctx) {
+      reject(new Error('Failed to get canvas context for compression'));
+      return;
+    }
+    
+    // Always fill with white background when removing transparency
+    if (options.removeTransparency) {
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, width, height);
+      console.log("Applied white background to remove transparency");
+    }
     
     // Draw the image onto the canvas
     ctx.drawImage(img, 0, 0, width, height);
     
-    // Convert to JPEG blob
+    // Determine output format - default to JPEG for transparency removal
+    const outputFormat = options.removeTransparency ? 'image/jpeg' : (options.outputFormat || 'image/jpeg');
+    
+    // Convert to blob with the determined format
     canvas.toBlob(
       (blob) => {
         if (!blob) {
           reject(new Error('Failed to create image blob'));
           return;
         }
+        
+        // Log format info
+        console.log(`Created ${blob.type} blob: ${Math.round(blob.size/1024)}KB` +
+                   `${options.removeTransparency ? ' (transparency removed)' : ''}`);
+        
         resolve(blob);
       }, 
-      'image/jpeg', 
+      outputFormat, 
       quality
     );
   });
@@ -54,6 +98,7 @@ export async function performMultiStepCompression(
     quality?: number;
     maxSizeBytes?: number;
     forceJpeg?: boolean;
+    removeTransparency?: boolean;
   }
 ): Promise<string> {
   const { 
@@ -61,6 +106,8 @@ export async function performMultiStepCompression(
     maxHeight = 1000,
     quality = 0.65,
     maxSizeBytes = 4 * 1024 * 1024,
+    forceJpeg = false,
+    removeTransparency = false
   } = options;
   
   // Imported functions moved to separate modules
@@ -75,12 +122,24 @@ export async function performMultiStepCompression(
   let attempt = 0;
   const maxAttempts = 4;
   
+  // Log transparency handling settings
+  console.log(`Compression options: forceJpeg=${forceJpeg}, removeTransparency=${removeTransparency}`);
+  if (removeTransparency) {
+    console.log("Transparency removal enabled - will create JPEG with white background");
+  }
+  
+  // Determine the output format based on options
+  const outputFormat = forceJpeg || removeTransparency ? 'image/jpeg' : 'image/png';
+  
   while (attempt < maxAttempts) {
     attempt++;
     console.log(`Compression attempt ${attempt} with dimensions ${width}x${height} and quality ${currentQuality}`);
     
-    // Attempt compression with current settings
-    const blob = await compressAttempt(img, width, height, currentQuality);
+    // Attempt compression with current settings and transparency handling
+    const blob = await compressAttempt(img, width, height, currentQuality, {
+      removeTransparency: removeTransparency,
+      outputFormat: outputFormat
+    });
     console.log(`Compressed to ${Math.round(blob.size/1024)}KB (attempt ${attempt})`);
     
     // If size is acceptable, convert to data URL and return
@@ -96,6 +155,7 @@ export async function performMultiStepCompression(
           width = emergency.width;
           height = emergency.height;
           currentQuality = 0.3;
+          // In emergency mode, always force JPEG and remove transparency
           continue; // Try again with emergency settings
         }
         
@@ -104,7 +164,17 @@ export async function performMultiStepCompression(
       
       const dataUrl = await blobToDataUrl(blob);
       console.log(`Final compressed size: ${Math.round(blob.size/1024)}KB after ${attempt} attempts`);
-      console.log(`Output format: JPEG as data URL (first 30 chars): ${dataUrl.substring(0, 30)}...`);
+      
+      // Verify output format for debugging
+      const actualFormat = dataUrl.startsWith('data:image/jpeg') ? 'JPEG' : 
+                          dataUrl.startsWith('data:image/png') ? 'PNG' : 
+                          'unknown';
+      console.log(`Output format: ${actualFormat} as data URL (first 30 chars): ${dataUrl.substring(0, 30)}...`);
+      
+      // Final verification for transparency handling
+      if (removeTransparency && !dataUrl.startsWith('data:image/jpeg')) {
+        console.warn("WARNING: Image with transparency was not converted to JPEG as requested!");
+      }
       
       return dataUrl;
     }

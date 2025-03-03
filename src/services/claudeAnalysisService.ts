@@ -1,7 +1,8 @@
 
 import { toast } from "@/hooks/use-toast";
 import { handleAnalysisError } from "@/utils/upload/errorHandler";
-import { compressImageForAPI, CompressionOptions } from "@/utils/upload/imageCompressionService";
+import { compressImageForAPI } from "@/utils/upload/imageCompressionService";
+import { CompressionOptions } from "@/utils/upload/compression-types";
 import { uploadBlobToSupabase, validateImageUrl } from "@/utils/upload/imageUploadService";
 import { callClaudeAnalysisAPI, processClaudeResponse } from "@/services/claudeApiService";
 

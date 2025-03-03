@@ -1,7 +1,7 @@
 
 import { toast } from "@/hooks/use-toast";
 import { compressImageForAPI } from "@/utils/upload/imageCompressionService";
-import { CompressionOptions } from "@/services/openai/types";
+import { CompressionOptions } from "@/utils/upload/compression-types";
 
 /**
  * Compresses an image URL for OpenAI processing

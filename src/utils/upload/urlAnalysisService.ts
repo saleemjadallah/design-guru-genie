@@ -3,6 +3,15 @@ import { toast } from "@/hooks/use-toast";
 import { processWithOpenAI } from "@/services/openaiAnalysisService";
 import { handleUrlAnalysisError, handleUrlAnalysisSuccess } from "@/utils/upload/urlAnalysisErrorHandler";
 
+// Define compression options interface to ensure type consistency
+interface CompressionOptions {
+  maxWidth?: number;
+  maxHeight?: number;
+  quality?: number;
+  maxSizeBytes?: number;
+  forceJpeg?: boolean;
+}
+
 /**
  * Process data or get new analysis from OpenAI API
  * @param imageUrl URL of the screenshot or website
@@ -35,7 +44,7 @@ export const processUrlAnalysisData = async (imageUrl: string, data?: any) => {
     console.log("Using OpenAI for URL analysis");
     
     // Use more aggressive compression options
-    const compressionOptions = {
+    const compressionOptions: CompressionOptions = {
       maxWidth: 800,
       maxHeight: 1000,
       quality: 0.65,

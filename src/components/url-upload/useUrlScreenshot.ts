@@ -81,7 +81,7 @@ export const useUrlScreenshot = () => {
     } catch (error: any) {
       console.error("URL processing error:", error);
       
-      // Handle specific error cases
+      // Handle specific error cases with more detailed messages
       if (error.message?.includes("Failed to send a request to the Edge Function") || 
           error.name === "FunctionsFetchError") {
         toast({
@@ -89,16 +89,22 @@ export const useUrlScreenshot = () => {
           description: "The URL analysis feature is currently unavailable. Please try again later or upload a screenshot instead.",
           variant: "destructive",
         });
-      } else if (error.message?.includes("non-2xx status code")) {
+      } else if (error.message?.includes("OpenAI API key access issue")) {
         toast({
-          title: "Analysis service error",
-          description: "Our OpenAI analysis service encountered an issue. Please check that the OPENAI_API_KEY is correctly set in the Edge Function settings.",
+          title: "API Key Configuration Issue",
+          description: "The system cannot access the OpenAI API key. Please check that the key is correctly set with the EXACT name 'OPENAI_API_KEY' in the Edge Function secrets.",
           variant: "destructive",
         });
-      } else if (error.message?.includes("OpenAI API key may not be properly configured")) {
+      } else if (error.message?.includes("OpenAI API key appears to be invalid")) {
         toast({
-          title: "API Key Configuration Error",
-          description: "The OpenAI API key exists but may not be correctly accessed by the Edge Function. Please verify the Edge Function configuration.",
+          title: "Invalid API Key",
+          description: "The OpenAI API key appears to be invalid or has expired. Please update it in the Edge Function secrets.",
+          variant: "destructive",
+        });
+      } else if (error.message?.includes("OPENAI_API_KEY is not accessible")) {
+        toast({
+          title: "API Key Access Issue",
+          description: "The OPENAI_API_KEY is not accessible by the Edge Function. Check the exact name 'OPENAI_API_KEY' in Edge Function secrets.",
           variant: "destructive",
         });
       } else if (error.message?.includes("timeout")) {

@@ -34,8 +34,8 @@ export async function callOpenAIAnalysisAPI(imageUrl: string) {
       console.error("OpenAI analysis error:", analyzeError);
       
       if (analyzeError.message?.includes("non-2xx status code")) {
-        // This is likely due to an issue with the OpenAI API key or the edge function
-        throw new Error("The OpenAI API key may not be properly configured. Please check that the edge function is using the correct OPENAI_API_KEY secret.");
+        // This is likely due to an issue with how the edge function accesses the API key
+        throw new Error("OpenAI API key access issue. Please verify the OPENAI_API_KEY secret in Edge Function settings.");
       }
       
       throw analyzeError;
@@ -46,12 +46,23 @@ export async function callOpenAIAnalysisAPI(imageUrl: string) {
       throw new Error("Empty response from OpenAI API. The service may be temporarily unavailable.");
     }
     
-    console.log("Analysis results received successfully");
+    console.log("Analysis results received successfully:", analyzeData);
     return analyzeData;
     
   } catch (error: any) {
     console.error("Error in OpenAI analysis:", error);
+    
     const errorMessage = error.message || "Unknown error";
+    
+    // Add more specific error handling based on the error message
+    if (errorMessage.includes("invalid or has expired")) {
+      throw new Error("The OpenAI API key appears to be invalid or has expired. Please update it in the Edge Function secrets.");
+    } else if (errorMessage.includes("rate limit")) {
+      throw new Error("OpenAI API rate limit exceeded. Please try again later.");
+    } else if (errorMessage.includes("not set or not accessible")) {
+      throw new Error("The OPENAI_API_KEY is not accessible by the Edge Function. Please check the exact name and value in Edge Function secrets.");
+    }
+    
     throw new Error(`OpenAI analysis failed: ${errorMessage}`);
   }
 }
